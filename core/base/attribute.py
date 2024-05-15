@@ -1,60 +1,61 @@
+from collections.abc import MutableMapping
+
 from core.abstract import attribute
-from typing import Dict, Any
 
 
-class Attribute(attribute.AbstractAttribute):
+def integrate_validator(func):
     """
-    A concrete attribute class that implements 'name' and 'value' properties.
+    :param func: the function to be wrapped
+    :return: the wrapped function
+
+    This method takes a function as a parameter and returns a wrapped function. The wrapped function executes the
+    given function, but before doing so, it calls a validator method corresponding to the provided key. If the
+    validator method exists, it is called with the key and value parameters. If the validator method does not exist,
+    a default lambda function is called instead. Finally, the given function is executed with the key and value
+    parameters.
+
+    """
+    def wrapper(self, key, value):
+        getattr(self, f"{key}_validator", lambda *args: None)(key, value)
+        func(self, key, value)
+
+    return wrapper
+
+
+class Attribute(attribute.AbstractAttribute, MutableMapping):
+    """
+    A concrete attribute class that implements AbstractAttribute and MutableMapping.
     """
 
-    def __init__(self, name, value):
-        """
-        Initialize an attribute with a name and value.
+    def __init__(self, **kwargs):
+        self._data = {}
 
-        :param name: The name of the attribute.
-        :param value: The value of the attribute.
-        """
-        self.__name = None
-        self.__value = None
+        for key, value in kwargs.items():
+            self.__setitem__(key, value)
 
-        self.name = name
-        self.value = value
+    @integrate_validator
+    def __setitem__(self, key, value):
+        self._data[key] = value
 
-    @property
-    def name(self) -> str:
-        """
-        Get the name of the attribute.
+    def __getitem__(self, key):
+        return self._data[key]
 
-        :return: The name of the attribute.
-        """
-        return self.__name
+    def __delitem__(self, key):
+        del self._data[key]
 
-    @name.setter
-    def name(self, new_name: str) -> None:
-        """
-        Set a new name for the attribute.
+    def __iter__(self):
+        return iter(self._data)
 
-        :param new_name: The new name for the attribute.
-        """
-        self.__name = new_name
+    def __len__(self):
+        return len(self._data)
 
-    @property
-    def value(self) -> Any:
-        """
-        Get the value of the attribute.
+    def __repr__(self):
+        return repr(self._data)
 
-        :return: The value of the attribute.
-        """
-        return self.__value
-
-    @value.setter
-    def value(self, new_value: Any) -> None:
-        """
-        Set a new value for the attribute.
-
-        :param new_value: The new value for the attribute.
-        """
-        self.__value = new_value
+    @staticmethod
+    def name_validator(key, value):
+        if not isinstance(value, str):
+            raise TypeError(f'Attribute {key} must be a string.')
 
 
 class AttributeCollection(attribute.AbstractAttributeCollection, list):
@@ -64,36 +65,19 @@ class AttributeCollection(attribute.AbstractAttributeCollection, list):
 
     def __init__(self) -> None:
         """
-        Initialize an instance of AbstractAttributesManager.
+        Initialize an instance of AbstractAttributeCollection.
         """
         super().__init__()
 
-    def append(self, attribute):
+    def append(self, attr):
         """
         Append an attribute to the list of managed attribute. Raises a TypeError if the attribute is not an instance
         of AbstractAttribute.
 
-        :param attribute: The attribute to add to the manager.
+        :param attr: The attribute to add to the manager.
         """
-        if not isinstance(attribute, attribute.AbstractAttribute):
-            raise TypeError(f'attribute {attribute} is not an instance of {attribute.AbstractAttribute}')
+        if not isinstance(attr, attribute.AbstractAttribute):
+            raise TypeError(f'attribute {attr} is not an instance of {attribute.AbstractAttribute}')
 
-        super().append(attribute)
+        super().append(attr)
 
-    def serialize(self) -> Dict[str, Any]:
-        """
-        Return a dictionary representation of the attribute managed by this instance.
-
-        :return: A dictionary where the keys are attribute names and the values are attribute values.
-        """
-        return {attribute.name: attribute.value for attribute in self}
-
-    def deserialize(self, data: Dict[str, Any]) -> None:
-        """
-        Parse a dictionary representation of attribute and update this instance's attribute accordingly.
-
-        :param data: A dictionary of attribute data.
-        """
-        self.clear()
-        for name, value in data.items():
-            self.append(Attribute(name, value))
