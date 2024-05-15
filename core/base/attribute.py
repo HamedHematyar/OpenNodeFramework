@@ -1,4 +1,4 @@
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, MutableSequence
 
 from core.abstract import attribute
 
@@ -15,6 +15,7 @@ def integrate_validator(func):
     parameters.
 
     """
+
     def wrapper(self, key, value):
         getattr(self, f"{key}_validator", lambda *args: None)(key, value)
         func(self, key, value)
@@ -55,29 +56,36 @@ class Attribute(attribute.AbstractAttribute, MutableMapping):
     @staticmethod
     def name_validator(key, value):
         if not isinstance(value, str):
-            raise TypeError(f'Attribute {key} must be a string.')
+            raise TypeError(f'attribute {key} must be a string.')
 
 
-class AttributeCollection(attribute.AbstractAttributeCollection, list):
-    """
-    A concrete attribute manager class.
-    """
+class AttributeCollection(attribute.AbstractAttributeCollection, MutableSequence):
+    def __init__(self, attributes: list):
+        self._data = list(*attributes)
 
-    def __init__(self) -> None:
-        """
-        Initialize an instance of AbstractAttributeCollection.
-        """
-        super().__init__()
+    def __getitem__(self, index):
+        return self._data[index]
 
-    def append(self, attr):
-        """
-        Append an attribute to the list of managed attribute. Raises a TypeError if the attribute is not an instance
-        of AbstractAttribute.
+    def __setitem__(self, index, value):
+        self._data[index] = value
 
-        :param attr: The attribute to add to the manager.
-        """
-        if not isinstance(attr, attribute.AbstractAttribute):
-            raise TypeError(f'attribute {attr} is not an instance of {attribute.AbstractAttribute}')
+    def __delitem__(self, index):
+        del self._data[index]
 
-        super().append(attr)
+    def __len__(self):
+        return len(self._data)
 
+    def __repr__(self):
+        return repr(self._data)
+
+    def insert(self, index, value):
+        if not isinstance(value, attribute.AbstractAttribute):
+            raise TypeError(f'attribute {value} is not an instance of {attribute.AbstractAttribute}')
+
+        self._data.insert(index, value)
+
+    def append(self, value):
+        if not isinstance(value, attribute.AbstractAttribute):
+            raise TypeError(f'attribute {value} is not an instance of {attribute.AbstractAttribute}')
+
+        self._data.append(value)

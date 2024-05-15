@@ -1,26 +1,29 @@
 from core.base import attribute
 
 
-class NameAttribute(attribute.Attribute):
+class StringAttribute(attribute.Attribute):
     """
-    This is a test class for NameAttribute.
+    >>> StringAttribute(name="test_name", value='test_value')
+    {'name': 'test_name', 'value': 'test_value'}
 
-    >>> NameAttribute(value='test')
-    {'name': 'name', 'value': 'test'}
-
-    >>> NameAttribute(value=None)
+    >>> StringAttribute(value=None)
     Traceback (most recent call last):
     ...
-    TypeError: Attribute value must be a string.
+    TypeError: attribute value must be a string.
     """
     def __init__(self, **kwargs):
-        data = {'name': 'name'}
-        data.update(**kwargs)
-
-        super().__init__(**data)
+        super().__init__(**kwargs)
 
     @staticmethod
     def value_validator(key, value):
         if not isinstance(value, str):
-            raise TypeError(f'Attribute {key} must be a string.')
+            raise TypeError(f'attribute {key} must be a string.')
 
+
+class NameAttribute(StringAttribute):
+    """
+    >>> NameAttribute(value='test')
+    {'name': 'name', 'value': 'test'}
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**{'name': 'name', **kwargs})
