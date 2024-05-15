@@ -31,7 +31,7 @@ class Attribute(MutableMapping):
             self.__setitem__(key, value)
 
     def __str__(self):
-        return str({f"{key}: {id(value)}": value for key, value in self._data.items()})
+        return str(f"[{self.__class__.__name__} {id(self)}] {str(self._data)}")
 
     @dict_item_validator_wrapper
     def __setitem__(self, key, value):
@@ -63,9 +63,6 @@ class AttributeCollection(MutableMapping):
         self._data = {}
 
         self.update(**kwargs)
-
-    def __str__(self):
-        return str({f"{key}: {id(value)}": value for key, value in self._data.items()})
 
     def __setitem__(self, key: str, value: Attribute):
         if not isinstance(value, Attribute):
