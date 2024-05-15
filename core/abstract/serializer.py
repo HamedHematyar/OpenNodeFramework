@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 
-from core.base import attribute
+from core.base.attribute import *
 
 
 class AbstractAttributeSerializer(ABC):
@@ -15,11 +15,11 @@ class AbstractAttributeSerializer(ABC):
         deserialize: Converts a serialized attribute format to an attribute object.
     """
     @abstractmethod
-    def serialize(self, attr: attribute.Attribute) -> Dict[str, Any]:
+    def serialize(self, attr: Attribute) -> Dict[str, Any]:
         raise NotImplementedError('must override this method')
 
     @abstractmethod
-    def deserialize(self, attr_data: Dict[str, Any]) -> attribute.Attribute:
+    def deserialize(self, attr_data: Dict[str, Any]) -> Attribute:
         raise NotImplementedError('must override this method')
 
 
@@ -44,9 +44,9 @@ class AbstractAttributeCollectionSerializer(ABC):
 
     """
     @abstractmethod
-    def serialize(self, attr_collection: attribute.AttributeCollection) -> Dict[str, Any]:
+    def serialize(self, attr_collection: AttributeCollection) -> Dict[str, Any]:
         raise NotImplementedError('must override this method')
 
     @abstractmethod
-    def deserialize(self, attr_data: Dict[str, Any]) -> attribute.AttributeCollection:
+    def deserialize(self, attr_data: Dict[str, Any]) -> AttributeCollection:
         raise NotImplementedError('must override this method')

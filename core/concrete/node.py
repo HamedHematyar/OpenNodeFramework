@@ -1,11 +1,6 @@
-from core.base import node
-from core.concrete import attribute
+from core.base.node import *
 
 
-class NullNode(node.Node):
+class NullNode(Node):
     def __init__(self):
         super().__init__()
-
-    def initialize_attributes(self):
-        self.attributes.append(attribute.NameAttribute())
-

@@ -1,8 +1,8 @@
-from core.concrete import node
-from core.concrete import attribute
+from core.concrete.node import *
+from core.concrete.attribute import *
 
-Nodes = {cls.__name__: cls for cls in [node.NullNode,
+Nodes = {cls.__name__: cls for cls in [NullNode,
                                        ]}
 
-Attributes = {cls.__name__: cls for cls in [attribute.StringAttribute,
+Attributes = {cls.__name__: cls for cls in [StringAttribute,
                                             ]}

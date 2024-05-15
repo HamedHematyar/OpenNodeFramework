@@ -1,5 +1,4 @@
 from core.registry import *
-from core.base.attribute import *
 from core.abstract.serializer import *
 
 

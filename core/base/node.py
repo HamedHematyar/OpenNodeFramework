@@ -1,5 +1,5 @@
 from core.abstract import node
-from core.base import attribute
+from core.base.attribute import *
 
 
 class Node(node.AbstractNode):
@@ -7,4 +7,4 @@ class Node(node.AbstractNode):
         """
         Implement the base class of AbstractNode.
         """
-        self.attributes: attribute.AttributeCollection = attribute.AttributeCollection()
+        self.attributes: AttributeCollection = AttributeCollection()

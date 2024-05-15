@@ -1,7 +1,7 @@
-from core.base import attribute
+from core.base.attribute import *
 
 
-class StringAttribute(attribute.Attribute):
+class StringAttribute(Attribute):
     """
     >>> StringAttribute(name="test_name", value='test_value')
     {'name': 'test_name', 'value': 'test_value'}
