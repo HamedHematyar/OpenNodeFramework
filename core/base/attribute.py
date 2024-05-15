@@ -1,3 +1,4 @@
+import typing
 from collections.abc import MutableMapping
 
 
@@ -29,6 +30,9 @@ class Attribute(MutableMapping):
         for key, value in kwargs.items():
             self.__setitem__(key, value)
 
+    def __str__(self):
+        return str({f"{key}: {id(value)}": value for key, value in self._data.items()})
+
     @dict_item_validator_wrapper
     def __setitem__(self, key, value):
         self._data[key] = value
@@ -58,10 +62,12 @@ class AttributeCollection(MutableMapping):
     def __init__(self, **kwargs):
         self._data = {}
 
-        for key, value in kwargs.items():
-            self.__setitem__(key, value)
+        self.update(**kwargs)
 
-    def __setitem__(self, key, value):
+    def __str__(self):
+        return str({f"{key}: {id(value)}": value for key, value in self._data.items()})
+
+    def __setitem__(self, key: str, value: Attribute):
         if not isinstance(value, Attribute):
             raise TypeError(f'attribute {value} is not an instance of {Attribute}')
 
@@ -81,3 +87,14 @@ class AttributeCollection(MutableMapping):
 
     def __repr__(self):
         return repr(self._data)
+
+    def update(self, **kwargs):
+        for key, value in kwargs.items():
+            self.__setitem__(key, value)
+
+    def update_from_attribute(self, attribute: Attribute):
+        self.update(**{attribute['name']: attribute})
+
+    def update_from_attributes(self, attributes: typing.List[Attribute]):
+        for attr in attributes:
+            self.update_from_attribute(attr)
