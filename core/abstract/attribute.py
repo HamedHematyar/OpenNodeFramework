@@ -1,47 +1,25 @@
-from abc import ABC, abstractmethod
-from typing import Dict, Any
+from abc import ABC
 
 
 class AbstractAttribute(ABC):
     """
-    An abstract class representing an attribute.
+
+    The `AbstractAttribute` class is an abstract base class that represents an attribute. This class is meant to be
+    inherited by concrete attribute classes.
+
+    Usage: The `AbstractAttribute` class is not meant to be instantiated directly. It provides a blueprint for
+    attribute classes that need to implement certain methods.
+
     """
-
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """
-        Property that should return the name of the attribute.
-        """
-        raise NotImplementedError('must override this method')
-
-    @property
-    @abstractmethod
-    def value(self) -> Any:
-        """
-        Property that should return the value of the attribute.
-        """
-        raise NotImplementedError('must override this method')
 
 
 class AbstractAttributeCollection(ABC):
     """
-    An abstract class representing a manager for a list of attribute.
+
+    AbstractAttributeCollection
+
+    This class is an abstract base class for attribute collections.
+    It defines the common methods and properties for attribute management.
+
     """
 
-    @abstractmethod
-    def serialize(self) -> Dict[str, Any]:
-        """
-        Method that should return a dictionary representation of the attribute managed by this instance.
-        """
-        raise NotImplementedError('must override this method')
-
-    @abstractmethod
-    def deserialize(self, attributes_data: Dict[str, Any]) -> None:
-        """
-        Method that should parse a dictionary representation of attribute and update this instance's attribute
-        accordingly.
-
-        :param attributes_data: A dictionary of attribute data, typically coming from a call to 'serialize'.
-        """
-        raise NotImplementedError('must override this method')
