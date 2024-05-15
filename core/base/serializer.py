@@ -1,47 +1,36 @@
-from typing import Dict, Any
-
-from core import registry
-from core.abstract import attribute
-from core.abstract import serializer
+from core.registry import *
+from core.base.attribute import *
+from core.abstract.serializer import *
 
 
-class AttributeSerializer(serializer.AbstractAttributeSerializer):
+class AttributeSerializer(AbstractAttributeSerializer):
 
-    def serialize(self, attr: attribute.AbstractAttribute) -> Dict[str, Any]:
-        """
-        Test the serialize method with a sample attribute object
-        >>> from core.concrete import attribute
-        >>> attr_instance = attribute.NameAttribute(value='test')
+    def serialize(self, attr: Attribute) -> Dict[str, Any]:
+        return {"type": attr.__class__.__name__, **attr}
 
-        >>> serializer_instance = AttributeSerializer()
-        >>> serializer_instance.serialize(attr_instance)
-        {'type': 'NameAttribute', 'name': 'name', 'value': 'test'}
-        """
+    def deserialize(self, attr_data: Dict[str, Any]) -> Attribute:
+        return Attributes[attr_data.pop('type')](**attr_data)
 
-        data = {"type": attr.__class__.__name__}
-        data.update(dict(attr))
+
+class AttributeCollectionSerializer(AbstractAttributeCollectionSerializer):
+    def serialize(self, collection_instance: AttributeCollection) -> Dict[str, Any]:
+        data = {}
+        for key, attr in collection_instance.items():
+            serialized_attr = AttributeSerializer().serialize(attr)
+            data.update({key: serialized_attr})
 
         return data
 
-    def deserialize(self, attr_data: Dict[str, Any]) -> attribute.AbstractAttribute:
-        """
-        Test the deserialize method with a sample attribute dict
+    def deserialize(self, collection_data: Dict[str, Any]) -> AttributeCollection:
 
-        >>> data = {'type': 'NameAttribute', 'name': 'name', 'value': 'test'}
-        >>> serializer_instance = AttributeSerializer()
-        >>> attr_instance = serializer_instance.deserialize(data)
-        >>> isinstance(attr_instance, attribute.AbstractAttribute)
-        True
-        """
-        attr_type = attr_data.pop('type')
-        attr = registry.Attributes[attr_type](**attr_data)
+        collection = AttributeCollection()
+        for key, attribute_data in collection_data.items():
+            attribute_serializer = AttributeSerializer()
+            deserialized_attr = attribute_serializer.deserialize(attribute_data)
 
-        return attr
+            collection.update_from_attribute(deserialized_attr)
+
+        return collection
 
 
-class AbstractAttributeCollectionSerializer(serializer.AbstractAttributeCollectionSerializer):
-    def serialize(self, attr_collection: attribute.AbstractAttributeCollection) -> Dict[str, Any]:
-        pass
 
-    def deserialize(self, attr_data: Dict[str, Any]) -> attribute.AbstractAttributeCollection:
-        pass
