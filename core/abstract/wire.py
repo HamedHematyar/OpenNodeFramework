@@ -14,7 +14,7 @@ class AbstractWire(ABC):
         """This should return the source node of the plug."""
 
     @abstractmethod
-    def get_valid_source_types(self) -> typing.List [typing.Any]:
+    def get_valid_source_types(self) -> typing.List[typing.Any]:
         """This should return a list of valid source attribute types."""
 
     @abstractmethod
