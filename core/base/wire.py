@@ -11,12 +11,12 @@ class Wire(AbstractWire):
     def get_source(self) -> Attribute:
         return self._source_attribute
 
-    def get_valid_source_types(self) -> typing.List[typing.Any]:
+    def get_valid_source_types(self) -> typing.List[Attribute]:
         return Attributes
 
     def get_destination(self) -> Attribute:
         return self._destination_attribute
 
-    def get_valid_destination_types(self) -> typing.List[typing.Any]:
+    def get_valid_destination_types(self) -> typing.List[Attribute]:
         return Attributes
 
