@@ -14,10 +14,11 @@ class StringAttribute(Attribute):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    @staticmethod
-    def value_validator(key, value):
+    def set_value(self, value) -> bool:
         if not isinstance(value, str):
-            raise TypeError(f'attribute {key} must be a string.')
+            raise TypeError(f'attribute value must be a string.')
+
+        return super().set_value(value)
 
 
 class NameAttribute(StringAttribute):

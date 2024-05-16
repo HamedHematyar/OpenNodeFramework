@@ -20,7 +20,8 @@ if __name__ == '__main__':
     print(attr_02)
 
     attr_collection = AttributeCollection()
-    attr_collection.update_from_attributes([attr_01, attr_02])
+    attr_collection.add(attr_01)
+    attr_collection.add(attr_02)
 
     print(attr_collection)
 

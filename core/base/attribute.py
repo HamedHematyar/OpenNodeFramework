@@ -1,6 +1,8 @@
 import typing
 from collections.abc import MutableMapping
 
+from core.abstract.attribute import *
+
 
 def dict_item_validator_wrapper(func):
     """
@@ -19,43 +21,41 @@ def dict_item_validator_wrapper(func):
     return wrapper
 
 
-class Attribute(MutableMapping):
+class Attribute(AbstractAttribute):
     """
-    A concrete attribute class that implements AbstractAttribute and MutableMapping.
+    A concrete attribute class that implements AbstractAttribute.
     """
 
-    def __init__(self, **kwargs):
-        self._data = {}
+    def __init__(self, name, value):
+        self._name: typing.Optional = None
+        self.set_name(name)
 
-        for key, value in kwargs.items():
-            self.__setitem__(key, value)
+        self._value: typing.Optional = None
+        self.set_value(value)
 
     def __str__(self):
-        return str(f"[{self.__class__.__name__} {id(self)}] {str(self._data)}")
-
-    @dict_item_validator_wrapper
-    def __setitem__(self, key, value):
-        self._data[key] = value
-
-    def __getitem__(self, key):
-        return self._data[key]
-
-    def __delitem__(self, key):
-        del self._data[key]
-
-    def __iter__(self):
-        return iter(self._data)
-
-    def __len__(self):
-        return len(self._data)
+        return str(self.get_value())
 
     def __repr__(self):
-        return repr(self._data)
+        return f'{self.get_name()} : {self.get_value()}'
 
-    @staticmethod
-    def name_validator(key, value):
-        if not isinstance(value, str):
-            raise TypeError(f'attribute {key} must be a string.')
+    def set_name(self, name) -> bool:
+        if not isinstance(name, str):
+            raise TypeError(f'attribute name must be a string.')
+
+        self._name = name
+        return True
+
+    def get_name(self):
+        return self._name
+
+    def set_value(self, value) -> bool:
+        self._value = value
+
+        return True
+
+    def get_value(self) -> typing.Any:
+        return self._value
 
 
 class AttributeCollection(MutableMapping):
@@ -89,9 +89,5 @@ class AttributeCollection(MutableMapping):
         for key, value in kwargs.items():
             self.__setitem__(key, value)
 
-    def update_from_attribute(self, attribute: Attribute):
-        self.update(**{attribute['name']: attribute})
-
-    def update_from_attributes(self, attributes: typing.List[Attribute]):
-        for attr in attributes:
-            self.update_from_attribute(attr)
+    def add(self, attribute: Attribute):
+        self.update(**{attribute.get_name(): attribute})
