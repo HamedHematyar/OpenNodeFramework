@@ -1,9 +1,9 @@
 from core.registry import *
 from core.base.attribute import *
-from core.abstract.wire import *
+from core.abstract.connection import *
 
 
-class Wire(AbstractWire):
+class Wire(AbstractConnection):
     def __init__(self):
         self._source_attribute: Attribute or None = None
         self._destination_attribute: Attribute or None = None
