@@ -1,22 +1,20 @@
+import typing
+
 from core.registry import *
 from core.base.attribute import *
 from core.abstract.connection import *
 
 
-class Wire(AbstractConnection):
-    def __init__(self):
-        self._source_attribute: Attribute or None = None
-        self._destination_attribute: Attribute or None = None
+class Connection(AbstractConnection):
+    def __init__(self, source, destination):
+        self._source: typing.Optional[Attribute] = source
+        self._destination: typing.Optional[Attribute] = destination
 
     def get_source(self) -> Attribute:
-        return self._source_attribute
-
-    def get_valid_source_types(self) -> typing.List[Attribute]:
-        return Attributes
+        return self._source
 
     def get_destination(self) -> Attribute:
-        return self._destination_attribute
+        return self._destination
 
-    def get_valid_destination_types(self) -> typing.List[Attribute]:
-        return Attributes
-
+    def get_data(self) -> typing.Any:
+        return self._source.get_value()
