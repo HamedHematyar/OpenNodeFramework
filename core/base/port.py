@@ -1,9 +1,9 @@
 from core.registry import *
 from core.base.node import *
-from core.abstract.plug import *
+from core.abstract.port import *
 
 
-class Wire(AbstractPlug):
+class Wire(AbstractPort):
     def __init__(self):
         self._source_attribute: Attribute or None = None
         self._destination_attribute: Attribute or None = None

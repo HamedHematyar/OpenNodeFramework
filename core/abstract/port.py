@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from core.abstract.node import *
 
 
-class AbstractPlug(ABC):
+class AbstractPort(ABC):
     """
     An abstract class representing a node port.
     """
