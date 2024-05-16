@@ -3,7 +3,7 @@ from core.base.node import *
 from core.abstract.port import *
 
 
-class Wire(AbstractPort):
+class Port(AbstractPort):
     def __init__(self):
         self._source_attribute: Attribute or None = None
         self._destination_attribute: Attribute or None = None
