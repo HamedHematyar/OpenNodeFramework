@@ -5,7 +5,9 @@ from core.abstract.serializer import *
 class AttributeSerializer(AbstractAttributeSerializer):
 
     def serialize(self, attr: Attribute) -> Dict[str, Any]:
-        return {"type": attr.__class__.__name__, **attr}
+        return {'type': attr.__class__.__name__,
+                'name': attr.get_name(),
+                'value': attr.get_value()}
 
     def deserialize(self, attr_data: Dict[str, Any]) -> Attribute:
         return Attributes[attr_data.pop('type')](**attr_data)
@@ -27,7 +29,7 @@ class AttributeCollectionSerializer(AbstractAttributeCollectionSerializer):
             attribute_serializer = AttributeSerializer()
             deserialized_attr = attribute_serializer.deserialize(attribute_data)
 
-            collection.update_from_attribute(deserialized_attr)
+            collection.add(deserialized_attr)
 
         return collection
 
