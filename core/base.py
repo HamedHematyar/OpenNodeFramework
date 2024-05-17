@@ -1,11 +1,14 @@
 import typing as t
+
 from collections.abc import MutableMapping
 
 from core.abstract import (AbstractAttribute,
                            AbstractNode,
                            AbstractPort,
+                           PortType,
                            AbstractAttributeSerializer,
-                           AbstractAttributeCollectionSerializer)
+                           AbstractAttributeCollectionSerializer,
+                           AbstractConnection)
 
 
 class BaseAttribute(AbstractAttribute):
@@ -14,36 +17,36 @@ class BaseAttribute(AbstractAttribute):
     """
 
     def __init__(self, name, value):
-        self._name: t.Optional = None
-        self.set_name(name)
+        self.__name: t.Optional[str] = None
+        self.__value: t.Optional[t.Any] = None
 
-        self._value: t.Optional = None
-        self.set_value(value)
-
-        self._connection: t.Optional = None
+        self.name = name
+        self.value = value
 
     def __str__(self):
-        return str(self.get_value())
+        return str(self.value)
 
     def __repr__(self):
-        return f'{self.get_name()} : {self.get_value()}'
+        return f'{self.name} : {self.value}'
 
-    def set_name(self, name) -> bool:
-        if not isinstance(name, str):
+    @property
+    def name(self):
+        return self.__name
+
+    @name.setter
+    def name(self, value):
+        if not isinstance(value, str):
             raise TypeError(f'attribute name must be a string.')
 
-        self._name = name
-        return True
+        self.__name = value
 
-    def get_name(self):
-        return self._name
+    @property
+    def value(self):
+        return self.__value
 
-    def set_value(self, value) -> bool:
-        self._value = value
-        return True
-
-    def get_value(self) -> t.Any:
-        return self._value
+    @value.setter
+    def value(self, value):
+        self.__value = value
 
 
 class BaseAttributeCollection(MutableMapping):
@@ -78,65 +81,134 @@ class BaseAttributeCollection(MutableMapping):
             self.__setitem__(key, value)
 
     def add(self, attribute: BaseAttribute):
-        self.update(**{attribute.get_name(): attribute})
+        self.update(**{attribute.name: attribute})
 
 
 class BaseNode(AbstractNode):
-    def __init__(self) -> None:
+    def __init__(self):
         """
         Implement the base class of AbstractNode.
         """
         self.attributes: BaseAttributeCollection = BaseAttributeCollection()
-        self.inputs = {}
-        self.outputs = {}
+        self.inputs: t.List[AbstractPort] = []
+        self.outputs: t.List[AbstractPort] = []
+
+    def compute_data(self) -> t.Optional[t.Any]:
+        return
+
+    def compute_output(self, output_port: AbstractPort) -> t.Optional[t.Any]:
+        return getattr(self, f'_compute_{output_port.name}_port')()
 
 
 class BasePort(AbstractPort):
-    def __init__(self, name, node):
-        self._name: t.Optional[str] = name
-        self._node: t.Optional[BaseNode] = node
+    def __init__(self, name: str, port_type: PortType, node: AbstractNode):
+        self.__name: t.Optional[str] = None
+        self.__port_type: t.Optional[PortType] = None
+        self.__node: t.Optional[BaseNode] = None
+        self.__connection: t.Optional[BaseConnection] = None
 
-    def get_name(self) -> str:
-        return self._name
+        self.name = name
+        self.port_type = port_type
+        self.node = node
 
-    def set_name(self, name: str) -> bool:
+    @property
+    def name(self) -> str:
+        return self.__name
+
+    @name.setter
+    def name(self, name: str):
         if not isinstance(name, str):
             raise TypeError(f'port name must be a string.')
 
-        self._name = name
-        return True
+        self.__name = name
 
-    def get_node(self) -> t.Optional[BaseNode]:
-        return self._node
+    @property
+    def port_type(self) -> PortType | None:
+        return self.__port_type
 
-    def set_node(self, node: BaseNode) -> bool:
+    @port_type.setter
+    def port_type(self, port_type: PortType):
+        if not isinstance(port_type, PortType):
+            raise TypeError(f'port type must be a PortType.')
+
+        self.__port_type = port_type
+
+    @property
+    def node(self) -> t.Optional[BaseNode]:
+        return self.__node
+
+    @node.setter
+    def node(self, node: BaseNode):
         if not isinstance(node, BaseNode):
             raise TypeError(f'node must be an instance of {type(BaseNode)}.')
 
-        self._node = node
-        return True
+        self.__node = node
 
-    def get_valid_types(self) -> t.List[t.Type]:
-        return []
+    @property
+    def connection(self) -> t.Optional['BaseConnection']:
+        return self.__connection
+
+    @connection.setter
+    def connection(self, connection):
+        if not isinstance(connection, BaseConnection):
+            raise TypeError(f'connection must be an instance of {BaseConnection}.')
+
+        self.__connection = connection
+
+    def is_connected(self):
+        return bool(self.connection)
+
+
+class BaseConnection(AbstractConnection):
+    def __init__(self, source: BasePort, destination: BasePort):
+        self.__source: t.Optional[BasePort] = None
+        self.__destination: t.Optional[BasePort] = None
+
+        self.source = source
+        self.destination = destination
+
+    @property
+    def source(self) -> BasePort:
+        return self.__source
+
+    @source.setter
+    def source(self, source: BasePort):
+        if not isinstance(source, BasePort):
+            raise TypeError(f'source must be an instance of {BasePort}.')
+
+        self.__source = source
+        self.__source.connection = self
+
+    @property
+    def destination(self) -> BasePort:
+        return self.__destination
+
+    @destination.setter
+    def destination(self, destination: BasePort):
+        if not isinstance(destination, BasePort):
+            raise TypeError(f'destination must be an instance of {BasePort}.')
+
+        self.__destination = destination
+        self.__destination.connection = self
 
 
 class BaseAttributeSerializer(AbstractAttributeSerializer):
 
     def serialize(self, attr: BaseAttribute) -> t.Dict[str, t.Any]:
         return {'type': attr.__class__.__name__,
-                'name': attr.get_name(),
-                'value': attr.get_value()}
+                'name': attr.name,
+                'value': attr.value}
 
     def deserialize(self, attr_data: t.Dict[str, t.Any]) -> BaseAttribute:
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
 
 
 class BaseAttributeCollectionSerializer(AbstractAttributeCollectionSerializer):
     def serialize(self, collection_instance: BaseAttributeCollection) -> t.Dict[str, t.Any]:
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
 
     def deserialize(self, collection_data: t.Dict[str, t.Any]) -> BaseAttributeCollection:
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
 
 
 
