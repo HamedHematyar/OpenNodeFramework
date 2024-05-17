@@ -11,6 +11,10 @@ class AbstractAttribute(ABC):
     An abstract class representing a node attribute.
     """
 
+    @abstractmethod
+    def __init__(self, name: str, value: t.Any):
+        """This initializes the attribute."""
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -82,6 +86,10 @@ class AbstractPort(ABC):
     An abstract class representing a node port.
     """
 
+    @abstractmethod
+    def __init__(self, name: str, port_type: PortType, node: 'AbstractNode'):
+        """This initializes the port."""
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -113,6 +121,11 @@ class AbstractPort(ABC):
 
 
 class AbstractConnection(ABC):
+
+    @abstractmethod
+    def __init__(self, source: AbstractPort, destination: AbstractNode):
+        """This should initialize the connection."""
+
     @property
     @abstractmethod
     def source(self) -> AbstractPort:
