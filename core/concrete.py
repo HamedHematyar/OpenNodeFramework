@@ -1,44 +1,79 @@
 import typing as t
 
+from core.enums import PortType
 from core.base import (BaseNode,
                        BaseAttribute,
                        BasePort,
                        BaseAttributeSerializer,
                        BaseAttributeCollection,
-                       BaseAttributeCollectionSerializer)
+                       BaseAttributeCollectionSerializer,
+                       BaseConnection)
 
 
 class StringAttribute(BaseAttribute):
     def __init__(self, name, value):
         super().__init__(name, value)
 
-    def set_value(self, value) -> bool:
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, value):
         if not isinstance(value, str):
             raise TypeError(f'attribute value must be a str.')
 
-        return super().set_value(value)
+        self.__value = value
 
 
 class IntAttribute(BaseAttribute):
     def __init__(self, name, value):
         super().__init__(name, value)
 
-    def set_value(self, value) -> bool:
-        if not isinstance(value, int):
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, value):
+        if not isinstance(value, (int, float)):
             raise TypeError(f'attribute value must be a int.')
 
-        return super().set_value(value)
+        self.__value = value
 
 
 class ListAttribute(BaseAttribute):
     def __init__(self, name, value):
         super().__init__(name, value)
 
-    def set_value(self, value) -> bool:
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, value):
         if not isinstance(value, list):
             raise TypeError(f'attribute value must be a list.')
 
-        return super().set_value(value)
+        self.__value = value
+
+
+class TypeAttribute(BaseAttribute):
+    def __init__(self, name, value):
+        super().__init__(name, value)
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, value):
+        if value not in [str,
+                         int,
+                         list]:
+            raise TypeError(f'attribute value is not valid.')
+
+        self.__value = value
 
 
 class NameAttribute(StringAttribute):
@@ -47,7 +82,7 @@ class NameAttribute(StringAttribute):
     {'name': 'name', 'value': 'test'}
     """
 
-    def __init__(self, name, value):
+    def __init__(self, value):
         super().__init__('name', value)
 
 
@@ -60,19 +95,19 @@ class AttributeSerializer(BaseAttributeSerializer):
 
     def serialize(self, attr: BaseAttribute) -> t.Dict[str, t.Any]:
         return {'type': attr.__class__.__name__,
-                'name': attr.get_name(),
-                'value': attr.get_value()}
+                'name': attr.name,
+                'value': attr.value}
 
     def deserialize(self, attr_data: t.Dict[str, t.Any]) -> BaseAttribute:
         subclass_mapping = {subclass.__name__: subclass for subclass in BaseAttribute.__subclasses__()}
-        return subclass_mapping[attr_data.pop('type')](**attr_data)
+        return subclass_mapping[attr_data.pop('type')](*attr_data.values())
 
 
 class AttributeCollectionSerializer(BaseAttributeCollectionSerializer):
     def serialize(self, collection_instance: AttributeCollection) -> t.Dict[str, t.Any]:
         data = {}
         for key, attr in collection_instance.items():
-            serialized_attr = BaseAttributeSerializer().serialize(attr)
+            serialized_attr = AttributeSerializer().serialize(attr)
             data.update({key: serialized_attr})
 
         return data
@@ -80,7 +115,7 @@ class AttributeCollectionSerializer(BaseAttributeCollectionSerializer):
     def deserialize(self, collection_data: t.Dict[str, t.Any]) -> AttributeCollection:
         collection = AttributeCollection()
         for key, attribute_data in collection_data.items():
-            attribute_serializer = BaseAttributeSerializer()
+            attribute_serializer = AttributeSerializer()
             deserialized_attr = attribute_serializer.deserialize(attribute_data)
 
             collection.add(deserialized_attr)
@@ -97,77 +132,54 @@ class ParameterNode(BaseNode):
     def __init__(self):
         super().__init__()
 
-        self.attributes.add(ListAttribute('type', [int, float]))
+        self.attributes.add(TypeAttribute('type', int))
         self.attributes.add(IntAttribute('value', int()))
 
-        self.output_port = OutPort('output', self)
-
         self.inputs = []
-        self.outputs = [self.output_port,
+        self.outputs = [OutPort('output', PortType.Out, self),
                         ]
 
-    def _compute_output_port(self):
-        value_attr: BaseAttribute = self.attributes['value']
-        return value_attr.get_value()
+    def compute_data(self) -> t.Optional[t.Any]:
+        return self.attributes['value'].get_value()
 
-    def compute(self, output):
-        return getattr(self, f'_compute_{output.get_name()}_port')()
+    def _compute_output_port(self):
+        return self.compute_data()
 
 
 class SumNode(BaseNode):
     def __init__(self):
         super().__init__()
 
-        self.attributes.add(StringAttribute('type', [int, float]))
-        self.attributes.add(StringAttribute('value', int()))
+        self.inputs = [InPort('left', PortType.In, self),
+                       InPort('right', PortType.In, self)]
 
-        self.first_entry_port = InPort('first_entry', None)
-        self.second_entry_port = InPort('second_entry', None)
-
-        self.output_port = OutPort('output', self)
-
-        self.inputs = [self.first_entry_port,
-                       self.second_entry_port]
-
-        self.outputs = [self.output_port,
+        self.outputs = [OutPort('output', PortType.Out, self),
                         ]
 
+    def compute_data(self) -> t.Optional[t.Any]:
+        data = 0
+        if self.inputs[0].is_connected():
+            data += self.inputs[0].connection.source.node.compute_output(self.inputs[0].connection.source)
+
+        if self.inputs[1].is_connected():
+            data += self.inputs[1].connection.source.node.compute_output(self.inputs[1].connection.source)
+
+        return data
+
     def _compute_output_port(self):
-        first_entry_source = self.first_entry_port.get_source()
-        if not first_entry_source:
-            return
-
-        second_entry_source = self.second_entry_port.get_source()
-        if not second_entry_source:
-            return
-
-        return first_entry_source.compute(self.first_entry_port) + second_entry_source.compute(self.second_entry_port)
-
-    def compute(self, output):
-        return getattr(self, f'_compute_{output.get_name()}_port')()
+        return self.compute_data()
 
 
 class InPort(BasePort):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._source = None
-
-    def get_source(self):
-        return self._source
-
-    def set_source(self, source):
-        self._source = source
+    def __init__(self, name, port_type, node):
+        super().__init__(name, port_type, node)
 
 
 class OutPort(BasePort):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, name, port_type, node):
+        super().__init__(name, port_type, node)
 
-        self._destination = None
 
-    def get_destination(self):
-        self._destination = self._destination
-
-    def set_destination(self, destination):
-        self._destination = destination
+class Connection(BaseConnection):
+    def __init__(self, source, destination):
+        super().__init__(source, destination)
