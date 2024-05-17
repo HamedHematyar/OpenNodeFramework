@@ -140,7 +140,7 @@ class ParameterNode(BaseNode):
                         ]
 
     def compute_data(self) -> t.Optional[t.Any]:
-        return self.attributes['value'].get_value()
+        return self.attributes['value'].value
 
     def _compute_output_port(self):
         return self.compute_data()

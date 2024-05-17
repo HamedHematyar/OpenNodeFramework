@@ -1,8 +1,8 @@
 from core.concrete import *
-from core.base import *
+
 
 if __name__ == '__main__':
-    attr_01 = StringAttribute(name="name", value="node_name")
+    attr_01 = StringAttribute("name", "node_name")
     print(attr_01)
 
     attr_01_serializer = AttributeSerializer()
@@ -19,13 +19,13 @@ if __name__ == '__main__':
     attr_02 = StringAttribute(name="path", value="node/path")
     print(attr_02)
 
-    attr_collection = BaseAttributeCollection()
+    attr_collection = AttributeCollection()
     attr_collection.add(attr_01)
     attr_collection.add(attr_02)
 
     print(attr_collection)
 
-    collection_serializer = BaseAttributeCollectionSerializer()
+    collection_serializer = AttributeCollectionSerializer()
     print(collection_serializer)
 
     serialized_collection = collection_serializer.serialize(attr_collection)
