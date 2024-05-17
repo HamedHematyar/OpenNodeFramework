@@ -1,5 +1,5 @@
-from core.concrete.attribute import *
-from core.base.serializer import *
+from core.concrete import *
+from core.base import *
 
 if __name__ == '__main__':
     attr_01 = StringAttribute(name="name", value="node_name")
@@ -19,13 +19,13 @@ if __name__ == '__main__':
     attr_02 = StringAttribute(name="path", value="node/path")
     print(attr_02)
 
-    attr_collection = AttributeCollection()
+    attr_collection = BaseAttributeCollection()
     attr_collection.add(attr_01)
     attr_collection.add(attr_02)
 
     print(attr_collection)
 
-    collection_serializer = AttributeCollectionSerializer()
+    collection_serializer = BaseAttributeCollectionSerializer()
     print(collection_serializer)
 
     serialized_collection = collection_serializer.serialize(attr_collection)
@@ -35,6 +35,5 @@ if __name__ == '__main__':
     print(deserialized_collection)
 
     assert attr_collection is not deserialized_collection
-
 
 
