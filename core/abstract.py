@@ -1,58 +1,66 @@
 import typing as t
+
 from abc import ABC, abstractmethod
 from collections.abc import MutableMapping
+
+from core.enums import PortType
 
 
 class AbstractAttribute(ABC):
     """
     An abstract class representing a node attribute.
     """
-    @abstractmethod
-    def set_name(self, name: str) -> bool:
-        """This method set the name of the attribute """
 
+    @property
     @abstractmethod
-    def get_name(self) -> str:
-        """This method return the name of the attribute"""
+    def name(self) -> str:
+        """This returns the name of the attribute."""
 
+    @name.setter
     @abstractmethod
-    def set_value(self, value: t.Any) -> bool:
-        """This method set the value of the attribute """
+    def name(self, name: str):
+        """This sets the name of the attribute."""
 
+    @property
     @abstractmethod
-    def get_value(self) -> t.Any:
-        """This method return the value of the attribute"""
+    def value(self) -> t.Any:
+        """This returns the value of the attribute."""
+
+    @value.setter
+    @abstractmethod
+    def value(self, value: t.Any):
+        """This sets the value of the attribute."""
 
 
 class AttributeCollection(MutableMapping):
 
     @abstractmethod
     def __setitem__(self, key: str, value: AbstractAttribute):
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
 
     @abstractmethod
     def __getitem__(self, key):
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
 
     @abstractmethod
     def __delitem__(self, key):
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
 
     @abstractmethod
     def __iter__(self):
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
 
     @abstractmethod
     def __len__(self):
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
 
     @abstractmethod
     def __repr__(self):
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
 
     @abstractmethod
     def update(self, **kwargs):
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
 
 
 class AbstractNode(ABC):
@@ -60,30 +68,69 @@ class AbstractNode(ABC):
     An abstract class representing a node with managed attribute.
     """
 
+    @abstractmethod
+    def compute_data(self) -> t.Optional[t.Any]:
+        """This method computes the node data"""
+
+    @abstractmethod
+    def compute_output(self, output_port: 'AbstractPort') -> t.Optional[t.Any]:
+        """This method computes the node output"""
+
 
 class AbstractPort(ABC):
     """
     An abstract class representing a node port.
     """
 
+    @property
     @abstractmethod
-    def get_name(self) -> str:
+    def name(self) -> str:
         """This should return the name of the port."""
-
-    def set_name(self, name: str) -> bool:
+    @name.setter
+    @abstractmethod
+    def name(self, name: str):
         """This should set the name of the port."""
 
+    @property
     @abstractmethod
-    def get_node(self) -> AbstractNode:
+    def port_type(self) -> t.Optional[PortType]:
+        """This should return the type of the port."""
+
+    @port_type.setter
+    @abstractmethod
+    def port_type(self, _type: PortType):
+        """This should set the type of the port."""
+
+    @property
+    @abstractmethod
+    def node(self) -> t.Optional[AbstractNode]:
         """This should return the node of the port."""
 
+    @node.setter
     @abstractmethod
-    def set_node(self, node: AbstractNode) -> bool:
+    def node(self, node: AbstractNode):
         """This should set the node of the port."""
 
+
+class AbstractConnection(ABC):
+    @property
     @abstractmethod
-    def get_valid_types(self) -> t.List[AbstractNode]:
-        """This should return a list of valid connection types."""
+    def source(self) -> AbstractPort:
+        """This should return the source port of the connection."""
+    @source.setter
+    @abstractmethod
+    def source(self, name: AbstractPort):
+        """This should set the source port of the connection."""
+
+    @property
+    @abstractmethod
+    def destination(self) -> AbstractPort:
+        """This should return the destination port of the connection."""
+
+    @destination.setter
+    @abstractmethod
+    def destination(self, name: AbstractPort):
+        """This should set the destination port of the connection."""
 
 
 class AbstractAttributeSerializer(ABC):
@@ -98,11 +145,11 @@ class AbstractAttributeSerializer(ABC):
     """
     @abstractmethod
     def serialize(self, attr: AbstractAttribute) -> t.Dict[str, t.Any]:
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
 
     @abstractmethod
     def deserialize(self, attr_data: t.Dict[str, t.Any]) -> AbstractAttribute:
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
 
 
 class AbstractAttributeCollectionSerializer(ABC):
@@ -127,8 +174,8 @@ class AbstractAttributeCollectionSerializer(ABC):
     """
     @abstractmethod
     def serialize(self, attr_collection: AttributeCollection) -> t.Dict[str, t.Any]:
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
 
     @abstractmethod
     def deserialize(self, attr_data: t.Dict[str, t.Any]) -> AttributeCollection:
-        raise NotImplementedError('must override this method')
+        raise NotImplementedError('this method is not implemented in subclass.')
