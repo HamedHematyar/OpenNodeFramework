@@ -155,6 +155,9 @@ class BasePort(AbstractPort):
 
         self.__connection = connection
 
+    def disconnect(self):
+        self.__connection = None
+
     def is_connected(self):
         return bool(self.connection)
 
@@ -168,28 +171,40 @@ class BaseConnection(AbstractConnection):
         self.destination = destination
 
     @property
-    def source(self) -> BasePort:
+    def source(self) -> t.Optional[BasePort]:
         return self.__source
 
     @source.setter
-    def source(self, source: BasePort):
-        if not isinstance(source, BasePort):
+    def source(self, source: t.Optional[BasePort]):
+        if not isinstance(source, (type(None), BasePort)):
             raise TypeError(f'source must be an instance of {BasePort}.')
 
         self.__source = source
         self.__source.connection = self
 
     @property
-    def destination(self) -> BasePort:
+    def destination(self) -> t.Optional[BasePort]:
         return self.__destination
 
     @destination.setter
-    def destination(self, destination: BasePort):
-        if not isinstance(destination, BasePort):
+    def destination(self, destination: t.Optional[BasePort]):
+        if not isinstance(destination, (type(None), BasePort)):
             raise TypeError(f'destination must be an instance of {BasePort}.')
 
         self.__destination = destination
         self.__destination.connection = self
+
+    def __del__(self):
+        if self.source:
+            self.source.disconnect()
+
+        if self.destination:
+            self.destination.disconnect()
+
+        self.__destination = None
+        self.__source = None
+
+        super().__del__()
 
 
 class BaseAttributeSerializer(AbstractAttributeSerializer):

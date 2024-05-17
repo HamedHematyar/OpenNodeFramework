@@ -25,3 +25,9 @@ if __name__ == '__main__':
     param02_connection = Connection(parameter_02.outputs[0], sum_node.inputs[1])
 
     print(sum_node.compute_output(sum_node.outputs[0]))
+
+    param01_connection.__del__()
+    print(sum_node.compute_output(sum_node.outputs[0]))
+
+    param02_connection.__del__()
+    print(sum_node.compute_output(sum_node.outputs[0]))

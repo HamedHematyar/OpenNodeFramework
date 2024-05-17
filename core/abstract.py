@@ -145,6 +145,10 @@ class AbstractConnection(ABC):
     def destination(self, name: AbstractPort):
         """This should set the destination port of the connection."""
 
+    @abstractmethod
+    def __del__(self):
+        """This should delete the connection and links to all connected ports."""
+
 
 class AbstractAttributeSerializer(ABC):
     """
