@@ -7,7 +7,10 @@ from core.base import (BaseNode,
                        BaseAttributeSerializer,
                        BaseAttributeCollection,
                        BaseAttributeCollectionSerializer,
-                       BaseConnection)
+                       BaseConnection,
+                       BaseGraph,
+                       BaseGraphSerializer,
+                       BaseNodeSerializer)
 
 
 class StringAttribute(BaseAttribute):
@@ -123,12 +126,19 @@ class AttributeCollectionSerializer(BaseAttributeCollectionSerializer):
         return collection
 
 
-class NullNode(BaseNode):
+class Node(BaseNode):
+    def __init__(self):
+        super().__init__()
+
+        self.attributes = AttributeCollection()
+
+
+class NullNode(Node):
     def __init__(self):
         super().__init__()
 
 
-class ParameterNode(BaseNode):
+class ParameterNode(Node):
     def __init__(self):
         super().__init__()
 
@@ -183,3 +193,24 @@ class OutPort(BasePort):
 class Connection(BaseConnection):
     def __init__(self, source, destination):
         super().__init__(source, destination)
+
+
+class Graph(BaseGraph):
+    def __init__(self, name: str):
+        super().__init__(name)
+
+
+class GraphSerializer(BaseGraphSerializer):
+    def serialize(self, graph: BaseGraph) -> t.Dict[str, t.Any]:
+        return super().serialize(graph)
+
+    def deserialize(self, graph_data: t.Dict[str, t.Any]) -> BaseGraph:
+        return super().deserialize(graph_data)
+
+
+class NodeSerializer(BaseNodeSerializer):
+    def serialize(self, node: BaseNode) -> t.Dict[str, t.Any]:
+        return super().serialize(node)
+
+    def deserialize(self, node_data: t.Dict[str, t.Any]) -> BaseNode:
+        return super().deserialize(node_data)

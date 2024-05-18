@@ -81,6 +81,19 @@ class AbstractNode(ABC):
         """This method computes the node output"""
 
 
+class AbstractNodeSerializer(ABC):
+    """
+    This abstract class represents a node serializer.
+    """
+    @abstractmethod
+    def serialize(self, attr: AbstractNode) -> t.Dict[str, t.Any]:
+        raise NotImplementedError('this method is not implemented in subclass.')
+
+    @abstractmethod
+    def deserialize(self, attr_data: t.Dict[str, t.Any]) -> AbstractNode:
+        raise NotImplementedError('this method is not implemented in subclass.')
+
+
 class AbstractPort(ABC):
     """
     An abstract class representing a node port.
@@ -196,3 +209,35 @@ class AbstractAttributeCollectionSerializer(ABC):
     @abstractmethod
     def deserialize(self, attr_data: t.Dict[str, t.Any]) -> AttributeCollection:
         raise NotImplementedError('this method is not implemented in subclass.')
+
+
+class AbstractGraph(ABC):
+    """This class defines the interface for a node graph."""
+
+    @abstractmethod
+    def __init__(self, name: str):
+        """This initializes the graph."""
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """This returns the name of the graph."""
+
+    @name.setter
+    @abstractmethod
+    def name(self, name: str):
+        """This sets the name of the graph."""
+
+
+class AbstractGraphSerializer(ABC):
+    """This class defines the interface for a node graph serializer which helps with serializing and deserializing
+    node graphs."""
+
+    @abstractmethod
+    def serialize(self, attr: AbstractGraph) -> t.Dict[str, t.Any]:
+        raise NotImplementedError('this method is not implemented in subclass.')
+
+    @abstractmethod
+    def deserialize(self, attr_data: t.Dict[str, t.Any]) -> AbstractGraph:
+        raise NotImplementedError('this method is not implemented in subclass.')
+

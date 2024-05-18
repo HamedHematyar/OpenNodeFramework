@@ -8,7 +8,10 @@ from core.abstract import (AbstractAttribute,
                            PortType,
                            AbstractAttributeSerializer,
                            AbstractAttributeCollectionSerializer,
-                           AbstractConnection)
+                           AbstractConnection,
+                           AbstractGraph,
+                           AbstractGraphSerializer,
+                           AbstractNodeSerializer)
 
 
 class BaseAttribute(AbstractAttribute):
@@ -22,12 +25,6 @@ class BaseAttribute(AbstractAttribute):
 
         self.name = name
         self.value = value
-
-    def __str__(self):
-        return str(self.value)
-
-    def __repr__(self):
-        return f'{self.name} : {self.value}'
 
     @property
     def name(self):
@@ -226,5 +223,57 @@ class BaseAttributeCollectionSerializer(AbstractAttributeCollectionSerializer):
         raise NotImplementedError('this method is not implemented in subclass.')
 
 
+class BaseGraph(AbstractGraph):
+    def __init__(self, name: str):
+        self.__name: t.Optional[str] = None
+
+        self.name = name
+        self._nodes: t.List[BaseNode] = []
+
+    @property
+    def name(self):
+        return self.__name
+
+    @name.setter
+    def name(self, value: t.Optional[str]):
+        if not isinstance(value, str):
+            raise TypeError(f'attribute name must be a string.')
+
+        self.__name = value
+
+    def clear(self):
+        self._nodes.clear()
+
+    def create_node(self, node_class: t.Type[BaseNode]):
+        self._nodes.append(node_class())
+
+    def remove_node(self, node: BaseNode):
+        self._nodes.remove(node)
+
+
+class BaseGraphSerializer(AbstractGraphSerializer):
+    def serialize(self, graph_instance: BaseGraph) -> t.Dict[str, t.Any]:
+        pass
+
+    def deserialize(self, graph_data: t.Dict[str, t.Any]) -> BaseGraph:
+        pass
+
+
+class BaseNodeSerializer(AbstractNodeSerializer):
+    def serialize(self, node_instance: BaseNode) -> t.Dict[str, t.Any]:
+
+        attributes = []
+        attribute_serializer = BaseAttributeSerializer()
+
+        for name, attr in node_instance.attributes.items():
+            attributes.append(attribute_serializer.serialize(attr))
+
+        return {'type': node_instance.__class__.__name__,
+                'attributes': attributes,
+                'inputs': {},
+                'outputs': {}}
+
+    def deserialize(self, node_data: t.Dict[str, t.Any]) -> BaseNode:
+        pass
 
 

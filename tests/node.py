@@ -24,6 +24,11 @@ if __name__ == '__main__':
     param01_connection = Connection(parameter_01.outputs[0], sum_node.inputs[0])
     param02_connection = Connection(parameter_02.outputs[0], sum_node.inputs[1])
 
+    node_serializer = NodeSerializer()
+    serialized_node = node_serializer.serialize(parameter_01)
+    deserialized_node = node_serializer.deserialize(serialized_node)
+    assert sum_node is not deserialized_node
+
     print(sum_node.compute_output(sum_node.outputs[0]))
 
     param01_connection.__del__()
@@ -31,3 +36,4 @@ if __name__ == '__main__':
 
     param02_connection.__del__()
     print(sum_node.compute_output(sum_node.outputs[0]))
+
