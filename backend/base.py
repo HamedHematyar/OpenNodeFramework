@@ -2,16 +2,16 @@ import typing as t
 
 from collections.abc import MutableMapping
 
-from core.abstract import (AbstractAttribute,
-                           AbstractNode,
-                           AbstractPort,
-                           PortType,
-                           AbstractAttributeSerializer,
-                           AbstractAttributeCollectionSerializer,
-                           AbstractConnection,
-                           AbstractGraph,
-                           AbstractGraphSerializer,
-                           AbstractNodeSerializer)
+from backend.abstract import (AbstractAttribute,
+                              AbstractNode,
+                              AbstractPort,
+                              PortType,
+                              AbstractAttributeSerializer,
+                              AbstractAttributeCollectionSerializer,
+                              AbstractConnection,
+                              AbstractGraph,
+                              AbstractGraphSerializer,
+                              AbstractNodeSerializer)
 
 
 class BaseAttribute(AbstractAttribute):

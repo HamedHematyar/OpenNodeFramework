@@ -3,7 +3,7 @@ import typing as t
 from abc import ABC, abstractmethod
 from collections.abc import MutableMapping
 
-from core.enums import PortType
+from backend.enums import PortType
 
 
 class AbstractAttribute(ABC):

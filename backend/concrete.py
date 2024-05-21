@@ -1,16 +1,16 @@
 import typing as t
 
-from core.enums import PortType
-from core.base import (BaseNode,
-                       BaseAttribute,
-                       BasePort,
-                       BaseAttributeSerializer,
-                       BaseAttributeCollection,
-                       BaseAttributeCollectionSerializer,
-                       BaseConnection,
-                       BaseGraph,
-                       BaseGraphSerializer,
-                       BaseNodeSerializer)
+from backend.enums import PortType
+from backend.base import (BaseNode,
+                          BaseAttribute,
+                          BasePort,
+                          BaseAttributeSerializer,
+                          BaseAttributeCollection,
+                          BaseAttributeCollectionSerializer,
+                          BaseConnection,
+                          BaseGraph,
+                          BaseGraphSerializer,
+                          BaseNodeSerializer)
 
 
 class StringAttribute(BaseAttribute):
