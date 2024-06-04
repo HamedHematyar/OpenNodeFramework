@@ -224,9 +224,9 @@ class BaseNode(AbstractNode):
         """
         self.__graph: t.Optional[BaseGraph] = None
 
-        self.attributes = None
-        self.inputs = None
-        self.outputs = None
+        self.__attributes = None
+        self.__inputs = None
+        self.__outputs = None
 
     def compute_data(self) -> t.Optional[t.Any]:
         return
