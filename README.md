@@ -1,4 +1,4 @@
-# OpenNodeFramework
+# Mana | OpenNodeFramework
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](<PROJECT_LICENSE_LINK>)
 
@@ -23,7 +23,7 @@ This platform can do everything you would expect from a common node based system
 * Frame Nodes
 * Lock/Unlock Nodes
 * Bookmark Nodes
-* Save and Load Node setups
+* dump and Load Node setups
 * Preview Node outputs
 * Build Custom Compounds
 * History/Undo and Redo
