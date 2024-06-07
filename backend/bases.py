@@ -389,7 +389,7 @@ class BaseGraph(AbstractGraph):
         value.parent = self
         self.__graphs = value
 
-    @register_event(GraphCreated.__name__)
+    @register_event(GraphRemoved.__name__)
     def __del__(self):
         super().__del__()
 
