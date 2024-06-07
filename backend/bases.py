@@ -1,4 +1,3 @@
-import typing as t
 from collections.abc import MutableMapping, MutableSequence
 
 from backend.abstracts import (AbstractAttribute,
@@ -6,6 +5,7 @@ from backend.abstracts import (AbstractAttribute,
                                AbstractPort,
                                PortType,
                                AbstractGraph)
+from backend.events import *
 
 
 class TypedList(MutableSequence):
@@ -45,6 +45,7 @@ class BaseAttribute(AbstractAttribute):
     A concrete attribute class that implements AbstractAttribute.
     """
 
+    @register_event(AttributeCreated.__name__)
     def __init__(self, name, value):
         self.__name: t.Optional[str] = None
         self.__value: t.Optional[t.Any] = None
@@ -82,6 +83,10 @@ class BaseAttribute(AbstractAttribute):
             raise TypeError(f'node {value} is not an instance of {BaseNode}')
 
         self.__node = value
+
+    @register_event(AttributeRemoved.__name__)
+    def __del__(self):
+        super().__del__()
 
 
 class BaseAttributeCollection(MutableMapping):
@@ -137,6 +142,8 @@ class BaseAttributeCollection(MutableMapping):
 
 
 class BasePort(AbstractPort):
+
+    @register_event(PortCreated.__name__)
     def __init__(self, name: str, mode: PortType):
         self.__name: t.Optional[str] = None
         self.__mode: t.Optional[PortType] = None
@@ -180,6 +187,10 @@ class BasePort(AbstractPort):
 
         self.__node = node
 
+    @register_event(PortRemoved.__name__)
+    def __del__(self):
+        super().__del__()
+
 
 class BasePortCollection(TypedList):
     def __init__(self):
@@ -218,6 +229,8 @@ class BasePortCollection(TypedList):
 
 
 class BaseNode(AbstractNode):
+
+    @register_event(NodeCreated.__name__)
     def __init__(self):
         """
         Implement the base class of AbstractNode.
@@ -281,6 +294,10 @@ class BaseNode(AbstractNode):
         value.node = self
         self.__outputs = value
 
+    @register_event(NodeRemoved.__name__)
+    def __del__(self):
+        super().__del__()
+
 
 class BaseNodeCollection(TypedList):
     def __init__(self):
@@ -316,6 +333,8 @@ class BaseNodeCollection(TypedList):
 
 
 class BaseGraph(AbstractGraph):
+
+    @register_event(GraphCreated.__name__)
     def __init__(self, name: str):
         self.__name: t.Optional[str] = None
         self.__parent = None
@@ -369,6 +388,10 @@ class BaseGraph(AbstractGraph):
 
         value.parent = self
         self.__graphs = value
+
+    @register_event(GraphCreated.__name__)
+    def __del__(self):
+        super().__del__()
 
 
 class BaseGraphCollection(TypedList):
