@@ -36,6 +36,9 @@ class AbstractAttribute(ABC):
     def node(self, value: 'AbstractNode'):
         """This sets the value of the parent node."""
 
+    def __del__(self):
+        """This method is called when this class is deleted."""
+
 
 class AbstractPort(ABC):
     @property
@@ -67,8 +70,12 @@ class AbstractPort(ABC):
     def node(self, node: 'AbstractNode'):
         """This should set the node of the port."""
 
+    def __del__(self):
+        """This method is called when this class is deleted."""
+
 
 class AbstractNode(ABC):
+
     @abstractmethod
     def compute_data(self) -> t.Optional[t.Any]:
         """This method computes the node data"""
@@ -76,6 +83,9 @@ class AbstractNode(ABC):
     @abstractmethod
     def compute_output(self, output_port: 'AbstractPort') -> t.Optional[t.Any]:
         """This method computes the node output"""
+
+    def __del__(self):
+        """This method is called when this class is deleted."""
 
 
 class AbstractGraph(ABC):
@@ -88,3 +98,6 @@ class AbstractGraph(ABC):
     @abstractmethod
     def name(self, name: str):
         """This sets the name of the graph."""
+
+    def __del__(self):
+        """This method is called when this class is deleted."""
