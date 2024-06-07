@@ -1,12 +1,11 @@
 import os
 
-from backend.logger import logger
 from backend.attributes import *
-from backend.ports import *
 from backend.nodes import *
 from backend.graphs import *
-from backend.collections import *
+from backend.aggregations import *
 from backend.serializers import *
+from backend.events import *
 
 RegisteredNodes = {entry.__name__: entry for entry in [Node,
                                                        SumNode,
@@ -29,6 +28,15 @@ RegisteredCollections = {entry.__name__: entry for entry in [AttributeCollection
 
 RegisteredGraphs = {entry.__name__: entry for entry in [Graph,
                                                         ]}
+
+RegisteredEvents = {entry.__name__: entry for entry in [NodeCreated,
+                                                        NodeRemoved,
+                                                        AttributeCreated,
+                                                        AttributeRemoved,
+                                                        PortCreated,
+                                                        PortRemoved,
+                                                        GraphCreated,
+                                                        GraphRemoved]}
 
 
 def register_custom_attribute(instance: BaseAttribute) -> type:
