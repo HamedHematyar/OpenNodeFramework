@@ -126,22 +126,20 @@ class GraphRemoved(Event):
         super().__init__()
 
 
-def singleton(cls):
-    instances = {}
+class SingletonMeta(type):
+    _instances = {}
 
-    def getinstance():
-        if cls not in instances:
-            instances[cls] = cls()
-        return instances[cls]
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+            logger.debug(f"{cls.__name__} instance initialized : {instance}")
 
-    return getinstance
+        return cls._instances[cls]
 
 
-@singleton
-class EventManager(object):
+class EventManager(metaclass=SingletonMeta):
     def __init__(self):
-        logger.debug(f"{self.__class__.__name__} instance initialized : {self}")
-
         from backend.registry import RegisteredEvents
         self._events = {name: event() for name, event in RegisteredEvents.items()}
 
