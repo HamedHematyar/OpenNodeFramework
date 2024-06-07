@@ -1,6 +1,6 @@
 from backend.bases import BaseGraph
 from backend.nodes import Node
-from backend.collections import NodeCollection, GraphCollection
+from backend.aggregations import NodeCollection, GraphCollection
 
 
 class Graph(BaseGraph):
