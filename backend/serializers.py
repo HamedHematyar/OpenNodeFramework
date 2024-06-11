@@ -65,7 +65,7 @@ class AttributeSerializer(JsonSerializer):
 
     @staticmethod
     def _decode(data):
-        instance = registry.RegisteredAttributes[data.pop('class')](*data.values())
+        instance = registry.RegisteredAttributes[data['class']]().initialize(data['name'], data['value'])
 
         return instance
 
@@ -96,7 +96,7 @@ class AttributeCollectionSerializer(JsonSerializer):
 
     @staticmethod
     def _decode(data):
-        instance = registry.RegisteredCollections[data.pop('class')]()
+        instance = registry.RegisteredCollections[data['class']]()
 
         for entry_data in data['entries']:
             instance.add(AttributeSerializer().deserialize(entry_data))
@@ -129,7 +129,7 @@ class PortSerializer(JsonSerializer):
     def _decode(data):
         from backend.enums import PortType
         mode = getattr(PortType, data['mode'].capitalize())
-        instance = registry.RegisteredPorts[data.pop('class')](data['name'], mode)
+        instance = registry.RegisteredPorts[data['class']]().initialize(data['name'], mode)
 
         # TODO deserialize port connections
         return instance
@@ -161,7 +161,7 @@ class PortCollectionSerializer(JsonSerializer):
 
     @staticmethod
     def _decode(data):
-        instance = registry.RegisteredCollections[data.pop('class')]()
+        instance = registry.RegisteredCollections[data['class']]()
 
         for entry_data in data['entries']:
             instance.append(PortSerializer().deserialize(entry_data))
@@ -182,6 +182,7 @@ class NodeSerializer(JsonSerializer):
     @staticmethod
     def _encode(obj):
         data = {'class': obj.__class__.__name__,
+                'name': obj.name,
                 'attributes': AttributeCollectionSerializer().serialize(obj.attributes),
                 'inputs': PortCollectionSerializer().serialize(obj.inputs),
                 'outputs': PortCollectionSerializer().serialize(obj.outputs)}
@@ -190,7 +191,7 @@ class NodeSerializer(JsonSerializer):
 
     @staticmethod
     def _decode(data):
-        node = registry.RegisteredNodes[data.pop('class')]()
+        node = registry.RegisteredNodes[data['class']]().initialize(data['name'])
 
         node.attributes = AttributeCollectionSerializer().deserialize(data['attributes'], node)
         node.inputs = PortCollectionSerializer().deserialize(data['inputs'], node)
@@ -225,7 +226,7 @@ class NodeCollectionSerializer(JsonSerializer):
 
     @staticmethod
     def _decode(data):
-        instance = registry.RegisteredCollections[data.pop('class')]()
+        instance = registry.RegisteredCollections[data['class']]()
 
         for entry in data['entries']:
             instance.append(NodeSerializer().deserialize(entry))
@@ -251,7 +252,7 @@ class GraphSerializer(JsonSerializer):
     def _decode(data, parent=None):
 
         for graph_name, graph_data in data.get('graphs', {}).items():
-            graph = registry.RegisteredGraphs[graph_data.pop('class')](graph_name)
+            graph = registry.RegisteredGraphs[graph_data['class']](graph_name)
             graph.nodes = NodeCollectionSerializer().deserialize(graph_data['nodes'], parent)
 
             sub_graph = GraphSerializer._decode(graph_data, graph)
