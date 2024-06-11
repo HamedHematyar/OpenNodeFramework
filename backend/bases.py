@@ -379,7 +379,7 @@ class BaseGraph(AbstractGraph):
 
     @register_event([GraphPreInitialized,
                      GraphPostInitialized])
-    def initialize(self, name:str):
+    def initialize(self, name: str):
         self.name = name
 
         return self
