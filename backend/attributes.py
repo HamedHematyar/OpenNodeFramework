@@ -2,8 +2,8 @@ from backend.bases import BaseAttribute
 
 
 class String(BaseAttribute):
-    def __init__(self, name, value):
-        super().__init__(name, value)
+    def __init__(self):
+        super().__init__()
 
     @property
     def value(self):
@@ -18,8 +18,8 @@ class String(BaseAttribute):
 
 
 class Integer(BaseAttribute):
-    def __init__(self, name, value):
-        super().__init__(name, value)
+    def __init__(self):
+        super().__init__()
 
     @property
     def value(self):
@@ -34,8 +34,8 @@ class Integer(BaseAttribute):
 
 
 class List(BaseAttribute):
-    def __init__(self, name, value):
-        super().__init__(name, value)
+    def __init__(self):
+        super().__init__()
 
     @property
     def value(self):
@@ -50,8 +50,8 @@ class List(BaseAttribute):
 
 
 class TypeAttribute(BaseAttribute):
-    def __init__(self, name, value):
-        super().__init__(name, value)
+    def __init__(self):
+        super().__init__()
 
     @property
     def value(self):
@@ -71,10 +71,5 @@ class TypeAttribute(BaseAttribute):
 
 
 class NameAttribute(String):
-    """
-    >>> NameAttribute(value='test')
-    {'name': 'name', 'value': 'test'}
-    """
-
-    def __init__(self, value):
-        super().__init__('name', value)
+    def __init__(self):
+        super().__init__()
