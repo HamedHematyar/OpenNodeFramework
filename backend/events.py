@@ -7,21 +7,22 @@ from backend.logger import logger
 
 
 class EventExecutionPhase(Enum):
+    Undefined = 'undefined'
     Pre = 'pre'
     Post = 'post'
 
 
-def register_event(event_name, callback_type=EventExecutionPhase.Post):
+def register_event(events):
     def decorator(func):
         @wraps(func)
         def wrapped(*args, **kwargs):
-            if callback_type == EventExecutionPhase.Pre:
-                EventManager().trigger(event_name)
+            for event in [event for event in events if event.phase == EventExecutionPhase.Pre]:
+                EventManager().trigger(event)
 
             result = func(*args, **kwargs)
 
-            if callback_type == EventExecutionPhase.Post:
-                EventManager().trigger(event_name, *args, **kwargs)
+            for event in [event for event in events if event.phase == EventExecutionPhase.Post]:
+                EventManager().trigger(event, *args, **kwargs)
 
             return result
         return wrapped
@@ -48,6 +49,7 @@ class AbstractEvent(ABC):
 
 class Event:
     def __init__(self):
+        self.phase = EventExecutionPhase.Undefined
         self._callbacks = []
 
     def __str__(self):
@@ -86,44 +88,170 @@ class Event:
         return self._callbacks
 
 
-class NodeCreated(Event):
+class NodePreInstanced(Event):
     def __init__(self):
         super().__init__()
 
+        self.phase = EventExecutionPhase.Pre
 
-class NodeRemoved(Event):
+
+class NodePostInstanced(Event):
     def __init__(self):
         super().__init__()
 
+        self.phase = EventExecutionPhase.Post
 
-class AttributeCreated(Event):
+
+class NodePreInitialized(Event):
     def __init__(self):
         super().__init__()
 
+        self.phase = EventExecutionPhase.Pre
 
-class AttributeRemoved(Event):
+
+class NodePostInitialized(Event):
     def __init__(self):
         super().__init__()
 
+        self.phase = EventExecutionPhase.Post
 
-class PortCreated(Event):
+
+class NodePreRemoved(Event):
     def __init__(self):
         super().__init__()
 
+        self.phase = EventExecutionPhase.Pre
 
-class PortRemoved(Event):
+
+class NodePostRemoved(Event):
     def __init__(self):
         super().__init__()
 
+        self.phase = EventExecutionPhase.Post
 
-class GraphCreated(Event):
+
+class AttributePreInstanced(Event):
     def __init__(self):
         super().__init__()
 
+        self.phase = EventExecutionPhase.Pre
 
-class GraphRemoved(Event):
+
+class AttributePostInstanced(Event):
     def __init__(self):
         super().__init__()
+
+        self.phase = EventExecutionPhase.Post
+
+
+class AttributePreInitialized(Event):
+    def __init__(self):
+        super().__init__()
+        self.phase = EventExecutionPhase.Pre
+
+
+class AttributePostInitialized(Event):
+    def __init__(self):
+        super().__init__()
+        self.phase = EventExecutionPhase.Post
+
+
+class AttributePreRemoved(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Pre
+
+
+class AttributePostRemoved(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Post
+
+
+class PortPreInstanced(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Pre
+
+
+class PortPostInstanced(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Post
+
+
+class PortPreInitialized(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Pre
+
+
+class PortPostInitialized(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Post
+
+
+class PortPreRemoved(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Pre
+
+
+class PortPostRemoved(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Post
+
+
+class GraphPreInstanced(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Pre
+
+
+class GraphPostInstanced(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Post
+
+
+class GraphPreInitialized(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Pre
+
+
+class GraphPostInitialized(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Post
+
+
+class GraphPreRemoved(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Pre
+
+
+class GraphPostRemoved(Event):
+    def __init__(self):
+        super().__init__()
+
+        self.phase = EventExecutionPhase.Post
 
 
 class SingletonMeta(type):

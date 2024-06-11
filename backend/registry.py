@@ -29,14 +29,34 @@ RegisteredCollections = {entry.__name__: entry for entry in [AttributeCollection
 RegisteredGraphs = {entry.__name__: entry for entry in [Graph,
                                                         ]}
 
-RegisteredEvents = {entry.__name__: entry for entry in [NodeCreated,
-                                                        NodeRemoved,
-                                                        AttributeCreated,
-                                                        AttributeRemoved,
-                                                        PortCreated,
-                                                        PortRemoved,
-                                                        GraphCreated,
-                                                        GraphRemoved]}
+RegisteredEvents = {entry.__name__: entry for entry in [NodePreInstanced,
+                                                        NodePostInstanced,
+                                                        NodePreInitialized,
+                                                        NodePostInitialized,
+                                                        NodePreRemoved,
+                                                        NodePostRemoved,
+
+                                                        AttributePreInstanced,
+                                                        AttributePostInstanced,
+                                                        AttributePreInitialized,
+                                                        AttributePostInitialized,
+                                                        AttributePreRemoved,
+                                                        AttributePostRemoved,
+
+                                                        PortPreInstanced,
+                                                        PortPostInstanced,
+                                                        PortPreInitialized,
+                                                        PortPostInitialized,
+                                                        PortPreRemoved,
+                                                        PortPostRemoved,
+
+                                                        GraphPreInstanced,
+                                                        GraphPostInstanced,
+                                                        GraphPreInitialized,
+                                                        GraphPostInitialized,
+                                                        GraphPreRemoved,
+                                                        GraphPostRemoved,
+                                                        ]}
 
 
 def register_custom_attribute(instance: BaseAttribute) -> type:
