@@ -271,17 +271,17 @@ class EventManager(metaclass=SingletonMeta):
         from backend.registry import RegisteredEvents
         self._events = {name: event() for name, event in RegisteredEvents.items()}
 
-    def get_event(self, event_name):
-        return self._events.get(event_name)
+    def get_event(self, event):
+        return self._events.get(event.__name__)
 
-    def register_callback(self, event_name, callback: t.Callable) -> bool:
-        return self._events[event_name].register_callback(callback)
+    def register_callback(self, event, callback: t.Callable) -> bool:
+        return self._events[event.__name__].register_callback(callback)
 
-    def deregister_callback(self, event_name, callback: t.Callable) -> bool:
-        return self._events[event_name].deregister_callback(callback)
+    def deregister_callback(self, event, callback: t.Callable) -> bool:
+        return self._events[event.__name__].deregister_callback(callback)
 
-    def trigger(self, event_name, *args, **kwargs) -> bool:
-        return self._events[event_name].trigger(*args, **kwargs)
+    def trigger(self, event, *args, **kwargs) -> bool:
+        return self._events[event.__name__].trigger(*args, **kwargs)
 
 
 
