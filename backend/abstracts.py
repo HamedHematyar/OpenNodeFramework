@@ -76,7 +76,7 @@ class AbstractPort(ABC):
     def __del__(self):
         """This method is called when this class is deleted."""
 
-    def initialize(self):
+    def initialize(self, name: str, mode):
         """This method is called when this object is initialized."""
 
 
@@ -93,7 +93,7 @@ class AbstractNode(ABC):
     def __del__(self):
         """This method is called when this class is deleted."""
 
-    def initialize(self):
+    def initialize(self, name:str):
         """This method is called when this object is initialized."""
 
 
@@ -111,5 +111,5 @@ class AbstractGraph(ABC):
     def __del__(self):
         """This method is called when this class is deleted."""
 
-    def initialize(self):
+    def initialize(self, name:str):
         """This method is called when this object is initialized."""
