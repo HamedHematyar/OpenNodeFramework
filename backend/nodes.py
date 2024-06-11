@@ -23,10 +23,10 @@ class ParameterNode(Node):
         self.inputs = PortCollection()
         self.outputs = PortCollection()
 
-        self.attributes.add(TypeAttribute('type', int))
-        self.attributes.add(Integer('value', int()))
+        self.attributes.add(TypeAttribute().initialize('type', int))
+        self.attributes.add(Integer().initialize('value', int()))
 
-        self.outputs.append(OutPort('output', PortType.Out))
+        self.outputs.append(OutPort().initialize('output', PortType.Out))
 
     def compute_data(self) -> t.Optional[t.Any]:
         return self.attributes['value'].value
@@ -43,10 +43,10 @@ class SumNode(Node):
         self.inputs = PortCollection()
         self.outputs = PortCollection()
 
-        self.inputs.append(InPort('left', PortType.In))
-        self.inputs.append(InPort('right', PortType.In))
+        self.inputs.append(InPort().initialize('left', PortType.In))
+        self.inputs.append(InPort().initialize('right', PortType.In))
 
-        self.outputs.append(OutPort('output', PortType.Out))
+        self.outputs.append(OutPort().initialize('output', PortType.Out))
 
     def compute_data(self) -> t.Optional[t.Any]:
         data = 0
