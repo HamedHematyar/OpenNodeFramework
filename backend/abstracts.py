@@ -39,6 +39,9 @@ class AbstractAttribute(ABC):
     def __del__(self):
         """This method is called when this class is deleted."""
 
+    def initialize(self):
+        """This method is called when this object is initialized."""
+
 
 class AbstractPort(ABC):
     @property
@@ -73,6 +76,9 @@ class AbstractPort(ABC):
     def __del__(self):
         """This method is called when this class is deleted."""
 
+    def initialize(self):
+        """This method is called when this object is initialized."""
+
 
 class AbstractNode(ABC):
 
@@ -86,6 +92,9 @@ class AbstractNode(ABC):
 
     def __del__(self):
         """This method is called when this class is deleted."""
+
+    def initialize(self):
+        """This method is called when this object is initialized."""
 
 
 class AbstractGraph(ABC):
@@ -101,3 +110,6 @@ class AbstractGraph(ABC):
 
     def __del__(self):
         """This method is called when this class is deleted."""
+
+    def initialize(self):
+        """This method is called when this object is initialized."""
