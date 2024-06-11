@@ -45,14 +45,20 @@ class BaseAttribute(AbstractAttribute):
     A concrete attribute class that implements AbstractAttribute.
     """
 
-    @register_event(AttributeCreated.__name__)
-    def __init__(self, name, value):
+    @register_event([AttributePreInstanced,
+                     AttributePostInstanced])
+    def __init__(self):
         self.__name: t.Optional[str] = None
         self.__value: t.Optional[t.Any] = None
         self.__node: t.Optional[BaseNode] = None
 
+    @register_event([AttributePreInitialized,
+                     AttributePostInitialized])
+    def initialize(self, name, value):
         self.name = name
         self.value = value
+
+        return self
 
     @property
     def name(self):
@@ -84,7 +90,8 @@ class BaseAttribute(AbstractAttribute):
 
         self.__node = value
 
-    @register_event(AttributeRemoved.__name__)
+    @register_event([AttributePreRemoved,
+                     AttributePostRemoved])
     def __del__(self):
         super().__del__()
 
@@ -143,16 +150,22 @@ class BaseAttributeCollection(MutableMapping):
 
 class BasePort(AbstractPort):
 
-    @register_event(PortCreated.__name__)
-    def __init__(self, name: str, mode: PortType):
+    @register_event([PortPreInstanced,
+                     PortPostInstanced])
+    def __init__(self):
         self.__name: t.Optional[str] = None
         self.__mode: t.Optional[PortType] = None
         self.__node: t.Optional[BaseNode] = None
 
+        self.connections: BasePortCollection[BasePort] = BasePortCollection()
+
+    @register_event([PortPreInitialized,
+                     PortPostInitialized])
+    def initialize(self, name: str, mode: PortType):
         self.name = name
         self.mode = mode
 
-        self.connections: BasePortCollection[BasePort] = BasePortCollection()
+        return self
 
     @property
     def name(self) -> str:
@@ -187,7 +200,8 @@ class BasePort(AbstractPort):
 
         self.__node = node
 
-    @register_event(PortRemoved.__name__)
+    @register_event([PortPreRemoved,
+                     PortPostRemoved])
     def __del__(self):
         super().__del__()
 
@@ -230,22 +244,36 @@ class BasePortCollection(TypedList):
 
 class BaseNode(AbstractNode):
 
-    @register_event(NodeCreated.__name__)
+    @register_event([NodePreInstanced,
+                     NodePostInstanced])
     def __init__(self):
         """
         Implement the base class of AbstractNode.
         """
+        self.__name: t.Optional[str] = None
         self.__graph: t.Optional[BaseGraph] = None
 
         self.__attributes = None
         self.__inputs = None
         self.__outputs = None
 
-    def compute_data(self) -> t.Optional[t.Any]:
-        return
+    @register_event([NodePreInitialized,
+                     NodePostInitialized])
+    def initialize(self, name:str):
+        self.name = name or self.__class__.__name__
 
-    def compute_output(self, output_port: AbstractPort) -> t.Optional[t.Any]:
-        return getattr(self, f'_compute_{output_port.name}_port')()
+        return self
+
+    @property
+    def name(self) -> str:
+        return self.__name
+
+    @name.setter
+    def name(self, name: str):
+        if not isinstance(name, str):
+            raise TypeError(f'{name} is not an instance of {str}')
+
+        self.__name = name
 
     @property
     def graph(self) -> t.Optional['BaseGraph']:
@@ -294,9 +322,16 @@ class BaseNode(AbstractNode):
         value.node = self
         self.__outputs = value
 
-    @register_event(NodeRemoved.__name__)
+    @register_event([NodePreRemoved,
+                     NodePostRemoved])
     def __del__(self):
         super().__del__()
+
+    def compute_data(self) -> t.Optional[t.Any]:
+        return
+
+    def compute_output(self, output_port: AbstractPort) -> t.Optional[t.Any]:
+        return getattr(self, f'_compute_{output_port.name}_port')()
 
 
 class BaseNodeCollection(TypedList):
@@ -334,14 +369,20 @@ class BaseNodeCollection(TypedList):
 
 class BaseGraph(AbstractGraph):
 
-    @register_event(GraphCreated.__name__)
-    def __init__(self, name: str):
+    @register_event([GraphPreInstanced,
+                     GraphPostInstanced])
+    def __init__(self):
         self.__name: t.Optional[str] = None
         self.__parent = None
         self.__nodes = None
         self.__graphs = None
 
+    @register_event([GraphPreInitialized,
+                     GraphPostInitialized])
+    def initialize(self, name:str):
         self.name = name
+
+        return self
 
     @property
     def name(self):
@@ -389,7 +430,8 @@ class BaseGraph(AbstractGraph):
         value.parent = self
         self.__graphs = value
 
-    @register_event(GraphRemoved.__name__)
+    @register_event([GraphPreRemoved,
+                     GraphPostRemoved])
     def __del__(self):
         super().__del__()
 
