@@ -16,12 +16,12 @@ def register_event(events):
     def decorator(func):
         @wraps(func)
         def wrapped(*args, **kwargs):
-            for event in [event for event in events if event.phase == EventExecutionPhase.Pre]:
+            for event in [event for event in events if event.Phase == EventExecutionPhase.Pre]:
                 EventManager().trigger(event)
 
             result = func(*args, **kwargs)
 
-            for event in [event for event in events if event.phase == EventExecutionPhase.Post]:
+            for event in [event for event in events if event.Phase == EventExecutionPhase.Post]:
                 EventManager().trigger(event, *args, **kwargs)
 
             return result
@@ -48,8 +48,9 @@ class AbstractEvent(ABC):
 
 
 class Event:
+    Phase = EventExecutionPhase.Undefined
+
     def __init__(self):
-        self.phase = EventExecutionPhase.Undefined
         self._callbacks = []
 
     def __str__(self):
@@ -89,169 +90,171 @@ class Event:
 
 
 class NodePreInstanced(Event):
+    Phase = EventExecutionPhase.Pre
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Pre
 
 
 class NodePostInstanced(Event):
+    Phase = EventExecutionPhase.Post
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Post
 
 
 class NodePreInitialized(Event):
+    Phase = EventExecutionPhase.Pre
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Pre
 
 
 class NodePostInitialized(Event):
+    Phase = EventExecutionPhase.Post
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Post
 
 
 class NodePreRemoved(Event):
+    Phase = EventExecutionPhase.Pre
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Pre
 
 
 class NodePostRemoved(Event):
+    Phase = EventExecutionPhase.Post
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Post
 
 
 class AttributePreInstanced(Event):
+    Phase = EventExecutionPhase.Pre
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Pre
 
 
 class AttributePostInstanced(Event):
+    Phase = EventExecutionPhase.Post
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Post
 
 
 class AttributePreInitialized(Event):
+    Phase = EventExecutionPhase.Pre
+
     def __init__(self):
         super().__init__()
-        self.phase = EventExecutionPhase.Pre
 
 
 class AttributePostInitialized(Event):
+    Phase = EventExecutionPhase.Post
+
     def __init__(self):
         super().__init__()
-        self.phase = EventExecutionPhase.Post
 
 
 class AttributePreRemoved(Event):
+    Phase = EventExecutionPhase.Pre
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Pre
 
 
 class AttributePostRemoved(Event):
+    Phase = EventExecutionPhase.Post
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Post
 
 
 class PortPreInstanced(Event):
+    Phase = EventExecutionPhase.Pre
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Pre
 
 
 class PortPostInstanced(Event):
+    Phase = EventExecutionPhase.Post
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Post
 
 
 class PortPreInitialized(Event):
+    Phase = EventExecutionPhase.Pre
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Pre
 
 
 class PortPostInitialized(Event):
+    Phase = EventExecutionPhase.Post
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Post
 
 
 class PortPreRemoved(Event):
+    Phase = EventExecutionPhase.Pre
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Pre
 
 
 class PortPostRemoved(Event):
+    Phase = EventExecutionPhase.Post
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Post
 
 
 class GraphPreInstanced(Event):
+    Phase = EventExecutionPhase.Pre
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Pre
 
 
 class GraphPostInstanced(Event):
+    Phase = EventExecutionPhase.Post
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Post
 
 
 class GraphPreInitialized(Event):
+    Phase = EventExecutionPhase.Pre
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Pre
 
 
 class GraphPostInitialized(Event):
+    Phase = EventExecutionPhase.Post
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Post
 
 
 class GraphPreRemoved(Event):
+    Phase = EventExecutionPhase.Pre
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Pre
 
 
 class GraphPostRemoved(Event):
+    Phase = EventExecutionPhase.Post
+
     def __init__(self):
         super().__init__()
-
-        self.phase = EventExecutionPhase.Post
 
 
 class SingletonMeta(type):
