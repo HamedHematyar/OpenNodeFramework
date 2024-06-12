@@ -117,12 +117,18 @@ class PortSerializer(JsonSerializer):
 
     @staticmethod
     def _encode(obj):
+        connections = []
+
+        for connection in obj.connections:
+            connections.append({'node': connection.node.name,
+                                'mode': connection.mode.value,
+                                'name': connection.name})
+
         data = {'class': obj.__class__.__name__,
                 'mode': obj.mode.value,
                 'name': obj.name,
-                'connections': []}
+                'connections': connections}
 
-        # TODO serialize port connections
         return data
 
     @staticmethod
