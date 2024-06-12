@@ -28,11 +28,8 @@ class ParameterNode(Node):
 
         self.outputs.append(OutputPort().initialize('product', PortType.Output))
 
-    def compute_data(self) -> t.Optional[t.Any]:
+    def data(self) -> t.Optional[t.Any]:
         return self.attributes['value'].value
-
-    def _compute_output_port(self):
-        return self.compute_data()
 
 
 class SumNode(Node):
@@ -48,15 +45,11 @@ class SumNode(Node):
 
         self.outputs.append(OutputPort().initialize('product', PortType.Output))
 
-    def compute_data(self) -> t.Optional[t.Any]:
+    def data(self) -> t.Optional[t.Any]:
         data = 0
-        if self.inputs[0].connections.has_connections():
-            data += self.inputs[0].connections[0].node.compute_output(self.inputs[0].connections[0])
 
-        if self.inputs[1].connections.has_connections():
-            data += self.inputs[1].connections[0].node.compute_output(self.inputs[1].connections[0])
+        for input_port in self.inputs:
+            data += input_port.data(0)
 
         return data
 
-    def _compute_output_port(self):
-        return self.compute_data()
