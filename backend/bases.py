@@ -213,6 +213,15 @@ class BasePort(AbstractPort):
 
         return True
 
+    def has_connections(self):
+        return bool(len(self.connections))
+
+    def disconnect(self, index):
+        self.connections[index].connections.remove(self)
+        self.connections.pop(index)
+
+        return True
+
 
 class BasePortCollection(TypedList):
     def __init__(self):
@@ -238,12 +247,6 @@ class BasePortCollection(TypedList):
         if self.node:
             value.node = self.node
 
-    def disconnect(self, index: int):
-        self.pop(index)
-
-    def has_connections(self):
-        return bool(len(self))
-
     @property
     def node(self) -> 'BaseNode':
         return self.__node
@@ -255,8 +258,18 @@ class BasePortCollection(TypedList):
 
         self.__node = value
 
-    def data(self, port_index, connection_index=0):
+    def connect_to(self, port_index, port_instance):
+        return self[port_index].connect_to(port_instance)
+
+    def has_connections(self, port_index):
+        return self[port_index].has_connections()
+
+    def disconnect(self, port_index: int, connection_index: int = 0):
+        self[port_index].disconnect(connection_index)
+
+    def data(self, port_index, connection_index: int = 0):
         return self[port_index].data(connection_index)
+
 
 
 class BaseNode(AbstractNode):
