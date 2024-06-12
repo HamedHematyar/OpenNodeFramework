@@ -17,8 +17,8 @@ RegisteredAttributes: t.Dict[str, type] = {entry.__name__: entry for entry in [S
                                                                                List,
                                                                                ]}
 
-RegisteredPorts = {entry.__name__: entry for entry in [InPort,
-                                                       OutPort
+RegisteredPorts = {entry.__name__: entry for entry in [InputPort,
+                                                       OutputPort
                                                        ]}
 
 RegisteredCollections = {entry.__name__: entry for entry in [AttributeCollection,

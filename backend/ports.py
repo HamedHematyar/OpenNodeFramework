@@ -1,11 +1,12 @@
 from backend.bases import BasePort
 
 
-class InPort(BasePort):
+class InputPort(BasePort):
     def __init__(self):
         super().__init__()
 
 
-class OutPort(BasePort):
+
+class OutputPort(BasePort):
     def __init__(self):
         super().__init__()
