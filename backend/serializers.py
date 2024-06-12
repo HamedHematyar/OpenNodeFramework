@@ -59,14 +59,19 @@ class AttributeSerializer(JsonSerializer):
     def _encode(obj):
         data = {'class': obj.__class__.__name__,
                 'name': obj.name,
-                'value': obj.value}
+                'value': obj.get_value(),
+                'link': None}
 
+        if obj.link:
+            data['link'] = {'name': obj.link.name,
+                            'node': obj.link.node}
         return data
 
     @staticmethod
     def _decode(data):
         instance = registry.RegisteredAttributes[data['class']]().initialize(data['name'], data['value'])
 
+        # TODO deserialize attribute link
         return instance
 
 
