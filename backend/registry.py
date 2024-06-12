@@ -1,4 +1,5 @@
 import os
+import threading
 
 from backend.attributes import *
 from backend.nodes import *
@@ -6,6 +7,8 @@ from backend.graphs import *
 from backend.aggregations import *
 from backend.serializers import *
 from backend.events import *
+
+Lock = threading.Lock()
 
 RegisteredNodes = {entry.__name__: entry for entry in [Node,
                                                        SumNode,
@@ -57,6 +60,23 @@ RegisteredEvents = {entry.__name__: entry for entry in [NodePreInstanced,
                                                         GraphPreRemoved,
                                                         GraphPostRemoved,
                                                         ]}
+
+
+InitializedNodes = {}
+
+
+def register_node_instance(name: str, instance: BaseNode):
+    if not isinstance(name, str):
+        raise ValueError("node name must be a string")
+
+    with Lock:
+        if name in InitializedNodes:
+            name = f"{name}_{len(InitializedNodes)}"
+
+        instance.name = name
+        InitializedNodes[instance.name] = instance
+
+    return instance
 
 
 def register_custom_attribute(instance: BaseAttribute) -> type:
