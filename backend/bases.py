@@ -1,3 +1,5 @@
+import json
+
 from collections.abc import MutableMapping, MutableSequence
 
 from backend.abstracts import (AbstractAttribute,
@@ -12,32 +14,32 @@ class TypedList(MutableSequence):
     def __init__(self, types: tuple):
         super().__init__()
 
-        self.data = list()
+        self.internal_data = list()
         self.types = types
 
     def __len__(self):
-        return len(self.data)
+        return len(self.internal_data)
 
     def __getitem__(self, idx):
-        return self.data[idx]
+        return self.internal_data[idx]
 
     def __setitem__(self, idx, value):
         if not isinstance(value, self.types):
             raise TypeError(f'value must be of type {self.types}')
 
-        self.data[idx] = value
+        self.internal_data[idx] = value
 
     def __delitem__(self, idx):
-        del self.data[idx]
+        del self.internal_data[idx]
 
     def insert(self, idx, value):
         if not isinstance(value, self.types):
             raise TypeError(f'value must be of type {self.types}')
 
-        self.data.insert(idx, value)
+        self.internal_data.insert(idx, value)
 
     def __repr__(self):
-        return str(self.data)
+        return str(self.internal_data)
 
 
 class BaseAttribute(AbstractAttribute):
@@ -143,7 +145,7 @@ class BaseAttributeCollection(MutableMapping):
     @node.setter
     def node(self, value: 'BaseNode'):
         if not isinstance(value, BaseNode):
-            raise TypeError(f'graph {value} is not an instance of {BaseNode}')
+            raise TypeError(f'{value} is not an instance of {BaseNode}')
 
         self.__node = value
 
@@ -205,6 +207,12 @@ class BasePort(AbstractPort):
     def __del__(self):
         super().__del__()
 
+    def connect_to(self, port):
+        self.connections.append(port)
+        port.connections.append(self)
+
+        return True
+
 
 class BasePortCollection(TypedList):
     def __init__(self):
@@ -213,12 +221,18 @@ class BasePortCollection(TypedList):
         self.__node: t.Optional[BaseNode] = None
 
     def __setitem__(self, idx, value):
+        if value in self:
+            raise ValueError(f'port {value} is already present in the collection')
+
         super().__setitem__(idx, value)
 
         if self.node:
             value.node = self.node
 
     def insert(self, idx, value):
+        if value in self:
+            raise ValueError(f'port {value} is already present in the collection')
+
         super().insert(idx, value)
 
         if self.node:
@@ -241,6 +255,9 @@ class BasePortCollection(TypedList):
 
         self.__node = value
 
+    def data(self, port_index, connection_index=0):
+        return self[port_index].data(connection_index)
+
 
 class BaseNode(AbstractNode):
 
@@ -257,15 +274,21 @@ class BaseNode(AbstractNode):
         self.__inputs = None
         self.__outputs = None
 
+    def __str__(self):
+        from backend.serializers import NodeSerializer
+        return json.dumps(NodeSerializer().serialize(self), indent=4)
+
     @register_event([NodePreInitialized,
                      NodePostInitialized])
-    def initialize(self, name:str):
-        self.name = name or self.__class__.__name__
-
-        return self
+    def initialize(self, name: str):
+        from backend import registry
+        return registry.register_node_instance(name, self)
 
     @property
     def name(self) -> str:
+        if not self.__name:
+            raise AttributeError(f'node has not been initialized properly.')
+
         return self.__name
 
     @name.setter
@@ -327,11 +350,8 @@ class BaseNode(AbstractNode):
     def __del__(self):
         super().__del__()
 
-    def compute_data(self) -> t.Optional[t.Any]:
+    def data(self) -> t.Optional[t.Any]:
         return
-
-    def compute_output(self, output_port: AbstractPort) -> t.Optional[t.Any]:
-        return getattr(self, f'_compute_{output_port.name}_port')()
 
 
 class BaseNodeCollection(TypedList):
