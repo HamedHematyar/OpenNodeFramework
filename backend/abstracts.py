@@ -18,16 +18,6 @@ class AbstractAttribute(ABC):
 
     @property
     @abstractmethod
-    def value(self) -> t.Any:
-        """This returns the value of the attribute."""
-
-    @value.setter
-    @abstractmethod
-    def value(self, value: t.Any):
-        """This sets the value of the attribute."""
-
-    @property
-    @abstractmethod
     def node(self) -> 'AbstractNode':
         """This returns the value of the parent node."""
 
@@ -38,6 +28,14 @@ class AbstractAttribute(ABC):
 
     def __del__(self):
         """This method is called when this class is deleted."""
+
+    @abstractmethod
+    def get_value(self) -> t.Any:
+        """This returns the value of the attribute."""
+
+    @abstractmethod
+    def set_value(self, value: t.Any):
+        """This sets the value of the attribute."""
 
 
 class AbstractPort(ABC):
