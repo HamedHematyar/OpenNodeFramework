@@ -8,6 +8,7 @@ from backend.abstracts import (AbstractAttribute,
                                PortType,
                                AbstractGraph)
 from backend.events import *
+from backend.exceptions import *
 
 
 class TypedList(MutableSequence):
@@ -50,52 +51,72 @@ class BaseAttribute(AbstractAttribute):
     @register_event([AttributePreInstanced,
                      AttributePostInstanced])
     def __init__(self):
-        self.__name: t.Optional[str] = None
-        self.__value: t.Optional[t.Any] = None
-        self.__node: t.Optional[BaseNode] = None
+        self._name: t.Optional[str] = None
+        self._link: t.Optional[t.Any] = None
+        self._node: t.Optional[BaseNode] = None
+        self._value: t.Optional[t.Any] = None
 
     @register_event([AttributePreInitialized,
                      AttributePostInitialized])
     def initialize(self, name, value):
         self.name = name
-        self.value = value
+        self.set_value(value)
 
         return self
 
     @property
     def name(self):
-        return self.__name
+        return self._name
 
     @name.setter
     def name(self, value):
         if not isinstance(value, str):
             raise TypeError(f'attribute name must be a string.')
 
-        self.__name = value
+        self._name = value
 
     @property
-    def value(self):
-        return self.__value
+    def link(self):
+        return self._link
 
-    @value.setter
-    def value(self, value):
-        self.__value = value
+    @link.setter
+    def link(self, value: 'BaseAttribute'):
+        if not isinstance(value, BaseAttribute):
+            raise TypeError(f'attribute link {value} is not an instance of {BaseAttribute}')
+
+        self._link = value
+
+    @link.deleter
+    def link(self):
+        self._link = None
 
     @property
     def node(self) -> 'BaseNode':
-        return self.__node
+        return self._node
 
     @node.setter
     def node(self, value: 'BaseNode'):
         if not isinstance(value, BaseNode):
             raise TypeError(f'node {value} is not an instance of {BaseNode}')
 
-        self.__node = value
+        self._node = value
 
     @register_event([AttributePreRemoved,
                      AttributePostRemoved])
     def __del__(self):
         super().__del__()
+
+    def get_value(self):
+        if self.link is None:
+            return self._value
+        else:
+            return self.link.get_value()
+
+    def set_value(self, value):
+        if self.link is not None:
+            raise LinkedAttributeError("attribute value is linked and cannot be changed directly")
+
+        self._value = value
 
 
 class BaseAttributeCollection(MutableMapping):
@@ -269,7 +290,6 @@ class BasePortCollection(TypedList):
 
     def data(self, port_index, connection_index: int = 0):
         return self[port_index].data(connection_index)
-
 
 
 class BaseNode(AbstractNode):
