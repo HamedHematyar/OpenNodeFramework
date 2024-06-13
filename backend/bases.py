@@ -306,7 +306,6 @@ class BaseNode(AbstractNode):
         return json.dumps(NodeSerializer().serialize(self), indent=4)
 
     @register_events_decorator([NodePreInitialized, NodePostInitialized])
-    @register_runtime_node_decorator
     def initialize(self, name: str):
         self.name = name
         
