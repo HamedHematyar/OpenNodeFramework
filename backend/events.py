@@ -12,7 +12,7 @@ class EventExecutionPhase(Enum):
     Post = 'post'
 
 
-def register_event(events):
+def register_events_decorator(events):
     def decorator(func):
         @wraps(func)
         def wrapped(*args, **kwargs):

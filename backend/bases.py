@@ -9,6 +9,7 @@ from backend.abstracts import (AbstractAttribute,
                                AbstractGraph)
 from backend.events import *
 from backend.exceptions import *
+from backend.decorators import *
 
 
 class TypedList(MutableSequence):
@@ -48,16 +49,14 @@ class BaseAttribute(AbstractAttribute):
     A concrete attribute class that implements AbstractAttribute.
     """
 
-    @register_event([AttributePreInstanced,
-                     AttributePostInstanced])
+    @register_events_decorator([AttributePreInstanced, AttributePostInstanced])
     def __init__(self):
         self._name: t.Optional[str] = None
         self._link: t.Optional[t.Any] = None
         self._node: t.Optional[BaseNode] = None
         self._value: t.Optional[t.Any] = None
 
-    @register_event([AttributePreInitialized,
-                     AttributePostInitialized])
+    @register_events_decorator([AttributePreInitialized, AttributePostInitialized])
     def initialize(self, name, value):
         self.name = name
         self.set_value(value)
@@ -101,8 +100,7 @@ class BaseAttribute(AbstractAttribute):
 
         self._node = value
 
-    @register_event([AttributePreRemoved,
-                     AttributePostRemoved])
+    @register_events_decorator([AttributePreRemoved, AttributePostRemoved])
     def __del__(self):
         super().__del__()
 
@@ -173,8 +171,7 @@ class BaseAttributeCollection(MutableMapping):
 
 class BasePort(AbstractPort):
 
-    @register_event([PortPreInstanced,
-                     PortPostInstanced])
+    @register_events_decorator([PortPreInstanced, PortPostInstanced])
     def __init__(self):
         self.__name: t.Optional[str] = None
         self.__mode: t.Optional[PortType] = None
@@ -182,8 +179,7 @@ class BasePort(AbstractPort):
 
         self.connections: BasePortCollection[BasePort] = BasePortCollection()
 
-    @register_event([PortPreInitialized,
-                     PortPostInitialized])
+    @register_events_decorator([PortPreInitialized, PortPostInitialized])
     def initialize(self, name: str, mode: PortType):
         self.name = name
         self.mode = mode
@@ -223,8 +219,7 @@ class BasePort(AbstractPort):
 
         self.__node = node
 
-    @register_event([PortPreRemoved,
-                     PortPostRemoved])
+    @register_events_decorator([PortPreRemoved, PortPostRemoved])
     def __del__(self):
         super().__del__()
 
@@ -294,8 +289,7 @@ class BasePortCollection(TypedList):
 
 class BaseNode(AbstractNode):
 
-    @register_event([NodePreInstanced,
-                     NodePostInstanced])
+    @register_events_decorator([NodePreInstanced, NodePostInstanced])
     def __init__(self):
         """
         Implement the base class of AbstractNode.
@@ -311,11 +305,12 @@ class BaseNode(AbstractNode):
         from backend.serializers import NodeSerializer
         return json.dumps(NodeSerializer().serialize(self), indent=4)
 
-    @register_event([NodePreInitialized,
-                     NodePostInitialized])
+    @register_events_decorator([NodePreInitialized, NodePostInitialized])
+    @register_runtime_node_decorator
     def initialize(self, name: str):
-        from backend import registry
-        return registry.register_node_instance(name, self)
+        self.name = name
+        
+        return self
 
     @property
     def name(self) -> str:
@@ -378,8 +373,7 @@ class BaseNode(AbstractNode):
         value.node = self
         self.__outputs = value
 
-    @register_event([NodePreRemoved,
-                     NodePostRemoved])
+    @register_events_decorator([NodePreRemoved, NodePostRemoved])
     def __del__(self):
         super().__del__()
 
@@ -422,16 +416,14 @@ class BaseNodeCollection(TypedList):
 
 class BaseGraph(AbstractGraph):
 
-    @register_event([GraphPreInstanced,
-                     GraphPostInstanced])
+    @register_events_decorator([GraphPreInstanced, GraphPostInstanced])
     def __init__(self):
         self.__name: t.Optional[str] = None
         self.__parent = None
         self.__nodes = None
         self.__graphs = None
 
-    @register_event([GraphPreInitialized,
-                     GraphPostInitialized])
+    @register_events_decorator([GraphPreInitialized, GraphPostInitialized])
     def initialize(self, name: str):
         self.name = name
 
@@ -483,8 +475,7 @@ class BaseGraph(AbstractGraph):
         value.parent = self
         self.__graphs = value
 
-    @register_event([GraphPreRemoved,
-                     GraphPostRemoved])
+    @register_events_decorator([GraphPreRemoved, GraphPostRemoved])
     def __del__(self):
         super().__del__()
 
