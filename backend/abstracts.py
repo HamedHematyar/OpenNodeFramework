@@ -1,11 +1,22 @@
+import enum
 import typing as t
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
 from backend.enums import PortType
+from backend.meta import *
 
 
-class AbstractAttribute(ABC):
+class EntityType(enum.StrEnum):
+    Node: str = enum.auto()
+    Port: str = enum.auto()
+    Attribute: str = enum.auto()
+    Graph: str = enum.auto()
+
+
+class AbstractAttribute(metaclass=EntityTrackerMeta):
+    TYPE = EntityType.Attribute
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -38,7 +49,9 @@ class AbstractAttribute(ABC):
         """This sets the value of the attribute."""
 
 
-class AbstractPort(ABC):
+class AbstractPort(metaclass=EntityTrackerMeta):
+    TYPE = EntityType.Port
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -72,7 +85,8 @@ class AbstractPort(ABC):
         """This method is called when this class is deleted."""
 
 
-class AbstractNode(ABC):
+class AbstractNode(metaclass=EntityTrackerMeta):
+    TYPE = EntityType.Node
 
     @abstractmethod
     def data(self) -> t.Optional[t.Any]:
@@ -82,7 +96,9 @@ class AbstractNode(ABC):
         """This method is called when this class is deleted."""
 
 
-class AbstractGraph(ABC):
+class AbstractGraph(metaclass=EntityTrackerMeta):
+    TYPE = EntityType.Graph
+
     @property
     @abstractmethod
     def name(self) -> str:
