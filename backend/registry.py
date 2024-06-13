@@ -7,8 +7,11 @@ from backend.graphs import *
 from backend.aggregations import *
 from backend.serializers import *
 from backend.events import *
+from backend.validators import *
+
 
 Lock = threading.Lock()
+
 
 RegisteredNodes = {entry.__name__: entry for entry in [Node,
                                                        SumNode,
@@ -65,18 +68,14 @@ RegisteredEvents = {entry.__name__: entry for entry in [NodePreInstanced,
 InitializedNodes = {}
 
 
-def register_node_instance(name: str, instance: BaseNode):
-    if not isinstance(name, str):
-        raise ValueError("node name must be a string")
+def register_runtime_node(instance: BaseNode, name: str):
+    validate_node_name(name)
 
-    with Lock:
-        if name in InitializedNodes:
-            name = f"{name}_{len(InitializedNodes)}"
+    if name in InitializedNodes:
+        name = f"{name}_{len(InitializedNodes)}"
 
-        instance.name = name
-        InitializedNodes[instance.name] = instance
-
-    return instance
+    InitializedNodes[name] = instance
+    return name
 
 
 def register_custom_attribute(instance: BaseAttribute) -> type:
