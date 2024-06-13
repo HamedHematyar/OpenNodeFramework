@@ -4,6 +4,7 @@ from functools import wraps
 from enum import Enum
 
 from backend.logger import logger
+from backend.meta import SingletonMeta
 
 
 class EventExecutionPhase(Enum):
@@ -255,18 +256,6 @@ class GraphPostRemoved(Event):
 
     def __init__(self):
         super().__init__()
-
-
-class SingletonMeta(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            instance = super().__call__(*args, **kwargs)
-            cls._instances[cls] = instance
-            logger.debug(f"{cls.__name__} instance initialized : {instance}")
-
-        return cls._instances[cls]
 
 
 class EventManager(metaclass=SingletonMeta):
