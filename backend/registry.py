@@ -65,19 +65,6 @@ RegisteredEvents = {entry.__name__: entry for entry in [NodePreInstanced,
                                                         ]}
 
 
-InitializedNodes = {}
-
-
-def register_runtime_node(instance: BaseNode, name: str):
-    validate_node_name(name)
-
-    if name in InitializedNodes:
-        name = f"{name}_{len(InitializedNodes)}"
-
-    InitializedNodes[name] = instance
-    return name
-
-
 def register_custom_attribute(instance: BaseAttribute) -> type:
     subclass: type = type(instance.name.capitalize(), (instance.__class__,), {})
     RegisteredAttributes.update({subclass.__name__: subclass})
