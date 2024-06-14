@@ -43,6 +43,14 @@ def attribute_name_validator(instance, name) -> bool:
     return True
 
 
+def port_name_validator(instance, name) -> bool:
+    if not isinstance(name, str):
+        warnings.warn(f'port name must be a string, not {type(name)}.')
+        return False
+
+    return True
+
+
 class ExampleValidator(BaseValidator):
     def validate(self, data: int) -> bool:
         return bool(data)
