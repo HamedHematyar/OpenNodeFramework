@@ -1,74 +1,61 @@
 import typing as t
+import enum
 from backend.bases import BaseAttribute
 
 
-class String(BaseAttribute):
+class GenericStr(BaseAttribute):
+    valid_types = (str, )
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def set_value(self, value):
-        if not isinstance(value, str):
-            raise TypeError(f'attribute value must be a str.')
 
-        super().set_value(value)
-
-
-class Integer(BaseAttribute):
+class GenericInt(BaseAttribute):
     valid_types = (int, float)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
 
-class List(BaseAttribute):
+class GenericList(BaseAttribute):
+    valid_types = (list, tuple, set)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def set_value(self, value):
-        if not isinstance(value, list):
-            raise TypeError(f'attribute value must be a list.')
 
-        super().set_value(value)
+class GenericEnum(BaseAttribute):
+    valid_types = (enum.Enum, )
 
-
-class Enumeration(BaseAttribute):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self._options: t.Optional[t.List[t.Any]] = None
+        self._options: t.Optional[t.List[t.Any]] = []
 
-    def initialize(self, name, options):
-        super().initialize(name, options)
-
-        self.set_options(options)
-        self.set_value(options[0])
-
-        return self
+        'options' in kwargs and self.set_options(kwargs.get('options'))
 
     def get_options(self):
         return self._options
 
     def set_options(self, options):
-        if not isinstance(options, list):
-            raise TypeError(f'options is not an instance of {list}.')
-
-        if options:
-            raise ValueError(f'no valid options are given : {options}')
+        if not issubclass(options, enum.Enum):
+            raise TypeError(f'options is not a subclass of {enum.Enum}.')
 
         self._options = options
 
+    def del_options(self):
+        self._options.clear()
 
-class TypeAttribute(BaseAttribute):
+
+class DataTypeEnum(GenericEnum):
+    class DataType(enum.Enum):
+        Str = str
+        Int = int
+        Float = float
+        Bool = bool
+
     def __init__(self, **kwargs):
+        kwargs['options'] = self.DataType
+
         super().__init__(**kwargs)
 
-    def set_value(self, value):
-        if isinstance(value, str):
-            value = eval(value)
-
-        if value not in [str,
-                         int,
-                         list]:
-            raise TypeError(f'attribute value is not valid.')
-
-        super().set_value(value.__name__)
