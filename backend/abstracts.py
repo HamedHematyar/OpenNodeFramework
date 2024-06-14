@@ -48,6 +48,11 @@ class AbstractAttribute(metaclass=EntityTrackerMeta):
     def set_value(self, value: t.Any):
         """This sets the value of the attribute."""
 
+    @classmethod
+    @abstractmethod
+    def serializer(cls):
+        """This returns class serializer instance."""
+
 
 class AbstractPort(metaclass=EntityTrackerMeta):
     TYPE = EntityType.Port
@@ -84,6 +89,11 @@ class AbstractPort(metaclass=EntityTrackerMeta):
     def __del__(self):
         """This method is called when this class is deleted."""
 
+    @classmethod
+    @abstractmethod
+    def serializer(cls):
+        """This returns class serializer instance."""
+
 
 class AbstractNode(metaclass=EntityTrackerMeta):
     TYPE = EntityType.Node
@@ -94,6 +104,11 @@ class AbstractNode(metaclass=EntityTrackerMeta):
 
     def __del__(self):
         """This method is called when this class is deleted."""
+
+    @classmethod
+    @abstractmethod
+    def serializer(cls):
+        """This returns class serializer instance."""
 
 
 class AbstractGraph(metaclass=EntityTrackerMeta):
@@ -111,3 +126,8 @@ class AbstractGraph(metaclass=EntityTrackerMeta):
 
     def __del__(self):
         """This method is called when this class is deleted."""
+
+    @classmethod
+    @abstractmethod
+    def serializer(cls):
+        """This returns class serializer instance."""
