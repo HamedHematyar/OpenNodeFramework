@@ -512,6 +512,7 @@ class BaseGraph(AbstractGraph):
 
         value.parent = self
         self.__graphs = value
+
     @classmethod
     def create(cls, *args, **kwargs):
         return cls().initialize(*args, **kwargs)
