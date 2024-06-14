@@ -8,26 +8,26 @@ from backend import registry
 class AbstractJsonSerializer(ABC):
     @abstractmethod
     def serialize(self, instance: t.Any) -> t.Dict[str, t.Any]:
-        raise NotImplementedError('this method is not implemented in subclass.')
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     @abstractmethod
     def deserialize(self, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
-        raise NotImplementedError('this method is not implemented in subclass.')
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     @abstractmethod
     def dump(self, obj: t.Any, file_path: str):
-        raise NotImplementedError('this method is not implemented in subclass.')
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     def load(self, file_path: str):
-        raise NotImplementedError('this method is not implemented in subclass.')
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     @staticmethod
     def _encode(obj) -> t.Dict[str, t.Any]:
-        raise NotImplementedError('this method is not implemented in subclass.')
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     @staticmethod
     def _decode(data: t.Dict[str, t.Any]) -> t.Any:
-        raise NotImplementedError('this method is not implemented in subclass.')
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
 
 class JsonSerializer(AbstractJsonSerializer):
