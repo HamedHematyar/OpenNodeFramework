@@ -22,6 +22,10 @@ class AbstractAttribute(metaclass=EntityTrackerMeta):
         """This method is called when this class is deleted."""
 
     @abstractmethod
+    def identifier(self):
+        """This returns the identifier of the attribute."""
+
+    @abstractmethod
     def get_name(self) -> str:
         """This returns the name of the attribute."""
 
@@ -34,14 +38,14 @@ class AbstractAttribute(metaclass=EntityTrackerMeta):
         """This deletes the name of the attribute."""
 
     @abstractmethod
-    def get_node(self) -> 'AbstractNode':
+    def get_parent(self) -> 'AbstractNode':
         """This returns the value of the parent node."""
 
     @abstractmethod
-    def set_node(self, node: 'AbstractNode') -> bool:
+    def set_parent(self, node: 'AbstractNode') -> bool:
         """This sets the value of the parent node."""
     @abstractmethod
-    def del_node(self):
+    def del_parent(self):
         """This deletes the value of the parent node."""
 
     @abstractmethod
@@ -132,12 +136,16 @@ class AbstractPort(metaclass=EntityTrackerMeta):
 class AbstractNode(metaclass=EntityTrackerMeta):
     entity_type = EntityType.Node
 
+    def __del__(self):
+        """This method is called when this class is deleted."""
+
+    @abstractmethod
+    def identifier(self):
+        """This returns the identifier of the attribute."""
+
     @abstractmethod
     def data(self) -> t.Optional[t.Any]:
         """This method computes the node data"""
-
-    def __del__(self):
-        """This method is called when this class is deleted."""
 
     @classmethod
     @abstractmethod
