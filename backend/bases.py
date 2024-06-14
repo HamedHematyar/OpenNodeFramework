@@ -57,7 +57,7 @@ class BaseAttribute(AbstractAttribute):
         self._value: t.Optional[t.Any] = None
 
     def __str__(self):
-        return f"{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}"
+        return f'{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}'
 
     @register_events_decorator([AttributePreRemoved, AttributePostRemoved])
     def __del__(self):
@@ -115,7 +115,7 @@ class BaseAttribute(AbstractAttribute):
 
     def set_value(self, value):
         if self.link is not None:
-            raise LinkedAttributeError("attribute value is linked and cannot be changed directly")
+            raise LinkedAttributeError('attribute value is linked and cannot be changed directly')
 
         self._value = value
 
@@ -192,7 +192,7 @@ class BasePort(AbstractPort):
         self.connections: BasePortCollection[BasePort] = BasePortCollection()
 
     def __str__(self):
-        return f"{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}"
+        return f'{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}'
 
     @register_events_decorator([PortPreRemoved, PortPostRemoved])
     def __del__(self):
