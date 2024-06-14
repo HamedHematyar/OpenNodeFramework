@@ -28,13 +28,13 @@ class InstanceManager(metaclass=SingletonMeta):
         self._instances = {}
 
     def add_instance(self, cls, instance):
-        if cls.TYPE not in self._instances:
-            self._instances[cls.TYPE] = {}
+        if cls.entity_type not in self._instances:
+            self._instances[cls.entity_type] = {}
 
-        if cls not in self._instances[cls.TYPE]:
-            self._instances[cls.TYPE][cls] = []
+        if cls not in self._instances[cls.entity_type]:
+            self._instances[cls.entity_type][cls] = []
 
-        self._instances[cls.TYPE][cls].append(instance)
+        self._instances[cls.entity_type][cls].append(instance)
 
     def instances(self):
         return self._instances
