@@ -53,6 +53,11 @@ class AbstractAttribute(metaclass=EntityTrackerMeta):
     def serializer(cls):
         """This returns class serializer instance."""
 
+    @classmethod
+    @abstractmethod
+    def create(cls, *args, **kwargs):
+        """This returns initialized class instance."""
+
 
 class AbstractPort(metaclass=EntityTrackerMeta):
     TYPE = EntityType.Port
@@ -94,6 +99,11 @@ class AbstractPort(metaclass=EntityTrackerMeta):
     def serializer(cls):
         """This returns class serializer instance."""
 
+    @classmethod
+    @abstractmethod
+    def create(cls, *args, **kwargs):
+        """This returns initialized class instance."""
+
 
 class AbstractNode(metaclass=EntityTrackerMeta):
     TYPE = EntityType.Node
@@ -109,6 +119,11 @@ class AbstractNode(metaclass=EntityTrackerMeta):
     @abstractmethod
     def serializer(cls):
         """This returns class serializer instance."""
+
+    @classmethod
+    @abstractmethod
+    def create(cls, *args, **kwargs):
+        """This returns initialized class instance."""
 
 
 class AbstractGraph(metaclass=EntityTrackerMeta):
@@ -131,3 +146,8 @@ class AbstractGraph(metaclass=EntityTrackerMeta):
     @abstractmethod
     def serializer(cls):
         """This returns class serializer instance."""
+
+    @classmethod
+    @abstractmethod
+    def create(cls, *args, **kwargs):
+        """This returns initialized class instance."""
