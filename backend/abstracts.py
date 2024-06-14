@@ -94,6 +94,10 @@ class AbstractPort(metaclass=EntityTrackerMeta):
         """This method is called when this class is deleted."""
 
     @abstractmethod
+    def identifier(self):
+        """This returns the identifier of the port."""
+
+    @abstractmethod
     def get_name(self) -> str:
         """This should return the name of the port."""
 
@@ -150,7 +154,7 @@ class AbstractNode(metaclass=EntityTrackerMeta):
 
     @abstractmethod
     def identifier(self):
-        """This returns the identifier of the attribute."""
+        """This returns the identifier of the node."""
 
     @abstractmethod
     def data(self) -> t.Optional[t.Any]:
@@ -170,6 +174,13 @@ class AbstractNode(metaclass=EntityTrackerMeta):
 class AbstractGraph(metaclass=EntityTrackerMeta):
     entity_type = EntityType.Graph
 
+    def __del__(self):
+        """This method is called when this class is deleted."""
+
+    @abstractmethod
+    def identifier(self):
+        """This returns the identifier of the graph."""
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -179,9 +190,6 @@ class AbstractGraph(metaclass=EntityTrackerMeta):
     @abstractmethod
     def name(self, name: str):
         """This sets the name of the graph."""
-
-    def __del__(self):
-        """This method is called when this class is deleted."""
 
     @classmethod
     @abstractmethod
