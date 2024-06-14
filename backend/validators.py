@@ -1,3 +1,4 @@
+import warnings
 import typing as t
 from functools import wraps
 from abc import ABC, abstractmethod
@@ -15,12 +16,10 @@ class BaseValidator(AbstractValidator):
         return bool(data)
 
 
-def validate(validator: t.Union[t.Callable[[t.Any], bool], BaseValidator]):
+def validate(validator: t.Union[t.Callable, BaseValidator]):
     def decorator(func: t.Callable):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            data = args[0]
-
             if isinstance(validator, BaseValidator):
                 validation_func = validator.validate
             elif callable(validator):
@@ -28,20 +27,24 @@ def validate(validator: t.Union[t.Callable[[t.Any], bool], BaseValidator]):
             else:
                 raise TypeError(f'validator must be a callable or an instance of {BaseValidator}.')
 
-            if validation_func(data):
-                raise ValueError(f'validation failed : {validation_func} : {data}')
+            if not validation_func(*args, **kwargs):
+                return False
 
             return func(*args, **kwargs)
-
         return wrapper
-
     return decorator
 
 
-def is_validate(data: int) -> bool:
-    return bool(data)
+def attribute_name_validator(instance, name) -> bool:
+    if not isinstance(name, str):
+        warnings.warn(f'attribute name must be a string, not {type(name)}.')
+        return False
+
+    return True
 
 
-class PositiveValidator(BaseValidator):
+class ExampleValidator(BaseValidator):
     def validate(self, data: int) -> bool:
         return bool(data)
+
+
