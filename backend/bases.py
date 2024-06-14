@@ -132,6 +132,21 @@ class BaseAttribute(AbstractAttribute):
         from backend.serializers import AttributeSerializer
         return AttributeSerializer()
 
+    def serialize(self):
+        data = {'class': self.__class__.__name__,
+                'name': self.get_name(),
+                'value': self.get_value(),
+                'link': None}
+
+        if self.get_link():
+            data['link'] = {'name': self.get_link().get_name(),
+                            'node': self.get_link().get_node()}
+        return data
+
+    @classmethod
+    def deserialize(cls, **kwargs):
+        return cls(**kwargs)
+
 
 class BaseAttributeCollection(MutableMapping):
     def __init__(self, **kwargs):
