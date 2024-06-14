@@ -8,8 +8,7 @@ from backend.abstracts import (AbstractAttribute,
                                PortType,
                                AbstractGraph)
 from backend.events import *
-from backend.exceptions import *
-from backend.decorators import *
+from backend.validators import *
 
 
 class TypedList(MutableSequence):
@@ -46,15 +45,20 @@ class TypedList(MutableSequence):
 
 class BaseAttribute(AbstractAttribute):
     """
-    A concrete attribute class that implements AbstractAttribute.
+    A base attribute class that implements AbstractAttribute.
     """
 
-    @register_events_decorator([AttributePreInstanced, AttributePostInstanced])
-    def __init__(self):
+    @register_events_decorator([AttributePreInitialized, AttributePostInitialized])
+    def __init__(self, **kwargs):
         self._name: t.Optional[str] = None
-        self._link: t.Optional[t.Any] = None
+        self._link: t.Optional[BaseAttribute] = None
         self._node: t.Optional[BaseNode] = None
         self._value: t.Optional[t.Any] = None
+
+        'name' in kwargs and self.set_name(kwargs.get('name'))
+        'value' in kwargs and self.set_value(kwargs.get('value'))
+        'node' in kwargs and self.set_node(kwargs.get('node'))
+        'link' in kwargs and self.set_link(kwargs.get('link'))
 
     def __str__(self):
         return f'{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}'
@@ -63,65 +67,65 @@ class BaseAttribute(AbstractAttribute):
     def __del__(self):
         super().__del__()
 
-    @register_events_decorator([AttributePreInitialized, AttributePostInitialized])
-    def initialize(self, name, value):
-        self.name = name
-        self.set_value(value)
-
-        return self
-
-    @property
-    def name(self):
+    def get_name(self):
         return self._name
 
-    @name.setter
-    def name(self, value):
-        if not isinstance(value, str):
-            raise TypeError(f'attribute name must be a string.')
+    @validate(attribute_name_validator)
+    def set_name(self, name):
+        self._name = name
+        return True
 
-        self._name = value
+    def del_name(self):
+        del self._name
 
-    @property
-    def link(self):
+    def get_link(self):
         return self._link
 
-    @link.setter
-    def link(self, value: 'BaseAttribute'):
-        if not isinstance(value, BaseAttribute):
-            raise TypeError(f'attribute link {value} is not an instance of {BaseAttribute}')
+    def set_link(self, link: 'BaseAttribute'):
+        if not isinstance(link, BaseAttribute):
+            warnings.warn(f'attribute link {link} is not an instance of {BaseAttribute}')
+            return False
 
-        self._link = value
+        self._link = link
+        return True
 
-    @link.deleter
-    def link(self):
+    def del_link(self):
         self._link = None
 
-    @property
-    def node(self) -> 'BaseNode':
+    def get_node(self) -> 'BaseNode':
         return self._node
 
-    @node.setter
-    def node(self, value: 'BaseNode'):
-        if not isinstance(value, BaseNode):
-            raise TypeError(f'node {value} is not an instance of {BaseNode}')
+    def set_node(self, node: 'BaseNode'):
+        if not isinstance(node, BaseNode):
+            warnings.warn(f'node {node} is not an instance of {BaseNode}')
+            return False
 
-        self._node = value
+        self._node = node
+        return True
+
+    def del_node(self):
+        self._node = None
 
     def get_value(self):
-        if self.link is None:
+        if self.get_link() is None:
             return self._value
         else:
-            return self.link.get_value()
+            return self.get_link().get_value()
 
     def set_value(self, value):
-        if self.link is not None:
-            raise LinkedAttributeError('attribute value is linked and cannot be changed directly')
+        if self.get_link() is not None:
+            logger.warn(f'attribute value is linked and cannot be changed directly : {self.get_link()}')
+            return False
+
+        if not isinstance(value, self.valid_types):
+            logger.warn(f'attribute value must be an instance of {self.valid_types} not {type(value)}.')
+            return False
 
         self._value = value
+        return True
 
-    @classmethod
-    def create(cls, *args, **kwargs):
-        return cls().initialize(*args, **kwargs)
+    def del_value(self):
+        del self._value
 
     @classmethod
     def serializer(cls):
