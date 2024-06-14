@@ -73,6 +73,15 @@ class AbstractAttribute(metaclass=EntityTrackerMeta):
     def serializer(cls):
         """This returns class serializer instance."""
 
+    @abstractmethod
+    def serialize(self):
+        """This return serialized instance data"""
+
+    @classmethod
+    @abstractmethod
+    def deserialize(cls, **kwargs):
+        """This returns deserialized class instance."""
+
 
 class AbstractPort(metaclass=EntityTrackerMeta):
     entity_type = EntityType.Port
