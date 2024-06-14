@@ -58,13 +58,13 @@ class AttributeSerializer(JsonSerializer):
     @staticmethod
     def _encode(obj):
         data = {'class': obj.__class__.__name__,
-                'name': obj.name,
+                'name': obj.get_name(),
                 'value': obj.get_value(),
                 'link': None}
 
-        if obj.link:
-            data['link'] = {'name': obj.link.name,
-                            'node': obj.link.node}
+        if obj.get_link():
+            data['link'] = {'name': obj.get_link().get_name(),
+                            'node': obj.get_link().get_node()}
         return data
 
     @staticmethod
