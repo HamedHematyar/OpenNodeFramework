@@ -1,6 +1,6 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class PortType(Enum):
+class PortType(StrEnum):
     Input = 'input'
     Output = 'output'
