@@ -15,7 +15,8 @@ class EntityType(enum.StrEnum):
 
 
 class AbstractAttribute(metaclass=EntityTrackerMeta):
-    TYPE = EntityType.Attribute
+    entity_type = EntityType.Attribute
+    valid_types = tuple()
 
     def __del__(self):
         """This method is called when this class is deleted."""
@@ -25,7 +26,7 @@ class AbstractAttribute(metaclass=EntityTrackerMeta):
         """This returns the name of the attribute."""
 
     @abstractmethod
-    def set_name(self, name: str):
+    def set_name(self, name: str) -> bool:
         """This sets the name of the attribute."""
 
     @abstractmethod
@@ -37,7 +38,7 @@ class AbstractAttribute(metaclass=EntityTrackerMeta):
         """This returns the value of the parent node."""
 
     @abstractmethod
-    def set_node(self, node: 'AbstractNode'):
+    def set_node(self, node: 'AbstractNode') -> bool:
         """This sets the value of the parent node."""
     @abstractmethod
     def del_node(self):
@@ -48,7 +49,7 @@ class AbstractAttribute(metaclass=EntityTrackerMeta):
         """This returns the linked attribute."""
 
     @abstractmethod
-    def set_link(self, link: 'AbstractAttribute'):
+    def set_link(self, link: 'AbstractAttribute') -> bool:
         """This sets the linked attribute."""
 
     @abstractmethod
@@ -60,7 +61,7 @@ class AbstractAttribute(metaclass=EntityTrackerMeta):
         """This returns the value of the attribute."""
 
     @abstractmethod
-    def set_value(self, value: t.Any):
+    def set_value(self, value: t.Any) -> bool:
         """This sets the value of the attribute."""
 
     @abstractmethod
@@ -72,14 +73,9 @@ class AbstractAttribute(metaclass=EntityTrackerMeta):
     def serializer(cls):
         """This returns class serializer instance."""
 
-    @classmethod
-    @abstractmethod
-    def create(cls, *args, **kwargs):
-        """This returns initialized class instance."""
-
 
 class AbstractPort(metaclass=EntityTrackerMeta):
-    TYPE = EntityType.Port
+    entity_type = EntityType.Port
 
     @property
     @abstractmethod
@@ -125,7 +121,7 @@ class AbstractPort(metaclass=EntityTrackerMeta):
 
 
 class AbstractNode(metaclass=EntityTrackerMeta):
-    TYPE = EntityType.Node
+    entity_type = EntityType.Node
 
     @abstractmethod
     def data(self) -> t.Optional[t.Any]:
@@ -146,7 +142,7 @@ class AbstractNode(metaclass=EntityTrackerMeta):
 
 
 class AbstractGraph(metaclass=EntityTrackerMeta):
-    TYPE = EntityType.Graph
+    entity_type = EntityType.Graph
 
     @property
     @abstractmethod
