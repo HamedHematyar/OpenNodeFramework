@@ -58,4 +58,3 @@ class DataTypeEnum(GenericEnum):
         kwargs['options'] = self.DataType
 
         super().__init__(**kwargs)
-
