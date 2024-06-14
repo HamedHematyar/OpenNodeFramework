@@ -90,47 +90,56 @@ class AbstractAttribute(metaclass=EntityTrackerMeta):
 class AbstractPort(metaclass=EntityTrackerMeta):
     entity_type = EntityType.Port
 
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """This should return the name of the port."""
-    @name.setter
-    @abstractmethod
-    def name(self, name: str):
-        """This should set the name of the port."""
-
-    @property
-    @abstractmethod
-    def mode(self) -> t.Optional[PortType]:
-        """This should return the mode of the port."""
-
-    @mode.setter
-    @abstractmethod
-    def mode(self, _type: PortType):
-        """This should set the mode of the port."""
-
-    @property
-    @abstractmethod
-    def node(self) -> t.Optional['AbstractNode']:
-        """This should return the node of the port."""
-
-    @node.setter
-    @abstractmethod
-    def node(self, node: 'AbstractNode'):
-        """This should set the node of the port."""
-
     def __del__(self):
         """This method is called when this class is deleted."""
+
+    @abstractmethod
+    def get_name(self) -> str:
+        """This should return the name of the port."""
+
+    @abstractmethod
+    def set_name(self, name: str):
+        """This should set the name of the port."""
+
+    def del_name(self):
+        """This deletes the name of the port."""
+
+    @abstractmethod
+    def get_mode(self) -> t.Optional[PortType]:
+        """This should return the mode of the port."""
+
+    @abstractmethod
+    def set_mode(self, _type: PortType):
+        """This should set the mode of the port."""
+
+    def del_mode(self):
+        """This deletes the mode of the port."""
+
+    @abstractmethod
+    def get_parent(self) -> t.Optional['AbstractNode']:
+        """This should return the parent of the port."""
+
+    @abstractmethod
+    def set_parent(self, node: 'AbstractNode'):
+        """This should set the parent of the port."""
+
+    @abstractmethod
+    def del_parent(self):
+        """This deletes the parent of the port."""
 
     @classmethod
     @abstractmethod
     def serializer(cls):
         """This returns class serializer instance."""
 
+    @abstractmethod
+    def serialize(self):
+        """This return serialized instance data"""
+
     @classmethod
     @abstractmethod
-    def create(cls, *args, **kwargs):
-        """This returns initialized class instance."""
+    def deserialize(cls, **kwargs):
+        """This returns deserialized class instance."""
 
 
 class AbstractNode(metaclass=EntityTrackerMeta):
