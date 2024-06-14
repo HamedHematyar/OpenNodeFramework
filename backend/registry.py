@@ -65,15 +65,8 @@ RegisteredEvents = {entry.__name__: entry for entry in [NodePreInstanced,
                                                         ]}
 
 
-def register_custom_attribute(instance: BaseAttribute) -> type:
-    subclass: type = type(instance.name.capitalize(), (instance.__class__,), {})
-    RegisteredAttributes.update({subclass.__name__: subclass})
+def register_custom_attribute(cls: t.Type[BaseAttribute]) -> t.Type[BaseAttribute]:
+    RegisteredAttributes.update({cls.__name__: cls})
+    logger.debug(f'new attribute has been registered: {cls.__name__}')
 
-    logger.debug(f"new attribute has been registered : {subclass}")
-    return subclass
-
-
-def register_custom_attributes():
-    for entry in os.scandir("../custom/attributes"):
-        loaded_attribute = AttributeSerializer().load(entry.path)
-        register_custom_attribute(loaded_attribute)
+    return cls
