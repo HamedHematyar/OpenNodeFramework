@@ -1,11 +1,9 @@
-import os
 import threading
 
 from backend.attributes import *
 from backend.nodes import *
 from backend.graphs import *
 from backend.aggregations import *
-from backend.serializers import *
 from backend.events import *
 from backend.validators import *
 
@@ -18,9 +16,9 @@ RegisteredNodes = {entry.__name__: entry for entry in [Node,
                                                        ParameterNode
                                                        ]}
 
-RegisteredAttributes: t.Dict[str, type] = {entry.__name__: entry for entry in [String,
-                                                                               Integer,
-                                                                               List,
+RegisteredAttributes: t.Dict[str, type] = {entry.__name__: entry for entry in [GenericStr,
+                                                                               GenericInt,
+                                                                               GenericList,
                                                                                ]}
 
 RegisteredPorts = {entry.__name__: entry for entry in [InputPort,
