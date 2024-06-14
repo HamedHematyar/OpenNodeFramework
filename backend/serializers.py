@@ -48,9 +48,6 @@ class JsonSerializer(AbstractJsonSerializer):
 
 class AttributeSerializer(JsonSerializer):
 
-    def deserialize(self, data: t.Dict[str, t.Any], *args, **kwargs):
-        return super().deserialize(data)
-
     @staticmethod
     def _encode(obj):
         return obj.serialize()
@@ -96,39 +93,13 @@ class AttributeCollectionSerializer(JsonSerializer):
 
 class PortSerializer(JsonSerializer):
 
-    def deserialize(self, data: t.Dict[str, t.Any], node=None, *args, **kwargs) -> t.Any:
-        instance = super().deserialize(data)
-
-        if node:
-            instance.node = node
-
-        # TODO deserialize port connections
-        return instance
-
     @staticmethod
     def _encode(obj):
-        connections = []
-
-        for connection in obj.connections:
-            connections.append({'node': connection.node.name,
-                                'mode': connection.mode.value,
-                                'name': connection.name})
-
-        data = {'class': obj.__class__.__name__,
-                'mode': obj.mode.value,
-                'name': obj.name,
-                'connections': connections}
-
-        return data
+        return obj.serialize()
 
     @staticmethod
     def _decode(data):
-        from backend.enums import PortType
-        mode = getattr(PortType, data['mode'].capitalize())
-        instance = registry.RegisteredPorts[data['class']]().initialize(data['name'], mode)
-
-        # TODO deserialize port connections
-        return instance
+        return registry.RegisteredPorts[data['class']]().deserialize(**data)
 
 
 class PortCollectionSerializer(JsonSerializer):
@@ -148,7 +119,7 @@ class PortCollectionSerializer(JsonSerializer):
     def _encode(obj):
         entries = []
         for entry in obj:
-            entries.append(PortSerializer().serialize(entry))
+            entries.append(entry.serializer().serialize(entry))
 
         data = {'class': obj.__class__.__name__,
                 'entries': entries}
@@ -160,7 +131,7 @@ class PortCollectionSerializer(JsonSerializer):
         instance = registry.RegisteredCollections[data['class']]()
 
         for entry_data in data['entries']:
-            instance.append(PortSerializer().deserialize(entry_data))
+            instance.append(registry.RegisteredPorts[entry_data['class']].serializer().deserialize(entry_data))
 
         return instance
 
