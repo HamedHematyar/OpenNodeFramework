@@ -1,6 +1,6 @@
 from backend.enums import PortType
 from backend.bases import BaseNode
-from backend.attributes import TypeAttribute, Integer
+from backend.attributes import DataTypeEnum, GenericInt
 from backend.aggregations import AttributeCollection, PortCollection
 from backend.ports import OutputPort, InputPort
 from backend.events import *
@@ -23,8 +23,8 @@ class ParameterNode(Node):
         self.inputs = PortCollection()
         self.outputs = PortCollection()
 
-        self.attributes.add(TypeAttribute().initialize('type', int))
-        self.attributes.add(Integer().initialize('value', int()))
+        self.attributes.add(DataTypeEnum(name='type'))
+        self.attributes.add(GenericInt(name='value', value=int()))
 
         self.outputs.append(OutputPort().initialize('product', PortType.Output))
 
