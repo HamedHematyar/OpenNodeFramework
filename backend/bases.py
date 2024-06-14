@@ -11,7 +11,7 @@ from backend.events import *
 from backend.validators import *
 
 
-class TypedList(MutableSequence):
+class TypedSequence(MutableSequence):
     def __init__(self, types: tuple):
         super().__init__()
 
@@ -267,7 +267,7 @@ class BasePort(AbstractPort):
         return PortSerializer()
 
 
-class BasePortCollection(TypedList):
+class BasePortCollection(TypedSequence):
     def __init__(self):
         super().__init__(self.__class__.__mro__)
 
@@ -416,7 +416,7 @@ class BaseNode(AbstractNode):
         return NodeSerializer()
 
 
-class BaseNodeCollection(TypedList):
+class BaseNodeCollection(TypedSequence):
     def __init__(self):
         super().__init__(self.__class__.__mro__)
 
@@ -527,7 +527,7 @@ class BaseGraph(AbstractGraph):
         return GraphSerializer()
 
 
-class BaseGraphCollection(TypedList):
+class BaseGraphCollection(TypedSequence):
     def __init__(self):
         super().__init__(self.__class__.__mro__)
 
