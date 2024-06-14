@@ -18,7 +18,7 @@ def register_events_decorator(events):
         @wraps(func)
         def wrapped(*args, **kwargs):
             for event in [event for event in events if event.Phase == EventExecutionPhase.Pre]:
-                EventManager().trigger(event)
+                EventManager().trigger(event, *args, **kwargs)
 
             result = func(*args, **kwargs)
 
