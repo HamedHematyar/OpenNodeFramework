@@ -17,28 +17,43 @@ class EntityType(enum.StrEnum):
 class AbstractAttribute(metaclass=EntityTrackerMeta):
     TYPE = EntityType.Attribute
 
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """This returns the name of the attribute."""
-
-    @name.setter
-    @abstractmethod
-    def name(self, name: str):
-        """This sets the name of the attribute."""
-
-    @property
-    @abstractmethod
-    def node(self) -> 'AbstractNode':
-        """This returns the value of the parent node."""
-
-    @node.setter
-    @abstractmethod
-    def node(self, value: 'AbstractNode'):
-        """This sets the value of the parent node."""
-
     def __del__(self):
         """This method is called when this class is deleted."""
+
+    @abstractmethod
+    def get_name(self) -> str:
+        """This returns the name of the attribute."""
+
+    @abstractmethod
+    def set_name(self, name: str):
+        """This sets the name of the attribute."""
+
+    @abstractmethod
+    def del_name(self):
+        """This deletes the name of the attribute."""
+
+    @abstractmethod
+    def get_node(self) -> 'AbstractNode':
+        """This returns the value of the parent node."""
+
+    @abstractmethod
+    def set_node(self, node: 'AbstractNode'):
+        """This sets the value of the parent node."""
+    @abstractmethod
+    def del_node(self):
+        """This deletes the value of the parent node."""
+
+    @abstractmethod
+    def get_link(self) -> 'AbstractAttribute':
+        """This returns the linked attribute."""
+
+    @abstractmethod
+    def set_link(self, link: 'AbstractAttribute'):
+        """This sets the linked attribute."""
+
+    @abstractmethod
+    def del_link(self):
+        """This deletes the linked attribute."""
 
     @abstractmethod
     def get_value(self) -> t.Any:
@@ -47,6 +62,10 @@ class AbstractAttribute(metaclass=EntityTrackerMeta):
     @abstractmethod
     def set_value(self, value: t.Any):
         """This sets the value of the attribute."""
+
+    @abstractmethod
+    def del_value(self):
+        """This deletes the value of the attribute."""
 
     @classmethod
     @abstractmethod
