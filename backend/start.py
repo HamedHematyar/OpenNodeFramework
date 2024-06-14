@@ -1,4 +1,5 @@
 from backend import registry
+from custom.attributes import attributes
 
 if __name__ == '__main__':
-    registry.register_custom_attributes()
+    print(registry.RegisteredAttributes)
