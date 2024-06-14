@@ -52,27 +52,33 @@ class BaseAttribute(AbstractAttribute):
     def __init__(self, **kwargs):
         self._name: t.Optional[str] = None
         self._link: t.Optional[BaseAttribute] = None
-        self._node: t.Optional[BaseNode] = None
+        self._parent: t.Optional[BaseNode] = None
         self._value: t.Optional[t.Any] = None
 
         'name' in kwargs and self.set_name(kwargs.get('name'))
         'value' in kwargs and self.set_value(kwargs.get('value'))
-        'node' in kwargs and self.set_node(kwargs.get('node'))
+        'parent' in kwargs and self.set_parent(kwargs.get('parent'))
         'link' in kwargs and self.set_link(kwargs.get('link'))
 
     def __str__(self):
-        return f'{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}'
+        return f'{super().__str__()}\n{json.dumps(self.serialize(), indent=4)}'
 
     @register_events_decorator([AttributePreRemoved, AttributePostRemoved])
     def __del__(self):
         super().__del__()
+
+    def identifier(self):
+        if not self.get_parent():
+            return f'{self.get_name()}'
+
+        return f'{self.get_parent().identifier()}/{self.get_name()}'
 
     def get_name(self):
         return self._name
 
     @validate(attribute_name_validator)
     def set_name(self, name):
-        self._name = name
+        self._name = name.strip().lower().replace(' ', '')
         return True
 
     def del_name(self):
@@ -92,19 +98,19 @@ class BaseAttribute(AbstractAttribute):
     def del_link(self):
         self._link = None
 
-    def get_node(self) -> 'BaseNode':
-        return self._node
+    def get_parent(self) -> 'BaseNode':
+        return self._parent
 
-    def set_node(self, node: 'BaseNode'):
-        if not isinstance(node, BaseNode):
-            warnings.warn(f'node {node} is not an instance of {BaseNode}')
+    def set_parent(self, parent: 'BaseNode'):
+        if not isinstance(parent, BaseNode):
+            warnings.warn(f'parent {parent} is not an instance of {BaseNode}')
             return False
 
-        self._node = node
+        self._parent = parent
         return True
 
-    def del_node(self):
-        self._node = None
+    def del_parent(self):
+        self._parent = None
 
     def get_value(self):
         if self.get_link() is None:
@@ -135,16 +141,23 @@ class BaseAttribute(AbstractAttribute):
     def serialize(self):
         data = {'class': self.__class__.__name__,
                 'name': self.get_name(),
-                'value': self.get_value(),
-                'link': None}
+                'value': self.get_value()}
+
+        if self.get_parent():
+            data['parent'] = self.get_parent().identifier()
 
         if self.get_link():
-            data['link'] = {'name': self.get_link().get_name(),
-                            'node': self.get_link().get_node()}
+            data['link'] = self.get_link().identifier()
+
         return data
 
     @classmethod
     def deserialize(cls, **kwargs):
+        # TODO we need to find associations and set them properly in data dict
+
+        'parent' in kwargs and kwargs.pop('parent')
+        'link' in kwargs and kwargs.pop('link')
+
         return cls(**kwargs)
 
 
@@ -162,7 +175,7 @@ class BaseAttributeCollection(MutableMapping):
             raise TypeError(f'attribute {value} is not an instance of {BaseAttribute}')
 
         if self.node:
-            value.node = self.node
+            value.set_parent(self.node)
 
         self._data[key] = value
 
@@ -186,7 +199,7 @@ class BaseAttributeCollection(MutableMapping):
             self.__setitem__(key, value)
 
     def add(self, attribute: BaseAttribute):
-        self.update(**{attribute.name: attribute})
+        self.update(**{attribute.get_name(): attribute})
 
     @property
     def node(self) -> 'BaseNode':
@@ -350,6 +363,9 @@ class BaseNode(AbstractNode):
     @register_events_decorator([NodePreRemoved, NodePostRemoved])
     def __del__(self):
         super().__del__()
+
+    def identifier(self):
+        return f'{self.name}'
 
     @register_events_decorator([NodePreInitialized, NodePostInitialized])
     def initialize(self, name: str):
