@@ -56,6 +56,13 @@ class BaseAttribute(AbstractAttribute):
         self._node: t.Optional[BaseNode] = None
         self._value: t.Optional[t.Any] = None
 
+    def __str__(self):
+        return f"{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}"
+
+    @register_events_decorator([AttributePreRemoved, AttributePostRemoved])
+    def __del__(self):
+        super().__del__()
+
     @register_events_decorator([AttributePreInitialized, AttributePostInitialized])
     def initialize(self, name, value):
         self.name = name
@@ -100,10 +107,6 @@ class BaseAttribute(AbstractAttribute):
 
         self._node = value
 
-    @register_events_decorator([AttributePreRemoved, AttributePostRemoved])
-    def __del__(self):
-        super().__del__()
-
     def get_value(self):
         if self.link is None:
             return self._value
@@ -115,6 +118,15 @@ class BaseAttribute(AbstractAttribute):
             raise LinkedAttributeError("attribute value is linked and cannot be changed directly")
 
         self._value = value
+
+    @classmethod
+    def create(cls, *args, **kwargs):
+        return cls().initialize(*args, **kwargs)
+
+    @classmethod
+    def serializer(cls):
+        from backend.serializers import AttributeSerializer
+        return AttributeSerializer()
 
 
 class BaseAttributeCollection(MutableMapping):
@@ -179,6 +191,13 @@ class BasePort(AbstractPort):
 
         self.connections: BasePortCollection[BasePort] = BasePortCollection()
 
+    def __str__(self):
+        return f"{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}"
+
+    @register_events_decorator([PortPreRemoved, PortPostRemoved])
+    def __del__(self):
+        super().__del__()
+
     @register_events_decorator([PortPreInitialized, PortPostInitialized])
     def initialize(self, name: str, mode: PortType):
         self.name = name
@@ -219,10 +238,6 @@ class BasePort(AbstractPort):
 
         self.__node = node
 
-    @register_events_decorator([PortPreRemoved, PortPostRemoved])
-    def __del__(self):
-        super().__del__()
-
     def connect_to(self, port):
         self.connections.append(port)
         port.connections.append(self)
@@ -237,6 +252,15 @@ class BasePort(AbstractPort):
         self.connections.pop(index)
 
         return True
+
+    @classmethod
+    def create(cls, *args, **kwargs):
+        return cls().initialize(*args, **kwargs)
+
+    @classmethod
+    def serializer(cls):
+        from backend.serializers import PortSerializer
+        return PortSerializer()
 
 
 class BasePortCollection(TypedList):
@@ -302,8 +326,11 @@ class BaseNode(AbstractNode):
         self.__outputs = None
 
     def __str__(self):
-        from backend.serializers import NodeSerializer
-        return json.dumps(NodeSerializer().serialize(self), indent=4)
+        return f"{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}"
+
+    @register_events_decorator([NodePreRemoved, NodePostRemoved])
+    def __del__(self):
+        super().__del__()
 
     @register_events_decorator([NodePreInitialized, NodePostInitialized])
     def initialize(self, name: str):
@@ -372,12 +399,17 @@ class BaseNode(AbstractNode):
         value.node = self
         self.__outputs = value
 
-    @register_events_decorator([NodePreRemoved, NodePostRemoved])
-    def __del__(self):
-        super().__del__()
-
     def data(self) -> t.Optional[t.Any]:
         return
+
+    @classmethod
+    def create(cls, *args, **kwargs):
+        return cls().initialize(*args, **kwargs)
+
+    @classmethod
+    def serializer(cls):
+        from backend.serializers import NodeSerializer
+        return NodeSerializer()
 
 
 class BaseNodeCollection(TypedList):
@@ -421,6 +453,13 @@ class BaseGraph(AbstractGraph):
         self.__parent = None
         self.__nodes = None
         self.__graphs = None
+
+    def __str__(self):
+        return f"{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}"
+
+    @register_events_decorator([GraphPreRemoved, GraphPostRemoved])
+    def __del__(self):
+        super().__del__()
 
     @register_events_decorator([GraphPreInitialized, GraphPostInitialized])
     def initialize(self, name: str):
@@ -473,10 +512,14 @@ class BaseGraph(AbstractGraph):
 
         value.parent = self
         self.__graphs = value
+    @classmethod
+    def create(cls, *args, **kwargs):
+        return cls().initialize(*args, **kwargs)
 
-    @register_events_decorator([GraphPreRemoved, GraphPostRemoved])
-    def __del__(self):
-        super().__del__()
+    @classmethod
+    def serializer(cls):
+        from backend.serializers import GraphSerializer
+        return GraphSerializer()
 
 
 class BaseGraphCollection(TypedList):
