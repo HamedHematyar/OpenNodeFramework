@@ -166,7 +166,7 @@ class BaseAttributeCollection(MutableMapping):
         super().__init__(**kwargs)
 
         self._data = {}
-        self.__node: t.Optional[BaseNode] = None
+        self._parent: t.Optional[BaseNode] = None
 
         self.update(**kwargs)
 
@@ -174,8 +174,8 @@ class BaseAttributeCollection(MutableMapping):
         if not isinstance(value, BaseAttribute):
             raise TypeError(f'attribute {value} is not an instance of {BaseAttribute}')
 
-        if self.node:
-            value.set_parent(self.node)
+        if self.get_parent():
+            value.set_parent(self.get_parent())
 
         self._data[key] = value
 
@@ -201,27 +201,29 @@ class BaseAttributeCollection(MutableMapping):
     def add(self, attribute: BaseAttribute):
         self.update(**{attribute.get_name(): attribute})
 
-    @property
-    def node(self) -> 'BaseNode':
-        return self.__node
+    def get_parent(self) -> 'BaseNode':
+        return self._parent
 
-    @node.setter
-    def node(self, value: 'BaseNode'):
-        if not isinstance(value, BaseNode):
-            raise TypeError(f'{value} is not an instance of {BaseNode}')
+    def set_parent(self, parent: 'BaseNode'):
+        if not isinstance(parent, BaseNode):
+            raise TypeError(f'{parent} is not an instance of {BaseNode}')
 
-        self.__node = value
+        self._parent = parent
 
 
 class BasePort(AbstractPort):
 
-    @register_events_decorator([PortPreInstanced, PortPostInstanced])
-    def __init__(self):
-        self.__name: t.Optional[str] = None
-        self.__mode: t.Optional[PortType] = None
-        self.__node: t.Optional[BaseNode] = None
+    @register_events_decorator([PortPreInitialized, PortPostInitialized])
+    def __init__(self, **kwargs):
+        self._name: t.Optional[str] = None
+        self._mode: t.Optional[PortType] = None
+        self._parent: t.Optional[BaseNode] = None
 
         self.connections: BasePortCollection[BasePort] = BasePortCollection()
+
+        'name' in kwargs and self.set_name(kwargs.get('name'))
+        'mode' in kwargs and self.set_mode(kwargs.get('mode'))
+        'parent' in kwargs and self.set_parent(kwargs.get('parent'))
 
     def __str__(self):
         return f'{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}'
@@ -230,45 +232,46 @@ class BasePort(AbstractPort):
     def __del__(self):
         super().__del__()
 
-    @register_events_decorator([PortPreInitialized, PortPostInitialized])
-    def initialize(self, name: str, mode: PortType):
-        self.name = name
-        self.mode = mode
+    def identifier(self):
+        if not self.get_parent():
+            return f'{self.get_name()}'
 
-        return self
+        return f'{self.get_parent().identifier()}/{self.get_name()}'
 
-    @property
-    def name(self) -> str:
-        return self.__name
+    def get_name(self) -> str:
+        return self._name
 
-    @name.setter
-    def name(self, name: str):
-        if not isinstance(name, str):
-            raise TypeError(f'port {name} is not an instance of {str}')
+    @validate(port_name_validator)
+    def set_name(self, name):
+        self._name = name.strip().lower().replace(' ', '')
+        return True
 
-        self.__name = name
+    def del_name(self):
+        del self._name
 
-    @property
-    def mode(self) -> PortType | None:
-        return self.__mode
+    def get_mode(self) -> PortType | None:
+        return self._mode
 
-    @mode.setter
-    def mode(self, mode: PortType):
+    def set_mode(self, mode: PortType):
         if not isinstance(mode, PortType):
             raise TypeError(f'port type {mode} is not an instance of {PortType}')
 
-        self.__mode = mode
+        self._mode = mode
 
-    @property
-    def node(self) -> t.Optional['BaseNode']:
-        return self.__node
+    def del_mode(self):
+        del self._mode
 
-    @node.setter
-    def node(self, node: 'BaseNode'):
-        if not isinstance(node, BaseNode):
-            raise TypeError(f'node {node} is not an instance of {BaseNode}')
+    def get_parent(self) -> t.Optional['BaseNode']:
+        return self._parent
 
-        self.__node = node
+    def set_parent(self, parent: 'BaseNode'):
+        if not isinstance(parent, BaseNode):
+            raise TypeError(f'parent {parent} is not an instance of {BaseNode}')
+
+        self._parent = parent
+
+    def del_parent(self):
+        self._parent = None
 
     def connect_to(self, port):
         self.connections.append(port)
@@ -286,20 +289,42 @@ class BasePort(AbstractPort):
         return True
 
     @classmethod
-    def create(cls, *args, **kwargs):
-        return cls().initialize(*args, **kwargs)
-
-    @classmethod
     def serializer(cls):
         from backend.serializers import PortSerializer
         return PortSerializer()
+
+    def serialize(self):
+        connections = []
+
+        for connection in self.connections:
+            connections.append(connection.identifier())
+
+        data = {'class': self.__class__.__name__,
+                'mode': str(self.get_mode()),
+                'name': self.get_name(),
+                'connections': connections}
+
+        if self.get_parent():
+            data['parent'] = self.get_parent().identifier()
+
+        return data
+
+    @classmethod
+    def deserialize(cls, **kwargs):
+        # TODO we need to find associations and set them properly in data dict
+
+        'parent' in kwargs and kwargs.pop('parent')
+        'connections' in kwargs and kwargs.pop('connections')
+
+        kwargs['mode'] = getattr(PortType, kwargs['mode'].capitalize())
+        return cls(**kwargs)
 
 
 class BasePortCollection(TypedSequence):
     def __init__(self):
         super().__init__(self.__class__.__mro__)
 
-        self.__node: t.Optional[BaseNode] = None
+        self._parent: t.Optional[BaseNode] = None
 
     def __setitem__(self, idx, value):
         if value in self:
@@ -307,8 +332,8 @@ class BasePortCollection(TypedSequence):
 
         super().__setitem__(idx, value)
 
-        if self.node:
-            value.node = self.node
+        if self.get_parent():
+            value.set_parent(self.get_parent())
 
     def insert(self, idx, value):
         if value in self:
@@ -316,19 +341,17 @@ class BasePortCollection(TypedSequence):
 
         super().insert(idx, value)
 
-        if self.node:
-            value.node = self.node
+        if self.get_parent():
+            value.set_parent(self.get_parent())
 
-    @property
-    def node(self) -> 'BaseNode':
-        return self.__node
+    def get_parent(self) -> 'BaseNode':
+        return self._parent
 
-    @node.setter
-    def node(self, value: 'BaseNode'):
-        if not isinstance(value, BaseNode):
-            raise TypeError(f'graph {value} is not an instance of {BaseNode}')
+    def set_node(self, parent: 'BaseNode'):
+        if not isinstance(parent, BaseNode):
+            raise TypeError(f'parent {parent} is not an instance of {BaseNode}')
 
-        self.__node = value
+        self._parent = parent
 
     def connect_to(self, port_index, port_instance):
         return self[port_index].connect_to(port_instance)
