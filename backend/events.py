@@ -33,19 +33,19 @@ def register_events_decorator(events):
 class AbstractEvent(ABC):
     @abstractmethod
     def __str__(self) -> str:
-        raise NotImplementedError('this method is not implemented in subclass.')
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     @abstractmethod
     def register(self, callback: t.Callable) -> bool:
-        raise NotImplementedError('this method is not implemented in subclass.')
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     @abstractmethod
     def deregister(self, callback: t.Callable) -> bool:
-        raise NotImplementedError('this method is not implemented in subclass.')
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     @abstractmethod
     def trigger(self, callback: t.Callable) -> bool:
-        raise NotImplementedError('this method is not implemented in subclass.')
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
 
 class Event:
@@ -62,17 +62,17 @@ class Event:
 
     def register_callback(self, callback: t.Callable) -> bool:
         if not callable(callback):
-            raise TypeError(f"callback must be a callable function : {type(callback)}")
+            raise TypeError(f'callback must be a callable function : {type(callback)}')
 
         self._callbacks.append(callback)
         return True
 
     def deregister_callback(self, callback: t.Callable) -> bool:
         if not callable(callback):
-            raise TypeError(f"callback must be a callable function : {type(callback)}")
+            raise TypeError(f'callback must be a callable function : {type(callback)}')
 
         if callback not in self._callbacks:
-            raise KeyError(f"callback {callback} is not registered.")
+            raise KeyError(f'callback {callback} is not registered.')
 
         self._callbacks.remove(callback)
         return True
