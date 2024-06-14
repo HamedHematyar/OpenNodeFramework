@@ -3,8 +3,8 @@ from backend.bases import BaseAttribute
 
 
 class String(BaseAttribute):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def set_value(self, value):
         if not isinstance(value, str):
@@ -14,19 +14,15 @@ class String(BaseAttribute):
 
 
 class Integer(BaseAttribute):
-    def __init__(self):
-        super().__init__()
+    valid_types = (int, float)
 
-    def set_value(self, value):
-        if not isinstance(value, (int, float)):
-            raise TypeError(f'attribute value must be a int.')
-
-        super().set_value(value)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 class List(BaseAttribute):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def set_value(self, value):
         if not isinstance(value, list):
@@ -36,8 +32,8 @@ class List(BaseAttribute):
 
 
 class Enumeration(BaseAttribute):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         self._options: t.Optional[t.List[t.Any]] = None
 
@@ -63,8 +59,8 @@ class Enumeration(BaseAttribute):
 
 
 class TypeAttribute(BaseAttribute):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def set_value(self, value):
         if isinstance(value, str):
