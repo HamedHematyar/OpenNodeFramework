@@ -48,31 +48,16 @@ class JsonSerializer(AbstractJsonSerializer):
 
 class AttributeSerializer(JsonSerializer):
 
-    def deserialize(self, data: t.Dict[str, t.Any], node=None, *args, **kwargs):
-        instance = super().deserialize(data)
-        if node:
-            instance.node = node
-
-        return instance
+    def deserialize(self, data: t.Dict[str, t.Any], *args, **kwargs):
+        return super().deserialize(data)
 
     @staticmethod
     def _encode(obj):
-        data = {'class': obj.__class__.__name__,
-                'name': obj.get_name(),
-                'value': obj.get_value(),
-                'link': None}
-
-        if obj.get_link():
-            data['link'] = {'name': obj.get_link().get_name(),
-                            'node': obj.get_link().get_node()}
-        return data
+        return obj.serialize()
 
     @staticmethod
     def _decode(data):
-        instance = registry.RegisteredAttributes[data['class']]().initialize(data['name'], data['value'])
-
-        # TODO deserialize attribute link
-        return instance
+        return registry.RegisteredAttributes[data['class']]().deserialize(**data)
 
 
 class AttributeCollectionSerializer(JsonSerializer):
