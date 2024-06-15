@@ -55,7 +55,8 @@ class BaseAttribute(AbstractAttribute):
         self._parent: t.Optional[BaseNode] = None
         self._value: t.Optional[t.Any] = None
 
-        'name' in kwargs and self.set_name(kwargs.get('name'))
+        self.set_name(kwargs.get('name'))
+
         'value' in kwargs and self.set_value(kwargs.get('value'))
         'parent' in kwargs and self.set_parent(kwargs.get('parent'))
         'link' in kwargs and self.set_link(kwargs.get('link'))
@@ -247,7 +248,8 @@ class BasePort(AbstractPort):
 
         self.connections: BasePortCollection[BasePort] = BasePortCollection()
 
-        'name' in kwargs and self.set_name(kwargs.get('name'))
+        self.set_name(kwargs.get('name'))
+
         'mode' in kwargs and self.set_mode(kwargs.get('mode'))
         'parent' in kwargs and self.set_parent(kwargs.get('parent'))
 

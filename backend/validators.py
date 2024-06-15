@@ -37,16 +37,14 @@ def validate(validator: t.Union[t.Callable, BaseValidator]):
 
 def attribute_name_validator(instance, name) -> bool:
     if not isinstance(name, str):
-        warnings.warn(f'attribute name must be a string, not {type(name)}.')
-        return False
+        raise ValueError('attribute name must be a valid string.')
 
     return True
 
 
 def port_name_validator(instance, name) -> bool:
     if not isinstance(name, str):
-        warnings.warn(f'port name must be a string, not {type(name)}.')
-        return False
+        raise ValueError('port name must be a valid string.')
 
     return True
 
