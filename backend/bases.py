@@ -210,6 +210,32 @@ class BaseAttributeCollection(MutableMapping):
 
         self._parent = parent
 
+    @classmethod
+    def serializer(cls):
+        from backend.serializers import AttributeCollectionSerializer
+        return AttributeCollectionSerializer()
+
+    def serialize(self):
+        entries = []
+        for key, attr in self.items():
+            entries.append(attr.serializer().serialize(attr))
+
+        data = {'class': self.__class__.__name__,
+                'entries': entries}
+
+        return data
+
+    @classmethod
+    def deserialize(cls, data):
+        from backend.registry import RegisteredAttributes
+        instance = cls()
+
+        for entry_data in data['entries']:
+            instance.add(RegisteredAttributes[entry_data['class']].serializer().deserialize(entry_data))
+
+        # TODO we need to set parent of collection and all entries
+        return instance
+
 
 class BasePort(AbstractPort):
 

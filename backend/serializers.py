@@ -54,41 +54,18 @@ class AttributeSerializer(JsonSerializer):
 
     @staticmethod
     def _decode(data):
-        return registry.RegisteredAttributes[data['class']]().deserialize(**data)
+        return registry.RegisteredAttributes[data['class']].deserialize(**data)
 
 
 class AttributeCollectionSerializer(JsonSerializer):
 
-    def deserialize(self, data: t.Dict[str, t.Any], node=None, *args, **kwargs) -> t.Any:
-        instance = super().deserialize(data)
-
-        if node:
-            instance.node = node
-
-            for entry in instance.node.attributes.values():
-                entry.node = node
-
-        return instance
-
     @staticmethod
     def _encode(obj):
-        entries = []
-        for key, attr in obj.items():
-            entries.append(AttributeSerializer().serialize(attr))
-
-        data = {'class': obj.__class__.__name__,
-                'entries': entries}
-
-        return data
+        return obj.serialize()
 
     @staticmethod
     def _decode(data):
-        instance = registry.RegisteredCollections[data['class']]()
-
-        for entry_data in data['entries']:
-            instance.add(AttributeSerializer().deserialize(entry_data))
-
-        return instance
+        return registry.RegisteredCollections[data['class']].deserialize(data)
 
 
 class PortSerializer(JsonSerializer):
@@ -99,7 +76,7 @@ class PortSerializer(JsonSerializer):
 
     @staticmethod
     def _decode(data):
-        return registry.RegisteredPorts[data['class']]().deserialize(**data)
+        return registry.RegisteredPorts[data['class']].deserialize(**data)
 
 
 class PortCollectionSerializer(JsonSerializer):
