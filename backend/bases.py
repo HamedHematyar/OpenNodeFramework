@@ -521,7 +521,7 @@ class BasePort(SerializableMixin, AbstractPort):
 
     def connect_to(self, port):
         self._connections.append(port)
-        port._connections.append(self)
+        port.get_connections().append(self)
 
         return True
 
