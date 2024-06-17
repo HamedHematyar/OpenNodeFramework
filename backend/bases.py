@@ -1,26 +1,26 @@
 import json
+import enum
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableSequence
 
 from backend.abstracts import (AbstractAttribute,
                                AbstractNode,
                                AbstractPort,
-                               PortType,
                                AbstractGraph,
                                AbstractMappingCollection,
-                               SerializableMixin)
+                               AbstractSerializableMixin)
 from backend.events import *
 from backend.validators import *
 
 
-class BaseSerializable(SerializableMixin):
+class SerializableMixin(AbstractSerializableMixin):
 
     @classmethod
     def serializer(cls):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     def serialize(self):
-        serializable = self.attributes + self.identities + self.associations
+        serializable = set(self.attributes + self.identities + self.associations)
 
         data = {key: getattr(self, f'get_{key}')(serialize=True) for key in serializable}
         return data
@@ -82,7 +82,7 @@ class TypedSequence(MutableSequence):
         return str(self.internal_data)
 
 
-class BaseAttribute(BaseSerializable, AbstractAttribute):
+class BaseAttribute(SerializableMixin, AbstractAttribute):
     """
     A base attribute class that implements AbstractAttribute.
     """
@@ -130,12 +130,6 @@ class BaseAttribute(BaseSerializable, AbstractAttribute):
 
     def get_id(self, serialize=False):
         return self._id
-
-    def set_id(self, _id):
-        self._id = _id
-
-    def del_id(self):
-        self._id = None
 
     def get_name(self, serialize=False):
         return self._name
@@ -333,11 +327,11 @@ class BaseMappingCollection(AbstractMappingCollection):
         return list(self.values())
 
     @classmethod
-    def find_entries(cls, ids_):
+    def find_entries(cls, ids):
         entries = []
         from backend.meta import InstanceManager
 
-        for id_ in ids_:
+        for id_ in ids:
             instance = InstanceManager().get_instance(id_)
             if instance:
                 entries.append(instance)
@@ -345,7 +339,7 @@ class BaseMappingCollection(AbstractMappingCollection):
         return entries
 
 
-class BaseAttributeCollection(BaseSerializable, BaseMappingCollection):
+class BaseAttributeCollection(SerializableMixin, BaseMappingCollection):
 
     identities = ['class',
                   ]
@@ -365,20 +359,37 @@ class BaseAttributeCollection(BaseSerializable, BaseMappingCollection):
         return AttributeCollectionSerializer()
 
 
-class BasePort(AbstractPort):
+class PortType(enum.StrEnum):
+    INPUT = 'INPUT'
+    OUTPUT = 'OUTPUT'
+
+
+class BasePort(SerializableMixin, AbstractPort):
+
+    identities = ['class',
+                  'type',
+                  'id']
+
+    attributes = ['name',
+                  'mode',
+                  'parent',
+                  ]
+
+    associations = ['parent',
+                    'connections']
 
     @register_events_decorator([PortPreInitialized, PortPostInitialized])
     def __init__(self, **kwargs):
+        self._id = kwargs.pop('id')
+
         self._name: t.Optional[str] = None
         self._mode: t.Optional[PortType] = None
         self._parent: t.Optional[BaseNode] = None
+        self._connections: t.Optional[BasePortCollection[BasePort]] = None
 
-        self.connections: BasePortCollection[BasePort] = BasePortCollection()
-
-        self.set_name(kwargs.get('name'))
-
-        'mode' in kwargs and self.set_mode(kwargs.get('mode'))
-        'parent' in kwargs and self.set_parent(kwargs.get('parent'))
+        for key in self.attributes:
+            if key in kwargs:
+                getattr(self, f'set_{key}')(kwargs[key])
 
     def __str__(self):
         return f'{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}'
@@ -387,59 +398,139 @@ class BasePort(AbstractPort):
     def __del__(self):
         super().__del__()
 
-    def identifier(self):
-        if not self.get_parent():
-            return f'{self.get_name()}'
+    def get_class(self, serialize=False):
+        if serialize:
+            return self.__class__.__name__
 
-        return f'{self.get_parent().identifier()}/{self.get_name()}'
+        return self.__class__
 
-    def get_name(self) -> str:
+    def get_type(self, serialize=False):
+        return self.entity_type.value
+
+    def get_id(self, serialize=False):
+        return self._id
+
+    def set_id(self, _id):
+        self._id = _id
+
+    def del_id(self):
+        self._id = None
+
+    def get_name(self, serialize=False):
         return self._name
 
-    @validate(port_name_validator)
     def set_name(self, name):
-        self._name = name.strip().lower().replace(' ', '')
+        if not self.validate_name(name):
+            return False
+
+        self._name = name
         return True
 
     def del_name(self):
-        del self._name
+        self._name = None
 
-    def get_mode(self) -> PortType | None:
-        return self._mode
+    def validate_name(self, name):
+        return port_name_validator(self, name)
 
-    def set_mode(self, mode: PortType):
-        if not isinstance(mode, PortType):
-            raise TypeError(f'port type {mode} is not an instance of {PortType}')
+    def get_parent(self, serialize=False):
+        if not self._parent:
+            return
 
-        self._mode = mode
+        if serialize:
+            return self._parent.get_id()
 
-    def del_mode(self):
-        del self._mode
-
-    def get_parent(self) -> t.Optional['BaseNode']:
         return self._parent
 
     def set_parent(self, parent: 'BaseNode'):
-        if not isinstance(parent, BaseNode):
-            raise TypeError(f'parent {parent} is not an instance of {BaseNode}')
+        if not self.validate_parent(parent):
+            return False
 
         self._parent = parent
+        return True
 
     def del_parent(self):
         self._parent = None
 
+    @classmethod
+    def find_parent(cls, id_):
+        from backend.meta import InstanceManager
+        return InstanceManager().get_instance(id_)
+
+    def validate_parent(self, parent):
+        if not isinstance(parent, BaseNode):
+            logger.warn(f'parent {parent} is not an instance of {BaseNode}')
+            return False
+
+        return True
+
+    def get_mode(self, serialize=False):
+        if serialize:
+            return self._mode.value
+
+        return self._mode
+
+    def set_mode(self, mode):
+        if isinstance(mode, str):
+            mode = getattr(PortType, mode)
+
+        if not self.validate_mode(mode):
+            return False
+
+        self._mode = mode
+        return True
+
+    def del_mode(self):
+        self._mode = None
+
+    def validate_mode(self, mode):
+        if not isinstance(mode, PortType):
+            logger.warn(f'port type {mode} is not an instance of {PortType}')
+            return False
+
+        return True
+
+    def get_connections(self, serialize=False):
+        if serialize:
+            return [connection.get_id() for connection in self._connections]
+
+        return self._connections
+
+    def set_connections(self, connections):
+        if not self.validate_connections(connections):
+            return False
+
+        self._connections = connections
+        return True
+
+    def del_connections(self):
+        self._connections = None
+
+    def validate_connections(self, connections):
+        return True
+
+    def find_connections(self, ids):
+        connections = []
+        from backend.meta import InstanceManager
+
+        for id_ in ids:
+            instance = InstanceManager().get_instance(id_)
+            if instance:
+                connections.append(instance)
+
+        return connections
+
     def connect_to(self, port):
-        self.connections.append(port)
-        port.connections.append(self)
+        self._connections.append(port)
+        port._connections.append(self)
 
         return True
 
     def has_connections(self):
-        return bool(len(self.connections))
+        return bool(len(self.get_connections()))
 
     def disconnect(self, index):
-        self.connections[index].connections.remove(self)
-        self.connections.pop(index)
+        self._connections[index].get_connections().remove(self)
+        self._connections.pop(index)
 
         return True
 
@@ -447,32 +538,6 @@ class BasePort(AbstractPort):
     def serializer(cls):
         from backend.serializers import PortSerializer
         return PortSerializer()
-
-    def serialize(self):
-        connections = []
-
-        for connection in self.connections:
-            connections.append(connection.identifier())
-
-        data = {'class': self.__class__.__name__,
-                'mode': str(self.get_mode()),
-                'name': self.get_name(),
-                'connections': connections}
-
-        if self.get_parent():
-            data['parent'] = self.get_parent().identifier()
-
-        return data
-
-    @classmethod
-    def deserialize(cls, **kwargs):
-        # TODO we need to find associations and set them properly in data dict
-
-        'parent' in kwargs and kwargs.pop('parent')
-        'connections' in kwargs and kwargs.pop('connections')
-
-        kwargs['mode'] = getattr(PortType, kwargs['mode'].capitalize())
-        return cls(**kwargs)
 
 
 class BasePortCollection(TypedSequence):
