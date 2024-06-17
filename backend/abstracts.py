@@ -44,19 +44,19 @@ class AbstractEntityMixin:
         """This method is called when this class is deleted."""
 
     @abstractmethod
-    def get_type(self, to_string=False):
+    def get_type(self, serialize=False):
         """This returns the type of the entity."""
 
     @abstractmethod
-    def get_class(self, to_string=False):
+    def get_class(self, serialize=False):
         """This returns the class of the entity."""
 
     @abstractmethod
-    def get_id(self, to_string=False):
+    def get_id(self, serialize=False):
         """This returns the id of the entity."""
 
     @abstractmethod
-    def get_name(self, to_string=False):
+    def get_name(self, serialize=False):
         """This returns the name of the entity."""
 
     @abstractmethod
@@ -72,7 +72,7 @@ class AbstractEntityMixin:
         """This validates the name of the entity."""
 
     @abstractmethod
-    def get_parent(self, to_string=False):
+    def get_parent(self, serialize=False):
         """This returns the parent node."""
 
     @abstractmethod
@@ -93,7 +93,7 @@ class AbstractAttribute(AbstractEntityMixin, SerializableMixin, metaclass=Entity
     valid_types = tuple()
 
     @abstractmethod
-    def get_link(self, to_string=False):
+    def get_link(self, serialize=False):
         """This returns the linked attribute."""
 
     @abstractmethod
@@ -109,7 +109,7 @@ class AbstractAttribute(AbstractEntityMixin, SerializableMixin, metaclass=Entity
         """This validates the linked attribute."""
 
     @abstractmethod
-    def get_value(self, to_string=False):
+    def get_value(self, serialize=False):
         """This returns the value of the attribute."""
 
     @abstractmethod
