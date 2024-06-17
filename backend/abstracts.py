@@ -14,39 +14,63 @@ class EntityType(enum.StrEnum):
     Graph: str = enum.auto()
 
 
-class AbstractAttribute(metaclass=EntityTrackerMeta):
-    entity_type = EntityType.Attribute
-    valid_types = tuple()
+class SerializableMixin:
+    @classmethod
+    @abstractmethod
+    def serializer(cls):
+        """This returns class serializer instance."""
+
+    @abstractmethod
+    def serialize(self):
+        """This return serialized instance data"""
+
+    @classmethod
+    @abstractmethod
+    def deserialize(cls, **kwargs):
+        """This returns deserialized class instance."""
+
+
+class AbstractEntityMixin:
 
     def __del__(self):
         """This method is called when this class is deleted."""
 
     @abstractmethod
-    def identifier(self):
-        """This returns the identifier of the attribute."""
+    def get_type(self):
+        """This returns the type of the entity."""
+
+    @abstractmethod
+    def get_id(self) -> str:
+        """This returns the id of the entity."""
 
     @abstractmethod
     def get_name(self) -> str:
-        """This returns the name of the attribute."""
+        """This returns the name of the entity."""
 
     @abstractmethod
     def set_name(self, name: str) -> bool:
-        """This sets the name of the attribute."""
+        """This sets the name of the entity."""
 
     @abstractmethod
     def del_name(self):
-        """This deletes the name of the attribute."""
+        """This deletes the name of the entity."""
 
     @abstractmethod
-    def get_parent(self) -> 'AbstractNode':
-        """This returns the value of the parent node."""
+    def get_parent(self):
+        """This returns the parent node."""
 
     @abstractmethod
-    def set_parent(self, node: 'AbstractNode') -> bool:
-        """This sets the value of the parent node."""
+    def set_parent(self, parent) -> bool:
+        """This sets the parent node."""
+
     @abstractmethod
     def del_parent(self):
-        """This deletes the value of the parent node."""
+        """This deletes the parent node."""
+
+
+class AbstractAttribute(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrackerMeta):
+    entity_type = EntityType.Attribute
+    valid_types = tuple()
 
     @abstractmethod
     def get_link(self) -> 'AbstractAttribute':
@@ -72,41 +96,9 @@ class AbstractAttribute(metaclass=EntityTrackerMeta):
     def del_value(self):
         """This deletes the value of the attribute."""
 
-    @classmethod
-    @abstractmethod
-    def serializer(cls):
-        """This returns class serializer instance."""
 
-    @abstractmethod
-    def serialize(self):
-        """This return serialized instance data"""
-
-    @classmethod
-    @abstractmethod
-    def deserialize(cls, **kwargs):
-        """This returns deserialized class instance."""
-
-
-class AbstractPort(metaclass=EntityTrackerMeta):
+class AbstractPort(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrackerMeta):
     entity_type = EntityType.Port
-
-    def __del__(self):
-        """This method is called when this class is deleted."""
-
-    @abstractmethod
-    def identifier(self):
-        """This returns the identifier of the port."""
-
-    @abstractmethod
-    def get_name(self) -> str:
-        """This should return the name of the port."""
-
-    @abstractmethod
-    def set_name(self, name: str):
-        """This should set the name of the port."""
-
-    def del_name(self):
-        """This deletes the name of the port."""
 
     @abstractmethod
     def get_mode(self) -> t.Optional[PortType]:
@@ -119,84 +111,14 @@ class AbstractPort(metaclass=EntityTrackerMeta):
     def del_mode(self):
         """This deletes the mode of the port."""
 
-    @abstractmethod
-    def get_parent(self) -> t.Optional['AbstractNode']:
-        """This should return the parent of the port."""
 
-    @abstractmethod
-    def set_parent(self, node: 'AbstractNode'):
-        """This should set the parent of the port."""
-
-    @abstractmethod
-    def del_parent(self):
-        """This deletes the parent of the port."""
-
-    @classmethod
-    @abstractmethod
-    def serializer(cls):
-        """This returns class serializer instance."""
-
-    @abstractmethod
-    def serialize(self):
-        """This return serialized instance data"""
-
-    @classmethod
-    @abstractmethod
-    def deserialize(cls, **kwargs):
-        """This returns deserialized class instance."""
-
-
-class AbstractNode(metaclass=EntityTrackerMeta):
+class AbstractNode(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrackerMeta):
     entity_type = EntityType.Node
-
-    def __del__(self):
-        """This method is called when this class is deleted."""
-
-    @abstractmethod
-    def identifier(self):
-        """This returns the identifier of the node."""
 
     @abstractmethod
     def data(self) -> t.Optional[t.Any]:
         """This method computes the node data"""
 
-    @classmethod
-    @abstractmethod
-    def serializer(cls):
-        """This returns class serializer instance."""
 
-    @classmethod
-    @abstractmethod
-    def create(cls, *args, **kwargs):
-        """This returns initialized class instance."""
-
-
-class AbstractGraph(metaclass=EntityTrackerMeta):
+class AbstractGraph(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrackerMeta):
     entity_type = EntityType.Graph
-
-    def __del__(self):
-        """This method is called when this class is deleted."""
-
-    @abstractmethod
-    def identifier(self):
-        """This returns the identifier of the graph."""
-
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """This returns the name of the graph."""
-
-    @name.setter
-    @abstractmethod
-    def name(self, name: str):
-        """This sets the name of the graph."""
-
-    @classmethod
-    @abstractmethod
-    def serializer(cls):
-        """This returns class serializer instance."""
-
-    @classmethod
-    @abstractmethod
-    def create(cls, *args, **kwargs):
-        """This returns initialized class instance."""
