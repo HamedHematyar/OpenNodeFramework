@@ -7,6 +7,7 @@ from backend.abstracts import (AbstractAttribute,
                                AbstractPort,
                                PortType,
                                AbstractGraph,
+                               AbstractMappingCollection,
                                SerializableMixin)
 from backend.events import *
 from backend.validators import *
@@ -21,26 +22,28 @@ class BaseSerializable(SerializableMixin):
     def serialize(self):
         serializable = self.attributes + self.identities + self.associations
 
-        data = {key: getattr(self, f'get_{key}')(to_string=True) for key in serializable}
+        data = {key: getattr(self, f'get_{key}')(serialize=True) for key in serializable}
         return data
 
     @classmethod
-    def deserialize(cls, associations=True, **kwargs):
+    def deserialize(cls, **kwargs):
+        associations = kwargs.pop('associations', False)
+        associations_kwargs = {}
+
+        for key in cls.associations + cls.identities:
+            if key in kwargs:
+                associations_kwargs[key] = kwargs.pop(key)
+
         instance = cls(**kwargs)
 
         if associations:
-            instance.deserialize_associations(**kwargs)
+            instance.deserialize_associations(**associations_kwargs)
 
         return instance
 
     def deserialize_associations(self, **kwargs):
-        associations_kwargs = {}
         for key in self.associations:
-            if key in kwargs:
-                associations_kwargs[key] = kwargs.pop(key)
-
-        for key in self.associations:
-            value = getattr(self, f'find_{key}')(associations_kwargs.get(f'{key}'))
+            value = getattr(self, f'find_{key}')(kwargs.get(f'{key}'))
             if value:
                 getattr(self, f'set_{key}')(value)
 
@@ -98,7 +101,7 @@ class BaseAttribute(BaseSerializable, AbstractAttribute):
 
     @register_events_decorator([AttributePreInitialized, AttributePostInitialized])
     def __init__(self, **kwargs):
-        self._id = kwargs.get('id')
+        self._id = kwargs.pop('id')
 
         self._name: t.Optional[str] = None
         self._link: t.Optional[BaseAttribute] = None
@@ -107,7 +110,7 @@ class BaseAttribute(BaseSerializable, AbstractAttribute):
 
         for key in self.attributes:
             if key in kwargs:
-                getattr(self, f'get_{key}')()
+                getattr(self, f'set_{key}')(kwargs[key])
 
     def __str__(self):
         return f'{super().__str__()}\n{json.dumps(self.serialize(), indent=4)}'
@@ -116,16 +119,16 @@ class BaseAttribute(BaseSerializable, AbstractAttribute):
     def __del__(self):
         super().__del__()
 
-    def get_class(self, to_string=False):
-        if to_string:
+    def get_class(self, serialize=False):
+        if serialize:
             return self.__class__.__name__
 
         return self.__class__
 
-    def get_type(self, to_string=False):
+    def get_type(self, serialize=False):
         return self.entity_type.value
 
-    def get_id(self, to_string=False):
+    def get_id(self, serialize=False):
         return self._id
 
     def set_id(self, _id):
@@ -134,7 +137,7 @@ class BaseAttribute(BaseSerializable, AbstractAttribute):
     def del_id(self):
         self._id = None
 
-    def get_name(self, to_string=False):
+    def get_name(self, serialize=False):
         return self._name
 
     def set_name(self, name):
@@ -150,11 +153,11 @@ class BaseAttribute(BaseSerializable, AbstractAttribute):
     def validate_name(self, name):
         return attribute_name_validator(self, name)
 
-    def get_parent(self, to_string=False):
+    def get_parent(self, serialize=False):
         if not self._parent:
             return
 
-        if to_string:
+        if serialize:
             return self._parent.get_id()
 
         return self._parent
@@ -181,11 +184,11 @@ class BaseAttribute(BaseSerializable, AbstractAttribute):
 
         return True
 
-    def get_link(self, to_string=False):
+    def get_link(self, serialize=False):
         if not self._link:
             return
 
-        if to_string:
+        if serialize:
             return self._link.get_id()
 
         return self._link
@@ -212,7 +215,7 @@ class BaseAttribute(BaseSerializable, AbstractAttribute):
         from backend.meta import InstanceManager
         return InstanceManager().get_instance(id_)
 
-    def get_value(self, to_string=False):
+    def get_value(self, serialize=False):
         if self.get_link() is None:
             return self._value
         else:
@@ -245,23 +248,20 @@ class BaseAttribute(BaseSerializable, AbstractAttribute):
         return AttributeSerializer()
 
 
-class BaseAttributeCollection(MutableMapping):
+class BaseMappingCollection(AbstractMappingCollection):
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         self._data = {}
         self._parent: t.Optional[BaseNode] = None
 
-        self.update(**kwargs)
+    def __setitem__(self, key: str, value):
+        if self.validate_item(key, value):
+            if self.get_parent():
+                value.set_parent(self.get_parent())
 
-    def __setitem__(self, key: str, value: BaseAttribute):
-        if not isinstance(value, BaseAttribute):
-            raise TypeError(f'attribute {value} is not an instance of {BaseAttribute}')
-
-        if self.get_parent():
-            value.set_parent(self.get_parent())
-
-        self._data[key] = value
+            self._data[key] = value
 
     def __getitem__(self, key):
         return self._data[key]
@@ -282,43 +282,87 @@ class BaseAttributeCollection(MutableMapping):
         for key, value in kwargs.items():
             self.__setitem__(key, value)
 
-    def add(self, attribute: BaseAttribute):
-        self.update(**{attribute.get_name(): attribute})
+    def validate_item(self, key, item):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    def get_parent(self) -> 'BaseNode':
+    def get_parent(self, serialize=False):
+        if serialize:
+            return self._parent.get_id()
+
         return self._parent
 
-    def set_parent(self, parent: 'BaseNode'):
-        if not isinstance(parent, BaseNode):
-            raise TypeError(f'{parent} is not an instance of {BaseNode}')
+    def set_parent(self, parent):
+        if not self.validate_parent(parent):
+            return False
 
         self._parent = parent
+        return True
+
+    def del_parent(self):
+        self._parent = None
+
+    def validate_parent(self, parent):
+        if not isinstance(parent, BaseNode):
+            logger.warn(f'{parent} is not an instance of {BaseNode}')
+
+        return True
+
+    def get_class(self, serialize=False):
+        if serialize:
+            return self.__class__.__name__
+
+        return self.__class__
+
+    def add_entry(self, entry):
+        self.__setitem__(entry.get_name(), entry)
+
+    def add_entries(self, entries):
+        for entry in entries:
+            self.__setitem__(entry.get_name(), entry)
+
+    def set_entries(self, entries: t.Iterable):
+        for entry in entries:
+            self.__setitem__(entry.get_name(), entry)
+
+        return True
+
+    def get_entries(self, serialize=False):
+        if serialize:
+            return [entry.get_id() for entry in self.values()]
+
+        return list(self.values())
+
+    @classmethod
+    def find_entries(cls, ids_):
+        entries = []
+        from backend.meta import InstanceManager
+
+        for id_ in ids_:
+            instance = InstanceManager().get_instance(id_)
+            if instance:
+                entries.append(instance)
+
+        return entries
+
+
+class BaseAttributeCollection(BaseSerializable, BaseMappingCollection):
+
+    identities = ['class',
+                  ]
+
+    associations = ['entries'
+                    ]
+
+    def validate_item(self, key, item):
+        if not isinstance(item, BaseAttribute):
+            logger.warn(f'attribute {item} is not an instance of {BaseAttribute}')
+
+        return True
 
     @classmethod
     def serializer(cls):
         from backend.serializers import AttributeCollectionSerializer
         return AttributeCollectionSerializer()
-
-    def serialize(self):
-        entries = []
-        for key, attr in self.items():
-            entries.append(attr.serializer().serialize(attr))
-
-        data = {'class': self.__class__.__name__,
-                'entries': entries}
-
-        return data
-
-    @classmethod
-    def deserialize(cls, data):
-        from backend.registry import RegisteredAttributes
-        instance = cls()
-
-        for entry_data in data['entries']:
-            instance.add(RegisteredAttributes[entry_data['class']].serializer().deserialize(entry_data))
-
-        # TODO we need to set parent of collection and all entries
-        return instance
 
 
 class BasePort(AbstractPort):
