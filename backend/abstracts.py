@@ -15,6 +15,10 @@ class EntityType(enum.StrEnum):
 
 
 class SerializableMixin:
+    identities = list()
+    attributes = list()
+    associations = list()
+
     @classmethod
     @abstractmethod
     def serializer(cls):
@@ -29,6 +33,10 @@ class SerializableMixin:
     def deserialize(cls, **kwargs):
         """This returns deserialized class instance."""
 
+    @abstractmethod
+    def deserialize_associations(self):
+        """This method deserializes the entity associations and return class instance."""
+
 
 class AbstractEntityMixin:
 
@@ -36,15 +44,19 @@ class AbstractEntityMixin:
         """This method is called when this class is deleted."""
 
     @abstractmethod
-    def get_type(self):
+    def get_type(self, to_string=False):
         """This returns the type of the entity."""
 
     @abstractmethod
-    def get_id(self) -> str:
+    def get_class(self, to_string=False):
+        """This returns the class of the entity."""
+
+    @abstractmethod
+    def get_id(self, to_string=False):
         """This returns the id of the entity."""
 
     @abstractmethod
-    def get_name(self) -> str:
+    def get_name(self, to_string=False):
         """This returns the name of the entity."""
 
     @abstractmethod
@@ -56,7 +68,11 @@ class AbstractEntityMixin:
         """This deletes the name of the entity."""
 
     @abstractmethod
-    def get_parent(self):
+    def validate_name(self, name):
+        """This validates the name of the entity."""
+
+    @abstractmethod
+    def get_parent(self, to_string=False):
         """This returns the parent node."""
 
     @abstractmethod
@@ -67,13 +83,17 @@ class AbstractEntityMixin:
     def del_parent(self):
         """This deletes the parent node."""
 
+    @abstractmethod
+    def validate_parent(self, parent):
+        """This validates the parent node."""
+
 
 class AbstractAttribute(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrackerMeta):
     entity_type = EntityType.Attribute
     valid_types = tuple()
 
     @abstractmethod
-    def get_link(self) -> 'AbstractAttribute':
+    def get_link(self, to_string=False):
         """This returns the linked attribute."""
 
     @abstractmethod
@@ -85,7 +105,11 @@ class AbstractAttribute(AbstractEntityMixin, SerializableMixin, metaclass=Entity
         """This deletes the linked attribute."""
 
     @abstractmethod
-    def get_value(self) -> t.Any:
+    def validate_link(self, link):
+        """This validates the linked attribute."""
+
+    @abstractmethod
+    def get_value(self, to_string=False):
         """This returns the value of the attribute."""
 
     @abstractmethod
@@ -95,6 +119,10 @@ class AbstractAttribute(AbstractEntityMixin, SerializableMixin, metaclass=Entity
     @abstractmethod
     def del_value(self):
         """This deletes the value of the attribute."""
+
+    @abstractmethod
+    def validate_value(self, value):
+        """This validates the value of the attribute."""
 
 
 class AbstractPort(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrackerMeta):
