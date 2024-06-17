@@ -1,5 +1,4 @@
-from backend.enums import PortType
-from backend.bases import BaseNode
+from backend.bases import BaseNode, PortType
 from backend.attributes import DataTypeEnum, GenericInt
 from backend.aggregations import AttributeCollection, PortCollection
 from backend.ports import OutputPort, InputPort
@@ -23,10 +22,10 @@ class ParameterNode(Node):
         self.inputs = PortCollection()
         self.outputs = PortCollection()
 
-        self.attributes.add(DataTypeEnum(name='type'))
-        self.attributes.add(GenericInt(name='value', value=int()))
+        self.attributes.add_entry(DataTypeEnum(name='type'))
+        self.attributes.add_entry(GenericInt(name='value', value=int()))
 
-        self.outputs.append(OutputPort(name='product', mode=PortType.Output))
+        self.outputs.append(OutputPort(name='product', mode=PortType.OUTPUT))
 
     def data(self) -> t.Optional[t.Any]:
         return self.attributes['value'].value
@@ -40,10 +39,10 @@ class SumNode(Node):
         self.inputs = PortCollection()
         self.outputs = PortCollection()
 
-        self.inputs.append(InputPort(name='entry0', mode=PortType.Input))
-        self.inputs.append(InputPort(name='entry1', mode=PortType.Input))
+        self.inputs.append(InputPort(name='entry0', mode=PortType.INPUT))
+        self.inputs.append(InputPort(name='entry1', mode=PortType.INPUT))
 
-        self.outputs.append(OutputPort(name='product', mode=PortType.Output))
+        self.outputs.append(OutputPort(name='product', mode=PortType.OUTPUT))
 
     def data(self) -> t.Optional[t.Any]:
         data = 0
