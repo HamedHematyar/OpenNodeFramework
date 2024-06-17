@@ -4,7 +4,6 @@ import typing as t
 from abc import abstractmethod
 from collections.abc import MutableMapping
 
-from backend.enums import PortType
 from backend.meta import *
 
 
@@ -148,15 +147,18 @@ class AbstractPort(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrack
     entity_type = EntityType.Port
 
     @abstractmethod
-    def get_mode(self) -> t.Optional[PortType]:
+    def get_mode(self, serialize=False):
         """This should return the mode of the port."""
 
     @abstractmethod
-    def set_mode(self, _type: PortType):
+    def set_mode(self, _type):
         """This should set the mode of the port."""
 
     def del_mode(self):
         """This deletes the mode of the port."""
+
+    def validate_mode(self, mode):
+        """This validates the port mode"""
 
 
 class AbstractNode(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrackerMeta):
