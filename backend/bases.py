@@ -349,7 +349,12 @@ class BaseAttributeCollection(SerializableMixin, BaseMappingCollection):
 
     def validate_item(self, key, item):
         if not isinstance(item, BaseAttribute):
-            logger.warn(f'attribute {item} is not an instance of {BaseAttribute}')
+            logger.warn(f'{item} is not an instance of {BaseAttribute}')
+            return False
+
+        if key in self:
+            logger.warn(f'{key}:{item} is already present in the collection')
+            return False
 
         return True
 
@@ -491,7 +496,7 @@ class BasePort(SerializableMixin, AbstractPort):
 
     def get_connections(self, serialize=False):
         if serialize:
-            return [connection.get_id() for connection in self._connections]
+            return [connection.get_id() for connection in self._connections.values()]
 
         return self._connections
 
@@ -520,8 +525,8 @@ class BasePort(SerializableMixin, AbstractPort):
         return connections
 
     def connect_to(self, port):
-        self._connections.append(port)
-        port.get_connections().append(self)
+        self._connections.add_entry(port)
+        port.get_connections().add_entry(self)
 
         return True
 
@@ -540,50 +545,40 @@ class BasePort(SerializableMixin, AbstractPort):
         return PortSerializer()
 
 
-class BasePortCollection(TypedSequence):
-    def __init__(self):
-        super().__init__(self.__class__.__mro__)
+class BasePortCollection(SerializableMixin, BaseMappingCollection):
+    identities = ['class',
+                  ]
 
-        self._parent: t.Optional[BaseNode] = None
+    associations = ['entries'
+                    ]
 
-    def __setitem__(self, idx, value):
-        if value in self:
-            raise ValueError(f'port {value} is already present in the collection')
+    def validate_item(self, key, item):
+        if not isinstance(item, BasePort):
+            logger.warn(f'{item} is not an instance of {BasePort}')
+            return False
 
-        super().__setitem__(idx, value)
+        if key in self:
+            logger.warn(f'{key}:{item} is already present in the collection')
+            return False
 
-        if self.get_parent():
-            value.set_parent(self.get_parent())
+        return True
 
-    def insert(self, idx, value):
-        if value in self:
-            raise ValueError(f'port {value} is already present in the collection')
+    def connect_to(self, key, port_instance):
+        return self[key].connect_to(port_instance)
 
-        super().insert(idx, value)
+    def has_connections(self, key):
+        return self[key].has_connections()
 
-        if self.get_parent():
-            value.set_parent(self.get_parent())
+    def disconnect(self, key: str, connection_index: int = 0):
+        self[key].disconnect(connection_index)
 
-    def get_parent(self) -> 'BaseNode':
-        return self._parent
+    def data(self, key, connection_index: int = 0):
+        return self[key].data(connection_index)
 
-    def set_node(self, parent: 'BaseNode'):
-        if not isinstance(parent, BaseNode):
-            raise TypeError(f'parent {parent} is not an instance of {BaseNode}')
-
-        self._parent = parent
-
-    def connect_to(self, port_index, port_instance):
-        return self[port_index].connect_to(port_instance)
-
-    def has_connections(self, port_index):
-        return self[port_index].has_connections()
-
-    def disconnect(self, port_index: int, connection_index: int = 0):
-        self[port_index].disconnect(connection_index)
-
-    def data(self, port_index, connection_index: int = 0):
-        return self[port_index].data(connection_index)
+    @classmethod
+    def serializer(cls):
+        from backend.serializers import PortCollectionSerializer
+        return PortCollectionSerializer()
 
 
 class BaseNode(AbstractNode):
