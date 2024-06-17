@@ -65,7 +65,7 @@ class AttributeCollectionSerializer(JsonSerializer):
 
     @staticmethod
     def _decode(data):
-        return registry.RegisteredCollections[data['class']].deserialize(data)
+        return registry.RegisteredCollections[data['class']].deserialize(**data)
 
 
 class PortSerializer(JsonSerializer):
