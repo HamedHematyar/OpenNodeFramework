@@ -6,9 +6,45 @@ from backend.abstracts import (AbstractAttribute,
                                AbstractNode,
                                AbstractPort,
                                PortType,
-                               AbstractGraph)
+                               AbstractGraph,
+                               SerializableMixin)
 from backend.events import *
 from backend.validators import *
+
+
+class BaseSerializable(SerializableMixin):
+
+    @classmethod
+    def serializer(cls):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    def serialize(self):
+        serializable = self.attributes + self.identities + self.associations
+
+        data = {key: getattr(self, f'get_{key}')(to_string=True) for key in serializable}
+        return data
+
+    @classmethod
+    def deserialize(cls, associations=True, **kwargs):
+        instance = cls(**kwargs)
+
+        if associations:
+            instance.deserialize_associations(**kwargs)
+
+        return instance
+
+    def deserialize_associations(self, **kwargs):
+        associations_kwargs = {}
+        for key in self.associations:
+            if key in kwargs:
+                associations_kwargs[key] = kwargs.pop(key)
+
+        for key in self.associations:
+            value = getattr(self, f'find_{key}')(associations_kwargs.get(f'{key}'))
+            if value:
+                getattr(self, f'set_{key}')(value)
+
+        return self
 
 
 class TypedSequence(MutableSequence):
@@ -43,23 +79,35 @@ class TypedSequence(MutableSequence):
         return str(self.internal_data)
 
 
-class BaseAttribute(AbstractAttribute):
+class BaseAttribute(BaseSerializable, AbstractAttribute):
     """
     A base attribute class that implements AbstractAttribute.
     """
 
+    identities = ['class',
+                  'type',
+                  'id']
+
+    attributes = ['name',
+                  'value',
+                  'parent',
+                  'link']
+
+    associations = ['parent',
+                    'link']
+
     @register_events_decorator([AttributePreInitialized, AttributePostInitialized])
     def __init__(self, **kwargs):
+        self._id = kwargs.get('id')
+
         self._name: t.Optional[str] = None
         self._link: t.Optional[BaseAttribute] = None
         self._parent: t.Optional[BaseNode] = None
         self._value: t.Optional[t.Any] = None
 
-        self.set_name(kwargs.get('name'))
-
-        'value' in kwargs and self.set_value(kwargs.get('value'))
-        'parent' in kwargs and self.set_parent(kwargs.get('parent'))
-        'link' in kwargs and self.set_link(kwargs.get('link'))
+        for key in self.attributes:
+            if key in kwargs:
+                getattr(self, f'get_{key}')()
 
     def __str__(self):
         return f'{super().__str__()}\n{json.dumps(self.serialize(), indent=4)}'
@@ -68,43 +116,51 @@ class BaseAttribute(AbstractAttribute):
     def __del__(self):
         super().__del__()
 
-    def identifier(self):
-        if not self.get_parent():
-            return f'{self.get_name()}'
+    def get_class(self, to_string=False):
+        if to_string:
+            return self.__class__.__name__
 
-        return f'{self.get_parent().identifier()}/{self.get_name()}'
+        return self.__class__
 
-    def get_name(self):
+    def get_type(self, to_string=False):
+        return self.entity_type.value
+
+    def get_id(self, to_string=False):
+        return self._id
+
+    def set_id(self, _id):
+        self._id = _id
+
+    def del_id(self):
+        self._id = None
+
+    def get_name(self, to_string=False):
         return self._name
 
-    @validate(attribute_name_validator)
     def set_name(self, name):
-        self._name = name.strip().lower().replace(' ', '')
+        if not self.validate_name(name):
+            return False
+
+        self._name = name
         return True
 
     def del_name(self):
-        del self._name
+        self._name = None
 
-    def get_link(self):
-        return self._link
+    def validate_name(self, name):
+        return attribute_name_validator(self, name)
 
-    def set_link(self, link: 'BaseAttribute'):
-        if not isinstance(link, BaseAttribute):
-            warnings.warn(f'attribute link {link} is not an instance of {BaseAttribute}')
-            return False
+    def get_parent(self, to_string=False):
+        if not self._parent:
+            return
 
-        self._link = link
-        return True
+        if to_string:
+            return self._parent.get_id()
 
-    def del_link(self):
-        self._link = None
-
-    def get_parent(self) -> 'BaseNode':
         return self._parent
 
     def set_parent(self, parent: 'BaseNode'):
-        if not isinstance(parent, BaseNode):
-            warnings.warn(f'parent {parent} is not an instance of {BaseNode}')
+        if not self.validate_parent(parent):
             return False
 
         self._parent = parent
@@ -113,13 +169,66 @@ class BaseAttribute(AbstractAttribute):
     def del_parent(self):
         self._parent = None
 
-    def get_value(self):
+    @classmethod
+    def find_parent(cls, id_):
+        from backend.meta import InstanceManager
+        return InstanceManager().get_instance(id_)
+
+    def validate_parent(self, parent):
+        if not isinstance(parent, BaseNode):
+            logger.warn(f'parent {parent} is not an instance of {BaseNode}')
+            return False
+
+        return True
+
+    def get_link(self, to_string=False):
+        if not self._link:
+            return
+
+        if to_string:
+            return self._link.get_id()
+
+        return self._link
+
+    def set_link(self, link: 'BaseAttribute'):
+        if not self.validate_link(link):
+            return False
+
+        self._link = link
+        return True
+
+    def del_link(self):
+        self._link = None
+
+    def validate_link(self, link):
+        if not isinstance(link, BaseAttribute):
+            logger.warn(f'attribute link {link} is not an instance of {BaseAttribute}')
+            return False
+
+        return True
+
+    @classmethod
+    def find_link(cls, id_):
+        from backend.meta import InstanceManager
+        return InstanceManager().get_instance(id_)
+
+    def get_value(self, to_string=False):
         if self.get_link() is None:
             return self._value
         else:
             return self.get_link().get_value()
 
     def set_value(self, value):
+        if not self.validate_value(value):
+            return False
+
+        self._value = value
+        return True
+
+    def del_value(self):
+        self._value = None
+
+    def validate_value(self, value):
         if self.get_link() is not None:
             logger.warn(f'attribute value is linked and cannot be changed directly : {self.get_link()}')
             return False
@@ -128,38 +237,12 @@ class BaseAttribute(AbstractAttribute):
             logger.warn(f'attribute value must be an instance of {self.valid_types} not {type(value)}.')
             return False
 
-        self._value = value
         return True
-
-    def del_value(self):
-        del self._value
 
     @classmethod
     def serializer(cls):
         from backend.serializers import AttributeSerializer
         return AttributeSerializer()
-
-    def serialize(self):
-        data = {'class': self.__class__.__name__,
-                'name': self.get_name(),
-                'value': self.get_value()}
-
-        if self.get_parent():
-            data['parent'] = self.get_parent().identifier()
-
-        if self.get_link():
-            data['link'] = self.get_link().identifier()
-
-        return data
-
-    @classmethod
-    def deserialize(cls, **kwargs):
-        # TODO we need to find associations and set them properly in data dict
-
-        'parent' in kwargs and kwargs.pop('parent')
-        'link' in kwargs and kwargs.pop('link')
-
-        return cls(**kwargs)
 
 
 class BaseAttributeCollection(MutableMapping):
