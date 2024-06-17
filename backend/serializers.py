@@ -81,36 +81,13 @@ class PortSerializer(JsonSerializer):
 
 class PortCollectionSerializer(JsonSerializer):
 
-    def deserialize(self, data: t.Dict[str, t.Any], node=None, *args, **kwargs) -> t.Any:
-        instance = super().deserialize(data)
-
-        if node:
-            instance.node = node
-
-            for entry in instance:
-                entry.node = node
-
-        return instance
-
     @staticmethod
     def _encode(obj):
-        entries = []
-        for entry in obj:
-            entries.append(entry.serializer().serialize(entry))
-
-        data = {'class': obj.__class__.__name__,
-                'entries': entries}
-
-        return data
+        return obj.serialize()
 
     @staticmethod
     def _decode(data):
-        instance = registry.RegisteredCollections[data['class']]()
-
-        for entry_data in data['entries']:
-            instance.append(registry.RegisteredPorts[entry_data['class']].serializer().deserialize(entry_data))
-
-        return instance
+        return registry.RegisteredCollections[data['class']].deserialize(**data)
 
 
 class NodeSerializer(JsonSerializer):
