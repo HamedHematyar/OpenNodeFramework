@@ -14,7 +14,7 @@ class EntityType(enum.StrEnum):
     Graph: str = enum.auto()
 
 
-class SerializableMixin:
+class AbstractSerializableMixin:
     identities = list()
     attributes = list()
     associations = list()
@@ -106,7 +106,7 @@ class AbstractEntityMixin:
         """This validates the parent node."""
 
 
-class AbstractAttribute(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrackerMeta):
+class AbstractAttribute(AbstractEntityMixin, AbstractSerializableMixin, metaclass=EntityTrackerMeta):
     entity_type = EntityType.Attribute
     valid_types = tuple()
 
@@ -143,7 +143,7 @@ class AbstractAttribute(AbstractEntityMixin, SerializableMixin, metaclass=Entity
         """This validates the value of the attribute."""
 
 
-class AbstractPort(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrackerMeta):
+class AbstractPort(AbstractEntityMixin, AbstractSerializableMixin, metaclass=EntityTrackerMeta):
     entity_type = EntityType.Port
 
     @abstractmethod
@@ -161,7 +161,7 @@ class AbstractPort(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrack
         """This validates the port mode"""
 
 
-class AbstractNode(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrackerMeta):
+class AbstractNode(AbstractEntityMixin, AbstractSerializableMixin, metaclass=EntityTrackerMeta):
     entity_type = EntityType.Node
 
     @abstractmethod
@@ -169,5 +169,5 @@ class AbstractNode(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrack
         """This method computes the node data"""
 
 
-class AbstractGraph(AbstractEntityMixin, SerializableMixin, metaclass=EntityTrackerMeta):
+class AbstractGraph(AbstractEntityMixin, AbstractSerializableMixin, metaclass=EntityTrackerMeta):
     entity_type = EntityType.Graph
