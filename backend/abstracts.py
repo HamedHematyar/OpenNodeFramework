@@ -2,6 +2,7 @@ import enum
 import typing as t
 
 from abc import abstractmethod
+from collections.abc import MutableMapping
 
 from backend.enums import PortType
 from backend.meta import *
@@ -36,6 +37,24 @@ class SerializableMixin:
     @abstractmethod
     def deserialize_associations(self):
         """This method deserializes the entity associations and return class instance."""
+
+
+class AbstractMappingCollection(MutableMapping):
+    @abstractmethod
+    def get_parent(self, serialize=False):
+        """This returns the parent node."""
+
+    @abstractmethod
+    def set_parent(self, parent) -> bool:
+        """This sets the parent node."""
+
+    @abstractmethod
+    def del_parent(self):
+        """This deletes the parent node."""
+
+    @abstractmethod
+    def validate_parent(self, parent):
+        """This validates the parent node."""
 
 
 class AbstractEntityMixin:
