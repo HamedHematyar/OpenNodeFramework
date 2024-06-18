@@ -16,14 +16,14 @@ class EventExecutionPhase(Enum):
 def register_events_decorator(events):
     def decorator(func):
         @wraps(func)
-        def wrapped(*args, **kwargs):
+        def wrapped(instance, **kwargs):
             for event in [event for event in events if event.Phase == EventExecutionPhase.Pre]:
-                EventManager().trigger(event, *args, **kwargs)
+                EventManager().trigger(event, instance, **kwargs)
 
-            result = func(*args, **kwargs)
+            result = func(instance, **kwargs)
 
             for event in [event for event in events if event.Phase == EventExecutionPhase.Post]:
-                EventManager().trigger(event, *args, **kwargs)
+                EventManager().trigger(event, instance, **kwargs)
 
             return result
         return wrapped
@@ -90,20 +90,6 @@ class Event:
         return self._callbacks
 
 
-class NodePreInstanced(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-class NodePostInstanced(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
-
-
 class NodePreInitialized(Event):
     Phase = EventExecutionPhase.Pre
 
@@ -126,20 +112,6 @@ class NodePreRemoved(Event):
 
 
 class NodePostRemoved(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
-
-
-class AttributePreInstanced(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-class AttributePostInstanced(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
@@ -174,20 +146,6 @@ class AttributePostRemoved(Event):
         super().__init__()
 
 
-class PortPreInstanced(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-class PortPostInstanced(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
-
-
 class PortPreInitialized(Event):
     Phase = EventExecutionPhase.Pre
 
@@ -210,20 +168,6 @@ class PortPreRemoved(Event):
 
 
 class PortPostRemoved(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
-
-
-class GraphPreInstanced(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-class GraphPostInstanced(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):

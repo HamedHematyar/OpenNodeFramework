@@ -47,8 +47,8 @@ class InstanceManager(metaclass=SingletonMeta):
     def add_instance(self, instance):
         self._instances[instance.get_id()] = instance
 
-    def remove_instance(self, instance_id):
-        self._instances.pop(instance_id)
+    def remove_instance(self, instance):
+        self._instances.pop(instance.get_id())
 
     def get_instance(self, instance_id):
         return self._instances.get(instance_id)

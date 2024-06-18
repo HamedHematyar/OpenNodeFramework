@@ -34,7 +34,14 @@ class EntitySerializer(AbstractEntitySerializer):
     def _encode(self) -> t.Dict[str, t.Any]:
         serializable = set(self.id_attributes + self.primary_attributes + self.relation_attributes)
 
-        data = {key: getattr(self, f'get_{key}')(serialize=True) for key in serializable}
+        data = {}
+        for key in serializable:
+            getter = getattr(self, f'get_{key}', None)
+            if not getter:
+                continue
+
+            data[key] = getter(serialize=True)
+
         return data
 
     @classmethod
@@ -193,12 +200,12 @@ class BaseAttribute(EntitySerializer, AbstractAttribute):
             if key in kwargs:
                 getattr(self, f'set_{key}')(kwargs[key])
 
-    def __str__(self):
-        return f'{super().__str__()}\n{self.dumps(indent=4)}'
-
     @register_events_decorator([AttributePreRemoved, AttributePostRemoved])
-    def __del__(self):
-        super().__del__()
+    def delete(self):
+        from backend.meta import InstanceManager
+        InstanceManager().remove_instance(self)
+
+        del self
 
     def get_class(self, serialize=False):
         if serialize:
@@ -409,12 +416,12 @@ class BasePort(EntitySerializer, AbstractPort):
             if key in kwargs:
                 getattr(self, f'set_{key}')(kwargs[key])
 
-    def __str__(self):
-        return f'{super().__str__()}\n{self.dumps(indent=4)}'
-
     @register_events_decorator([PortPreRemoved, PortPostRemoved])
-    def __del__(self):
-        super().__del__()
+    def delete(self):
+        from backend.meta import InstanceManager
+        InstanceManager().remove_instance(self)
+
+        del self
 
     def get_class(self, serialize=False):
         if serialize:
@@ -641,12 +648,12 @@ class BaseNode(EntitySerializer, AbstractNode):
             if key in kwargs:
                 getattr(self, f'set_{key}')(kwargs[key])
 
-    def __str__(self):
-        return f'{super().__str__()}\n{self.dumps(indent=4)}'
-
     @register_events_decorator([NodePreRemoved, NodePostRemoved])
-    def __del__(self):
-        super().__del__()
+    def delete(self):
+        from backend.meta import InstanceManager
+        InstanceManager().remove_instance(self)
+
+        del self
 
     def get_class(self, serialize=False):
         if serialize:
@@ -857,25 +864,19 @@ class BaseNodeCollection(EntitySerializer, TypedListCollection):
 
 class BaseGraph(EntitySerializer, AbstractGraph):
 
-    @register_events_decorator([GraphPreInstanced, GraphPostInstanced])
+    @register_events_decorator([GraphPreInitialized, GraphPostInitialized])
     def __init__(self):
         self._name: t.Optional[str] = None
         self.__parent = None
         self.__nodes = None
         self._graphs = None
 
-    def __str__(self):
-        return f'{super().__str__()}\n{self.dumps(indent=4)}'
-
     @register_events_decorator([GraphPreRemoved, GraphPostRemoved])
-    def __del__(self):
-        super().__del__()
+    def delete(self):
+        from backend.meta import InstanceManager
+        InstanceManager().remove_instance(self)
 
-    @register_events_decorator([GraphPreInitialized, GraphPostInitialized])
-    def initialize(self, name: str):
-        self.name = name
-
-        return self
+        del self
 
     @property
     def name(self):
@@ -922,15 +923,6 @@ class BaseGraph(EntitySerializer, AbstractGraph):
 
         value.parent = self
         self._graphs = value
-
-    @classmethod
-    def create(cls, *args, **kwargs):
-        return cls().initialize(*args, **kwargs)
-
-    @classmethod
-    def serializer(cls):
-        from backend.serializers import GraphSerializer
-        return GraphSerializer()
 
 
 class BaseGraphCollection(TypedListCollection):

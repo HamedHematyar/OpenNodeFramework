@@ -100,8 +100,9 @@ class AbstractListCollection(MutableSequence):
 
 class AbstractEntityMixin:
 
-    def __del__(self):
-        """This method is called when this class is deleted."""
+    @abstractmethod
+    def delete(self):
+        """This deletes the entity."""
 
     @abstractmethod
     def get_type(self, serialize=False):

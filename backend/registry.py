@@ -33,29 +33,21 @@ RegisteredCollections = {entry.__name__: entry for entry in [AttributeCollection
 RegisteredGraphs = {entry.__name__: entry for entry in [Graph,
                                                         ]}
 
-RegisteredEvents = {entry.__name__: entry for entry in [NodePreInstanced,
-                                                        NodePostInstanced,
-                                                        NodePreInitialized,
+RegisteredEvents = {entry.__name__: entry for entry in [NodePreInitialized,
                                                         NodePostInitialized,
                                                         NodePreRemoved,
                                                         NodePostRemoved,
 
-                                                        AttributePreInstanced,
-                                                        AttributePostInstanced,
                                                         AttributePreInitialized,
                                                         AttributePostInitialized,
                                                         AttributePreRemoved,
                                                         AttributePostRemoved,
 
-                                                        PortPreInstanced,
-                                                        PortPostInstanced,
                                                         PortPreInitialized,
                                                         PortPostInitialized,
                                                         PortPreRemoved,
                                                         PortPostRemoved,
 
-                                                        GraphPreInstanced,
-                                                        GraphPostInstanced,
                                                         GraphPreInitialized,
                                                         GraphPostInitialized,
                                                         GraphPreRemoved,
