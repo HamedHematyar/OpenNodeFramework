@@ -77,7 +77,7 @@ class ListCollection(AbstractListCollection):
 
     def __setitem__(self, idx, value):
         if self.validate_item(idx, value):
-            value.set_parent(self.get_parent())
+            value.set_parent(self)
             self._internal_data[idx] = value
 
     def __delitem__(self, idx):
@@ -88,7 +88,8 @@ class ListCollection(AbstractListCollection):
 
     def insert(self, idx, value):
         if self.validate_item(idx, value):
-            value.set_parent(self.get_parent())
+
+            value.set_parent(self)
             self._internal_data.insert(idx, value)
 
     def get_class(self, serialize=False):
@@ -155,7 +156,11 @@ class TypedListCollection(ListCollection):
         if not isinstance(item, self.valid_types):
             logger.warn(f'item value must be of type {self.valid_types}')
             return False
-        
+
+        if item in self:
+            logger.warn(f'{index}:{item} is already present in the collection')
+            return False
+
         return True
 
 
@@ -256,7 +261,7 @@ class BaseAttribute(EntitySerializer, AbstractAttribute):
         return InstanceManager().get_instance(id_)
 
     def validate_parent(self, parent):
-        if not isinstance(parent, BaseNode):
+        if not isinstance(parent, BaseAttributeCollection):
             logger.warn(f'parent {parent} is not an instance of {BaseNode}')
             return False
 
@@ -373,17 +378,6 @@ class BaseAttributeCollection(EntitySerializer, TypedListCollection):
 
         return entries
 
-    def validate_item(self, key, item):
-        if not isinstance(item, BaseAttribute):
-            logger.warn(f'{item} is not an instance of {BaseAttribute}')
-            return False
-
-        if key in self:
-            logger.warn(f'{key}:{item} is already present in the collection')
-            return False
-
-        return super().validate_item(key, item)
-
 
 class PortType(enum.StrEnum):
     INPUT = 'INPUT'
@@ -489,7 +483,7 @@ class BasePort(EntitySerializer, AbstractPort):
         return InstanceManager().get_instance(id_)
 
     def validate_parent(self, parent):
-        if not isinstance(parent, BaseNode):
+        if not isinstance(parent, BasePortCollection):
             logger.warn(f'parent {parent} is not an instance of {BaseNode}')
             return False
 
@@ -604,17 +598,6 @@ class BasePortCollection(EntitySerializer, TypedListCollection):
 
         return entries
 
-    def validate_item(self, key, item):
-        if not isinstance(item, BasePort):
-            logger.warn(f'{item} is not an instance of {BasePort}')
-            return False
-
-        if key in self:
-            logger.warn(f'{key}:{item} is already present in the collection')
-            return False
-
-        return super().validate_item(key, item)
-
     def connect_to(self, port_index, port_instance):
         return self[port_index].connect_to(port_instance)
 
@@ -629,8 +612,15 @@ class BasePortCollection(EntitySerializer, TypedListCollection):
 
 
 class BaseNode(EntitySerializer, AbstractNode):
+    id_attributes = ['class',
+                     'type',
+                     'id']
+
     primary_attributes = ['name',
-                          'parent']
+                          'parent',
+                          'attributes',
+                          'inputs',
+                          'outputs']
 
     relation_attributes = ['parent',
                            'attributes',
@@ -725,8 +715,8 @@ class BaseNode(EntitySerializer, AbstractNode):
         return InstanceManager().get_instance(id_)
 
     def validate_parent(self, parent):
-        if not isinstance(parent, BaseGraph):
-            logger.warn(f'parent {parent} is not an instance of {BaseNode}')
+        if not isinstance(parent, (BaseNodeCollection, BaseGraph)):
+            logger.warn(f'parent {parent} is not an instance of {BaseGraph}')
             return False
 
         return True
@@ -828,37 +818,41 @@ class BaseNode(EntitySerializer, AbstractNode):
         return
 
 
-class BaseNodeCollection(TypedListCollection):
-    def __init__(self):
-        super().__init__(self.__class__.__mro__)
+class BaseNodeCollection(EntitySerializer, TypedListCollection):
+    id_attributes = ['class'
+                     ]
 
-        self._graph: t.Optional[BaseGraph] = None
+    primary_attributes = ['parent']
 
-    def __setitem__(self, idx, value):
-        super().__setitem__(idx, value)
+    relation_attributes = ['parent',
+                           'entries'
+                           ]
 
-        if self.graph:
-            value.graph = self.graph
+    def validate_parent(self, parent):
+        if not isinstance(parent, BaseGraph):
+            logger.warn(f'{parent} is not an instance of {BaseGraph}')
 
-    def insert(self, idx, value):
-        super().insert(idx, value)
+        return True
 
-        if self.graph:
-            value.graph = self.graph
+    @classmethod
+    def deserialize_parent(cls, id_):
+        from backend.meta import InstanceManager
+        return InstanceManager().get_instance(id_)
 
-    def has_nodes(self):
-        return bool(len(self))
+    def validate_entries(self):
+        return True
 
-    @property
-    def graph(self) -> t.Optional['BaseGraph']:
-        return self._graph
+    @classmethod
+    def deserialize_entries(cls, ids):
+        entries = []
+        from backend.meta import InstanceManager
 
-    @graph.setter
-    def graph(self, value: 'BaseGraph'):
-        if not isinstance(value, BaseGraph):
-            raise TypeError(f'graph {value} is not an instance of {BaseGraph}')
+        for id_ in ids:
+            instance = InstanceManager().get_instance(id_)
+            if instance:
+                entries.append(instance)
 
-        self._graph = value
+        return entries
 
 
 class BaseGraph(EntitySerializer, AbstractGraph):
