@@ -49,6 +49,10 @@ def port_name_validator(instance, name) -> bool:
     return True
 
 
+def node_name_validator(instance, name) -> bool:
+    return True
+
+
 class ExampleValidator(BaseValidator):
     def validate(self, data: int) -> bool:
         return bool(data)
