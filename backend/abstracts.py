@@ -2,7 +2,7 @@ import enum
 import typing as t
 
 from abc import abstractmethod
-from collections.abc import MutableMapping
+from collections.abc import MutableSequence
 
 from backend.meta import *
 
@@ -38,7 +38,12 @@ class AbstractSerializableMixin:
         """This method deserializes the entity associations and return class instance."""
 
 
-class AbstractMappingCollection(MutableMapping):
+class AbstractListCollection(MutableSequence):
+
+    @abstractmethod
+    def get_class(self, serialize=False):
+        """This returns the class of the entity."""
+
     @abstractmethod
     def get_parent(self, serialize=False):
         """This returns the parent node."""
@@ -54,6 +59,22 @@ class AbstractMappingCollection(MutableMapping):
     @abstractmethod
     def validate_parent(self, parent):
         """This validates the parent node."""
+
+    @abstractmethod
+    def get_entries(self):
+        """This returns the internal entries."""
+
+    @abstractmethod
+    def set_entries(self, entries):
+        """This sets the internal entries."""
+
+    @abstractmethod
+    def del_entries(self):
+        """This deletes the internal entries."""
+
+    @abstractmethod
+    def validate_entries(self):
+        """This validates the internal entries."""
 
 
 class AbstractEntityMixin:
