@@ -9,7 +9,7 @@ from backend.bases import (BaseAttributeCollection,
 
 
 class AttributeCollection(BaseAttributeCollection):
-    valid_types = (BaseAttribute,)
+    valid_types = (BaseAttribute, )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
