@@ -6,52 +6,64 @@ from backend.abstracts import (AbstractAttribute,
                                AbstractPort,
                                AbstractGraph,
                                AbstractListCollection,
-                               AbstractSerializableMixin)
+                               AbstractEntitySerializer)
 from backend.events import *
 from backend.validators import *
 
 
-class SerializableMixin(AbstractSerializableMixin):
+class EntitySerializer(AbstractEntitySerializer):
+
+    def serialize(self) -> t.Dict[str, t.Any]:
+        return self._encode()
 
     @classmethod
-    def serializer(cls):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+    def deserialize(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
+        return cls._decode(data, *args, **kwargs)
 
-    def serialize(self):
-        serializable = set(self.attributes + self.identities + self.associations)
+    def dump(self, obj, file_path, *args, **kwargs):
+        with open(file_path, 'w') as file:
+            json.dump(obj, file, default=self._encode, *args, **kwargs)
+
+    def dumps(self, **kwargs):
+        return json.dumps(self._encode(), **kwargs)
+
+    def load(self, file_path, *args, **kwargs):
+        with open(file_path, 'r') as file:
+            return self._decode(json.load(file, *args, **kwargs))
+
+    def _encode(self) -> t.Dict[str, t.Any]:
+        serializable = set(self.id_attributes + self.primary_attributes + self.relation_attributes)
 
         data = {key: getattr(self, f'get_{key}')(serialize=True) for key in serializable}
         return data
 
     @classmethod
-    def deserialize(cls, **kwargs):
-        associations = kwargs.pop('associations', False)
-        associations_kwargs = {}
+    def _decode(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
+        relations = data.pop('relations', kwargs.pop('relations', False))
+        relations_data = {}
 
-        for key in cls.associations + cls.identities:
-            if key in kwargs:
-                associations_kwargs[key] = kwargs.pop(key)
+        for key in cls.relation_attributes + cls.id_attributes:
+            if key in data:
+                relations_data[key] = data.pop(key)
 
-        instance = cls(**kwargs)
+        instance = cls(**data)
 
-        if associations:
-            instance.deserialize_associations(**associations_kwargs)
+        if relations:
+            instance.deserialize_relations(**relations_data)
 
         return instance
 
-    def deserialize_associations(self, **kwargs):
-        for key in self.associations:
-            value = getattr(self, f'find_{key}')(kwargs.get(f'{key}'))
+    def deserialize_relations(self, **kwargs):
+        for key in self.relation_attributes:
+            value = getattr(self, f'deserialize_{key}')(kwargs.get(f'{key}'))
             if value:
                 getattr(self, f'set_{key}')(value)
 
         return self
 
 
-class TypedListCollection(AbstractListCollection):
-    valid_types = tuple()
-
-    def __init__(self):
+class ListCollection(AbstractListCollection):
+    def __init__(self, **kwargs):
         super().__init__()
 
         self._internal_data = []
@@ -77,7 +89,20 @@ class TypedListCollection(AbstractListCollection):
         if self.validate_item(idx, value):
             self._internal_data.insert(idx, value)
 
+    def get_class(self, serialize=False):
+        if serialize:
+            return self.__class__.__name__
+
+        return self.__class__
+
+    @property
+    def parent(self):
+        return self.get_parent()
+
     def get_parent(self, serialize=False):
+        if not self._parent:
+            return
+
         if serialize:
             return self._parent.get_id()
 
@@ -93,23 +118,9 @@ class TypedListCollection(AbstractListCollection):
     def del_parent(self):
         self._parent = None
 
-    def validate_parent(self, parent):
-        if not isinstance(parent, BaseNode):
-            logger.warn(f'{parent} is not an instance of {BaseNode}')
-
-        return True
-
-    def get_class(self, serialize=False):
-        if serialize:
-            return self.__class__.__name__
-
-        return self.__class__
-
-    def set_entries(self, entries: t.Iterable):
-        for entry in entries:
-            self.append(entry)
-
-        return True
+    @property
+    def entries(self):
+        return self.get_entries()
 
     def get_entries(self, serialize=False):
         if serialize:
@@ -117,23 +128,26 @@ class TypedListCollection(AbstractListCollection):
 
         return self
 
-    def del_entries(self):
-        self._internal_data.clear()
+    def set_entries(self, entries: t.Iterable):
+        self.extend(entries)
 
-    def validate_entries(self):
         return True
 
-    @classmethod
-    def find_entries(cls, ids):
-        entries = []
-        from backend.meta import InstanceManager
+    def del_entries(self):
+        self.clear()
 
-        for id_ in ids:
-            instance = InstanceManager().get_instance(id_)
-            if instance:
-                entries.append(instance)
+    def validate_entries(self):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-        return entries
+    def validate_parent(self, parent):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    def validate_item(self, index, item):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+
+class TypedListCollection(ListCollection):
+    valid_types = tuple()
 
     def validate_item(self, index, item):
         if not isinstance(item, self.valid_types):
@@ -141,24 +155,23 @@ class TypedListCollection(AbstractListCollection):
             return False
         
         return True
-    
 
-class BaseAttribute(SerializableMixin, AbstractAttribute):
+
+class BaseAttribute(EntitySerializer, AbstractAttribute):
     """
     A base attribute class that implements AbstractAttribute.
     """
+    id_attributes = ['class',
+                     'type',
+                     'id']
 
-    identities = ['class',
-                  'type',
-                  'id']
+    primary_attributes = ['name',
+                          'value',
+                          'parent',
+                          'link']
 
-    attributes = ['name',
-                  'value',
-                  'parent',
-                  'link']
-
-    associations = ['parent',
-                    'link']
+    relation_attributes = ['parent',
+                           'link']
 
     @register_events_decorator([AttributePreInitialized, AttributePostInitialized])
     def __init__(self, **kwargs):
@@ -169,12 +182,12 @@ class BaseAttribute(SerializableMixin, AbstractAttribute):
         self._parent: t.Optional[BaseNode] = None
         self._value: t.Optional[t.Any] = None
 
-        for key in self.attributes:
+        for key in self.primary_attributes:
             if key in kwargs:
                 getattr(self, f'set_{key}')(kwargs[key])
 
     def __str__(self):
-        return f'{super().__str__()}\n{json.dumps(self.serialize(), indent=4)}'
+        return f'{super().__str__()}\n{self.dumps(indent=4)}'
 
     @register_events_decorator([AttributePreRemoved, AttributePostRemoved])
     def __del__(self):
@@ -192,6 +205,10 @@ class BaseAttribute(SerializableMixin, AbstractAttribute):
     def get_id(self, serialize=False):
         return self._id
 
+    @property
+    def name(self):
+        return self.get_name()
+
     def get_name(self, serialize=False):
         return self._name
 
@@ -207,6 +224,10 @@ class BaseAttribute(SerializableMixin, AbstractAttribute):
 
     def validate_name(self, name):
         return attribute_name_validator(self, name)
+
+    @property
+    def parent(self):
+        return self.get_parent()
 
     def get_parent(self, serialize=False):
         if not self._parent:
@@ -228,7 +249,7 @@ class BaseAttribute(SerializableMixin, AbstractAttribute):
         self._parent = None
 
     @classmethod
-    def find_parent(cls, id_):
+    def deserialize_parent(cls, id_):
         from backend.meta import InstanceManager
         return InstanceManager().get_instance(id_)
 
@@ -238,6 +259,10 @@ class BaseAttribute(SerializableMixin, AbstractAttribute):
             return False
 
         return True
+
+    @property
+    def link(self):
+        return self.get_link()
 
     def get_link(self, serialize=False):
         if not self._link:
@@ -266,9 +291,13 @@ class BaseAttribute(SerializableMixin, AbstractAttribute):
         return True
 
     @classmethod
-    def find_link(cls, id_):
+    def deserialize_link(cls, id_):
         from backend.meta import InstanceManager
         return InstanceManager().get_instance(id_)
+
+    @property
+    def value(self):
+        return self.get_value()
 
     def get_value(self, serialize=False):
         if self.get_link() is None:
@@ -297,19 +326,50 @@ class BaseAttribute(SerializableMixin, AbstractAttribute):
 
         return True
 
+
+class BaseAttributeCollection(EntitySerializer, TypedListCollection):
+
+    id_attributes = ['class',
+                     ]
+
+    primary_attributes = ['parent',
+                          ]
+
+    relation_attributes = ['parent',
+                           'entries']
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        for key in self.primary_attributes:
+            if key in kwargs:
+                getattr(self, f'set_{key}')(kwargs[key])
+
+    def validate_parent(self, parent):
+        if not isinstance(parent, BaseNode):
+            logger.warn(f'{parent} is not an instance of {BaseNode}')
+
+        return True
+
     @classmethod
-    def serializer(cls):
-        from backend.serializers import AttributeSerializer
-        return AttributeSerializer()
+    def deserialize_parent(cls, id_):
+        from backend.meta import InstanceManager
+        return InstanceManager().get_instance(id_)
 
+    def validate_entries(self):
+        return True
 
-class BaseAttributeCollection(SerializableMixin, TypedListCollection):
+    @classmethod
+    def deserialize_entries(cls, ids):
+        entries = []
+        from backend.meta import InstanceManager
 
-    identities = ['class',
-                  ]
+        for id_ in ids:
+            instance = InstanceManager().get_instance(id_)
+            if instance:
+                entries.append(instance)
 
-    associations = ['entries'
-                    ]
+        return entries
 
     def validate_item(self, key, item):
         if not isinstance(item, BaseAttribute):
@@ -320,12 +380,7 @@ class BaseAttributeCollection(SerializableMixin, TypedListCollection):
             logger.warn(f'{key}:{item} is already present in the collection')
             return False
 
-        return True
-
-    @classmethod
-    def serializer(cls):
-        from backend.serializers import AttributeCollectionSerializer
-        return AttributeCollectionSerializer()
+        return super().validate_item(key, item)
 
 
 class PortType(enum.StrEnum):
@@ -333,19 +388,17 @@ class PortType(enum.StrEnum):
     OUTPUT = 'OUTPUT'
 
 
-class BasePort(SerializableMixin, AbstractPort):
+class BasePort(EntitySerializer, AbstractPort):
+    id_attributes = ['class',
+                     'type',
+                     'id']
 
-    identities = ['class',
-                  'type',
-                  'id']
+    primary_attributes = ['name',
+                          'mode',
+                          'parent']
 
-    attributes = ['name',
-                  'mode',
-                  'parent',
-                  ]
-
-    associations = ['parent',
-                    'connections']
+    relation_attributes = ['parent',
+                           'connections']
 
     @register_events_decorator([PortPreInitialized, PortPostInitialized])
     def __init__(self, **kwargs):
@@ -356,12 +409,12 @@ class BasePort(SerializableMixin, AbstractPort):
         self._parent: t.Optional[BaseNode] = None
         self._connections: t.Optional[BasePortCollection[BasePort]] = None
 
-        for key in self.attributes:
+        for key in self.primary_attributes:
             if key in kwargs:
                 getattr(self, f'set_{key}')(kwargs[key])
 
     def __str__(self):
-        return f'{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}'
+        return f'{super().__str__()}\n{self.dumps(indent=4)}'
 
     @register_events_decorator([PortPreRemoved, PortPostRemoved])
     def __del__(self):
@@ -385,6 +438,10 @@ class BasePort(SerializableMixin, AbstractPort):
     def del_id(self):
         self._id = None
 
+    @property
+    def name(self):
+        return self.get_name()
+
     def get_name(self, serialize=False):
         return self._name
 
@@ -400,6 +457,10 @@ class BasePort(SerializableMixin, AbstractPort):
 
     def validate_name(self, name):
         return port_name_validator(self, name)
+
+    @property
+    def parent(self):
+        return self.get_parent()
 
     def get_parent(self, serialize=False):
         if not self._parent:
@@ -421,7 +482,7 @@ class BasePort(SerializableMixin, AbstractPort):
         self._parent = None
 
     @classmethod
-    def find_parent(cls, id_):
+    def deserialize_parent(cls, id_):
         from backend.meta import InstanceManager
         return InstanceManager().get_instance(id_)
 
@@ -431,6 +492,10 @@ class BasePort(SerializableMixin, AbstractPort):
             return False
 
         return True
+
+    @property
+    def mode(self):
+        return self.get_mode()
 
     def get_mode(self, serialize=False):
         if serialize:
@@ -458,9 +523,13 @@ class BasePort(SerializableMixin, AbstractPort):
 
         return True
 
+    @property
+    def connections(self):
+        return self.get_connections()
+
     def get_connections(self, serialize=False):
         if serialize:
-            return [connection.get_id() for connection in self._connections]
+            return self._connections.serialize()
 
         return self._connections
 
@@ -469,6 +538,7 @@ class BasePort(SerializableMixin, AbstractPort):
             return False
 
         self._connections = connections
+        self._connections.set_parent(self)
         return True
 
     def del_connections(self):
@@ -477,20 +547,12 @@ class BasePort(SerializableMixin, AbstractPort):
     def validate_connections(self, connections):
         return True
 
-    def find_connections(self, ids):
-        connections = []
-        from backend.meta import InstanceManager
-
-        for id_ in ids:
-            instance = InstanceManager().get_instance(id_)
-            if instance:
-                connections.append(instance)
-
-        return connections
+    def deserialize_connections(self, data):
+        return self._connections.deserialize(data)
 
     def connect_to(self, port):
         self._connections.append(port)
-        port.get_connections().append(self)
+        port.connections.append(self)
 
         return True
 
@@ -498,23 +560,58 @@ class BasePort(SerializableMixin, AbstractPort):
         return bool(len(self.get_connections()))
 
     def disconnect(self, index):
-        self._connections[index].get_connections().remove(self)
+        self._connections[index].connections.remove(self)
         self._connections.pop(index)
 
         return True
 
+
+class BasePortCollection(EntitySerializer, TypedListCollection):
+    id_attributes = ['class'
+                     ]
+
+    primary_attributes = ['parent']
+
+    relation_attributes = ['parent',
+                           'entries'
+                           ]
+
+    def validate_parent(self, parent):
+        if not isinstance(parent, (BasePort, BaseNode)):
+            logger.warn(f'{parent} is not an instance of {BaseNode}')
+
+        return True
+
     @classmethod
-    def serializer(cls):
-        from backend.serializers import PortSerializer
-        return PortSerializer()
+    def deserialize_parent(cls, id_):
+        from backend.meta import InstanceManager
+        return InstanceManager().get_instance(id_)
 
+    def validate_entries(self):
+        return True
 
-class BasePortCollection(SerializableMixin, TypedListCollection):
-    identities = ['class',
-                  ]
+    @classmethod
+    def deserialize_entries(cls, ids):
+        entries = []
+        from backend.meta import InstanceManager
 
-    associations = ['entries'
-                    ]
+        for id_ in ids:
+            instance = InstanceManager().get_instance(id_)
+            if instance:
+                entries.append(instance)
+
+        return entries
+
+    def validate_item(self, key, item):
+        if not isinstance(item, BasePort):
+            logger.warn(f'{item} is not an instance of {BasePort}')
+            return False
+
+        if key in self:
+            logger.warn(f'{key}:{item} is already present in the collection')
+            return False
+
+        return super().validate_item(key, item)
 
     def connect_to(self, port_index, port_instance):
         return self[port_index].connect_to(port_instance)
@@ -528,121 +625,212 @@ class BasePortCollection(SerializableMixin, TypedListCollection):
     def data(self, port_index, connection_index: int = 0):
         return self[port_index].data(connection_index)
 
-    @classmethod
-    def serializer(cls):
-        from backend.serializers import PortCollectionSerializer
-        return PortCollectionSerializer()
 
+class BaseNode(EntitySerializer, AbstractNode):
+    primary_attributes = ['name',
+                          'parent']
 
-class BaseNode(AbstractNode):
+    relation_attributes = ['parent',
+                           'attributes',
+                           'inputs',
+                           'outputs']
 
-    @register_events_decorator([NodePreInstanced, NodePostInstanced])
-    def __init__(self):
-        """
-        Implement the base class of AbstractNode.
-        """
-        self.__name: t.Optional[str] = None
-        self.__graph: t.Optional[BaseGraph] = None
+    @register_events_decorator([NodePreInitialized, NodePostInitialized])
+    def __init__(self, **kwargs):
+        self._id = kwargs.pop('id')
 
-        self.__attributes = None
-        self.__inputs = None
-        self.__outputs = None
+        self._name: t.Optional[str] = None
+        self._parent: t.Optional[BaseNode] = None
+        self._attributes: t.Optional[BaseAttributeCollection] = None
+        self._inputs: t.Optional[BasePortCollection] = None
+        self._outputs: t.Optional[BasePortCollection] = None
+
+        for key in self.primary_attributes:
+            if key in kwargs:
+                getattr(self, f'set_{key}')(kwargs[key])
 
     def __str__(self):
-        return f"{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}"
+        return f'{super().__str__()}\n{self.dumps(indent=4)}'
 
     @register_events_decorator([NodePreRemoved, NodePostRemoved])
     def __del__(self):
         super().__del__()
 
-    def identifier(self):
-        return f'{self.name}'
+    def get_class(self, serialize=False):
+        if serialize:
+            return self.__class__.__name__
 
-    @register_events_decorator([NodePreInitialized, NodePostInitialized])
-    def initialize(self, name: str):
-        self.name = name
-        
-        return self
+        return self.__class__
 
-    @property
-    def name(self) -> str:
-        if not self.__name:
-            raise AttributeError(f'node has not been initialized properly.')
+    def get_type(self, serialize=False):
+        return self.entity_type.value
 
-        return self.__name
+    def get_id(self, serialize=False):
+        return self._id
 
-    @name.setter
-    def name(self, name: str):
-        if not isinstance(name, str):
-            raise TypeError(f'{name} is not an instance of {str}')
+    def set_id(self, _id):
+        self._id = _id
 
-        self.__name = name
+    def del_id(self):
+        self._id = None
 
     @property
-    def graph(self) -> t.Optional['BaseGraph']:
-        return self.__graph
+    def name(self):
+        return self.get_name()
 
-    @graph.setter
-    def graph(self, value: 'BaseGraph'):
-        if not isinstance(value, BaseGraph):
-            raise TypeError(f'graph {value} is not an instance of {BaseGraph}')
+    def get_name(self, serialize=False):
+        return self._name
 
-        self.__graph = value
+    def set_name(self, name):
+        if not self.validate_name(name):
+            return False
 
-    @property
-    def attributes(self) -> t.Optional['BaseAttributeCollection']:
-        return self.__attributes
+        self._name = name
+        return True
 
-    @attributes.setter
-    def attributes(self, value: 'BaseAttributeCollection'):
-        if not isinstance(value, BaseAttributeCollection):
-            raise TypeError(f'{value} is not an instance of {BaseAttributeCollection}')
+    def del_name(self):
+        self._name = None
 
-        value.node = self
-        self.__attributes = value
+    def validate_name(self, name):
+        return node_name_validator(self, name)
 
     @property
-    def inputs(self) -> t.Optional['BasePortCollection']:
-        return self.__inputs
+    def parent(self):
+        return self.get_parent()
 
-    @inputs.setter
-    def inputs(self, value: 'BasePortCollection'):
-        if not isinstance(value, BasePortCollection):
-            raise TypeError(f'{value} is not an instance of {BasePortCollection}')
+    def get_parent(self, serialize=False):
+        if not self._parent:
+            return
 
-        value.node = self
-        self.__inputs = value
+        if serialize:
+            return self._parent.get_id()
+
+        return self._parent
+
+    def set_parent(self, parent: 'BaseGraph'):
+        if not self.validate_parent(parent):
+            return False
+
+        self._parent = parent
+        return True
+
+    def del_parent(self):
+        self._parent = None
+
+    @classmethod
+    def deserialize_parent(cls, id_):
+        from backend.meta import InstanceManager
+        return InstanceManager().get_instance(id_)
+
+    def validate_parent(self, parent):
+        if not isinstance(parent, BaseGraph):
+            logger.warn(f'parent {parent} is not an instance of {BaseNode}')
+            return False
+
+        return True
 
     @property
-    def outputs(self) -> t.Optional['BasePortCollection']:
-        return self.__outputs
+    def attributes(self):
+        return self.get_attributes()
 
-    @outputs.setter
-    def outputs(self, value: 'BasePortCollection'):
-        if not isinstance(value, BasePortCollection):
-            raise TypeError(f'{value} is not an instance of {BasePortCollection}')
+    def get_attributes(self, serialize=False):
+        if serialize:
+            return self._attributes.serialize()
 
-        value.node = self
-        self.__outputs = value
+        return self._attributes
+
+    def set_attributes(self, attributes):
+        if not self.validate_attributes(attributes):
+            return False
+
+        self._attributes = attributes
+        self._attributes.set_parent(self)
+        return True
+
+    def del_attributes(self):
+        self._attributes.clear()
+
+    def validate_attributes(self, attributes):
+        if not isinstance(attributes, BaseAttributeCollection):
+            logger.warn(f'{attributes} is not an instance of {BaseAttributeCollection}')
+            return False
+
+        return True
+
+    def deserialize_attributes(self, data):
+        return self._attributes.deserialize(data)
+
+    @property
+    def inputs(self):
+        return self.get_inputs()
+
+    def get_inputs(self, serialize=False):
+        if serialize:
+            return self._inputs.serialize()
+
+        return self._inputs
+
+    def set_inputs(self, inputs):
+        if not self.validate_inputs(inputs):
+            return False
+
+        self._inputs = inputs
+        self._inputs.set_parent(self)
+        return True
+
+    def del_inputs(self):
+        self._inputs.clear()
+
+    def validate_inputs(self, inputs):
+        if not isinstance(inputs, BasePortCollection):
+            logger.warn(f'{inputs} is not an instance of {BasePortCollection}')
+            return False
+
+        return True
+
+    def deserialize_inputs(self, data):
+        return self._inputs.deserialize(data)
+
+    @property
+    def outputs(self):
+        return self.get_outputs()
+
+    def get_outputs(self, serialize=False):
+        if serialize:
+            return self._outputs.serialize()
+
+        return self._outputs
+
+    def set_outputs(self, outputs):
+        if not self.validate_outputs(outputs):
+            return False
+
+        self._outputs = outputs
+        self._outputs.set_parent(self)
+        return True
+
+    def del_outputs(self):
+        self._outputs.clear()
+
+    def validate_outputs(self, outputs):
+        if not isinstance(outputs, BasePortCollection):
+            logger.warn(f'{outputs} is not an instance of {BasePortCollection}')
+            return False
+
+        return True
+
+    def deserialize_outputs(self, data):
+        return self._outputs.deserialize(data)
 
     def data(self) -> t.Optional[t.Any]:
         return
-
-    @classmethod
-    def create(cls, *args, **kwargs):
-        return cls().initialize(*args, **kwargs)
-
-    @classmethod
-    def serializer(cls):
-        from backend.serializers import NodeSerializer
-        return NodeSerializer()
 
 
 class BaseNodeCollection(TypedListCollection):
     def __init__(self):
         super().__init__(self.__class__.__mro__)
 
-        self.__graph: t.Optional[BaseGraph] = None
+        self._graph: t.Optional[BaseGraph] = None
 
     def __setitem__(self, idx, value):
         super().__setitem__(idx, value)
@@ -661,27 +849,27 @@ class BaseNodeCollection(TypedListCollection):
 
     @property
     def graph(self) -> t.Optional['BaseGraph']:
-        return self.__graph
+        return self._graph
 
     @graph.setter
     def graph(self, value: 'BaseGraph'):
         if not isinstance(value, BaseGraph):
             raise TypeError(f'graph {value} is not an instance of {BaseGraph}')
 
-        self.__graph = value
+        self._graph = value
 
 
-class BaseGraph(AbstractGraph):
+class BaseGraph(EntitySerializer, AbstractGraph):
 
     @register_events_decorator([GraphPreInstanced, GraphPostInstanced])
     def __init__(self):
-        self.__name: t.Optional[str] = None
+        self._name: t.Optional[str] = None
         self.__parent = None
         self.__nodes = None
-        self.__graphs = None
+        self._graphs = None
 
     def __str__(self):
-        return f"{super().__str__()}\n{json.dumps(self.serializer().serialize(self), indent=4)}"
+        return f'{super().__str__()}\n{self.dumps(indent=4)}'
 
     @register_events_decorator([GraphPreRemoved, GraphPostRemoved])
     def __del__(self):
@@ -695,18 +883,18 @@ class BaseGraph(AbstractGraph):
 
     @property
     def name(self):
-        return self.__name
+        return self._name
 
     @name.setter
     def name(self, value: t.Optional[str]):
         if not isinstance(value, str):
             raise TypeError(f'{value} is not an instance of {str}')
 
-        self.__name = value
+        self._name = value
 
     @property
     def parent(self):
-        return self.__name
+        return self._name
 
     @parent.setter
     def parent(self, value: t.Optional[str]):
@@ -729,7 +917,7 @@ class BaseGraph(AbstractGraph):
 
     @property
     def graphs(self):
-        return self.__graphs
+        return self._graphs
 
     @graphs.setter
     def graphs(self, value):
@@ -737,7 +925,7 @@ class BaseGraph(AbstractGraph):
             raise TypeError(f'{value} is not an instance of {list}')
 
         value.parent = self
-        self.__graphs = value
+        self._graphs = value
 
     @classmethod
     def create(cls, *args, **kwargs):
