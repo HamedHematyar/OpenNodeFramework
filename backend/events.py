@@ -16,14 +16,14 @@ class EventExecutionPhase(Enum):
 def register_events_decorator(events):
     def decorator(func):
         @wraps(func)
-        def wrapped(instance, **kwargs):
+        def wrapped(*args, **kwargs):
             for event in [event for event in events if event.Phase == EventExecutionPhase.Pre]:
-                EventManager().trigger(event, instance, **kwargs)
+                EventManager().trigger(event, *args, **kwargs)
 
-            result = func(instance, **kwargs)
+            result = func(*args, **kwargs)
 
             for event in [event for event in events if event.Phase == EventExecutionPhase.Post]:
-                EventManager().trigger(event, instance, **kwargs)
+                EventManager().trigger(event, *args, **kwargs)
 
             return result
         return wrapped
@@ -104,14 +104,14 @@ class NodePostInitialized(Event):
         super().__init__()
 
 
-class NodePreRemoved(Event):
+class NodePreDeleted(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class NodePostRemoved(Event):
+class NodePostDeleted(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
@@ -132,14 +132,28 @@ class AttributePostInitialized(Event):
         super().__init__()
 
 
-class AttributePreRemoved(Event):
+class AttributePreDeleted(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class AttributePostRemoved(Event):
+class AttributePostDeleted(Event):
+    Phase = EventExecutionPhase.Post
+
+    def __init__(self):
+        super().__init__()
+
+
+class PreAttributeValueChanged(Event):
+    Phase = EventExecutionPhase.Pre
+
+    def __init__(self):
+        super().__init__()
+
+
+class PostAttributeValueChanged(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
@@ -160,14 +174,14 @@ class PortPostInitialized(Event):
         super().__init__()
 
 
-class PortPreRemoved(Event):
+class PortPreDeleted(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class PortPostRemoved(Event):
+class PortPostDeleted(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
@@ -188,14 +202,14 @@ class GraphPostInitialized(Event):
         super().__init__()
 
 
-class GraphPreRemoved(Event):
+class GraphPreDeleted(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class GraphPostRemoved(Event):
+class GraphPostDeleted(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):

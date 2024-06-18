@@ -200,7 +200,7 @@ class BaseAttribute(EntitySerializer, AbstractAttribute):
             if key in kwargs:
                 getattr(self, f'set_{key}')(kwargs[key])
 
-    @register_events_decorator([AttributePreRemoved, AttributePostRemoved])
+    @register_events_decorator([AttributePreDeleted, AttributePostDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)
@@ -319,6 +319,7 @@ class BaseAttribute(EntitySerializer, AbstractAttribute):
         else:
             return self.get_link().get_value()
 
+    @register_events_decorator([PreAttributeValueChanged, PostAttributeValueChanged])
     def set_value(self, value):
         if not self.validate_value(value):
             return False
@@ -416,7 +417,7 @@ class BasePort(EntitySerializer, AbstractPort):
             if key in kwargs:
                 getattr(self, f'set_{key}')(kwargs[key])
 
-    @register_events_decorator([PortPreRemoved, PortPostRemoved])
+    @register_events_decorator([PortPreDeleted, PortPostDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)
@@ -648,7 +649,7 @@ class BaseNode(EntitySerializer, AbstractNode):
             if key in kwargs:
                 getattr(self, f'set_{key}')(kwargs[key])
 
-    @register_events_decorator([NodePreRemoved, NodePostRemoved])
+    @register_events_decorator([NodePreDeleted, NodePostDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)
@@ -871,7 +872,7 @@ class BaseGraph(EntitySerializer, AbstractGraph):
         self.__nodes = None
         self._graphs = None
 
-    @register_events_decorator([GraphPreRemoved, GraphPostRemoved])
+    @register_events_decorator([GraphPreDeleted, GraphPostDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)

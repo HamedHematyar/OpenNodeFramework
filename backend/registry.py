@@ -35,23 +35,25 @@ RegisteredGraphs = {entry.__name__: entry for entry in [Graph,
 
 RegisteredEvents = {entry.__name__: entry for entry in [NodePreInitialized,
                                                         NodePostInitialized,
-                                                        NodePreRemoved,
-                                                        NodePostRemoved,
+                                                        NodePreDeleted,
+                                                        NodePostDeleted,
 
                                                         AttributePreInitialized,
                                                         AttributePostInitialized,
-                                                        AttributePreRemoved,
-                                                        AttributePostRemoved,
+                                                        AttributePreDeleted,
+                                                        AttributePostDeleted,
+                                                        PreAttributeValueChanged,
+                                                        PostAttributeValueChanged,
 
                                                         PortPreInitialized,
                                                         PortPostInitialized,
-                                                        PortPreRemoved,
-                                                        PortPostRemoved,
+                                                        PortPreDeleted,
+                                                        PortPostDeleted,
 
                                                         GraphPreInitialized,
                                                         GraphPostInitialized,
-                                                        GraphPreRemoved,
-                                                        GraphPostRemoved,
+                                                        GraphPreDeleted,
+                                                        GraphPostDeleted,
                                                         ]}
 
 
