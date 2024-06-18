@@ -1,7 +1,8 @@
 from backend.bases import (BaseAttributeCollection,
                            BasePortCollection,
                            BaseNodeCollection,
-                           BaseGraphCollection)
+                           BaseGraphCollection,
+                           BasePort)
 
 
 class AttributeCollection(BaseAttributeCollection):
@@ -10,6 +11,8 @@ class AttributeCollection(BaseAttributeCollection):
 
 
 class PortCollection(BasePortCollection):
+    valid_types = (BasePort, )
+
     def __init__(self):
         super().__init__()
 
