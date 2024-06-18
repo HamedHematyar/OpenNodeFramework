@@ -22,8 +22,8 @@ class ParameterNode(Node):
         self.inputs = PortCollection()
         self.outputs = PortCollection()
 
-        self.attributes.add_entry(DataTypeEnum(name='type'))
-        self.attributes.add_entry(GenericInt(name='value', value=int()))
+        self.attributes.append(DataTypeEnum(name='type'))
+        self.attributes.append(GenericInt(name='value', value=int()))
 
         self.outputs.append(OutputPort(name='product', mode=PortType.OUTPUT))
 
