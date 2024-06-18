@@ -14,15 +14,10 @@ class EntityType(enum.StrEnum):
     Graph: str = enum.auto()
 
 
-class AbstractSerializableMixin:
-    identities = list()
-    attributes = list()
-    associations = list()
-
-    @classmethod
-    @abstractmethod
-    def serializer(cls):
-        """This returns class serializer instance."""
+class AbstractEntitySerializer:
+    id_attributes = list()
+    primary_attributes = list()
+    relation_attributes = list()
 
     @abstractmethod
     def serialize(self):
@@ -34,8 +29,24 @@ class AbstractSerializableMixin:
         """This returns deserialized class instance."""
 
     @abstractmethod
-    def deserialize_associations(self):
+    def deserialize_relations(self):
         """This method deserializes the entity associations and return class instance."""
+    
+    @abstractmethod
+    def dump(self, obj: t.Any, file_path: str):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    def load(self, file_path: str):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    @abstractmethod
+    def _encode(self) -> t.Dict[str, t.Any]:
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    @classmethod
+    @abstractmethod
+    def _decode(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
 
 class AbstractListCollection(MutableSequence):
@@ -43,6 +54,11 @@ class AbstractListCollection(MutableSequence):
     @abstractmethod
     def get_class(self, serialize=False):
         """This returns the class of the entity."""
+
+    @property
+    @abstractmethod
+    def parent(self):
+        """This returns the parent node."""
 
     @abstractmethod
     def get_parent(self, serialize=False):
@@ -60,8 +76,13 @@ class AbstractListCollection(MutableSequence):
     def validate_parent(self, parent):
         """This validates the parent node."""
 
+    @property
     @abstractmethod
-    def get_entries(self):
+    def entries(self):
+        """This returns the internal entries."""
+
+    @abstractmethod
+    def get_entries(self, serialize=False):
         """This returns the internal entries."""
 
     @abstractmethod
@@ -94,6 +115,11 @@ class AbstractEntityMixin:
     def get_id(self, serialize=False):
         """This returns the id of the entity."""
 
+    @property
+    @abstractmethod
+    def name(self):
+        """This returns the name of the entity."""
+
     @abstractmethod
     def get_name(self, serialize=False):
         """This returns the name of the entity."""
@@ -109,6 +135,11 @@ class AbstractEntityMixin:
     @abstractmethod
     def validate_name(self, name):
         """This validates the name of the entity."""
+
+    @property
+    @abstractmethod
+    def parent(self):
+        """This returns the parent node."""
 
     @abstractmethod
     def get_parent(self, serialize=False):
@@ -127,9 +158,14 @@ class AbstractEntityMixin:
         """This validates the parent node."""
 
 
-class AbstractAttribute(AbstractEntityMixin, AbstractSerializableMixin, metaclass=EntityTrackerMeta):
+class AbstractAttribute(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
     entity_type = EntityType.Attribute
     valid_types = tuple()
+
+    @property
+    @abstractmethod
+    def link(self):
+        """This returns the linked attribute."""
 
     @abstractmethod
     def get_link(self, serialize=False):
@@ -146,6 +182,11 @@ class AbstractAttribute(AbstractEntityMixin, AbstractSerializableMixin, metaclas
     @abstractmethod
     def validate_link(self, link):
         """This validates the linked attribute."""
+
+    @property
+    @abstractmethod
+    def value(self):
+        """This returns the value of the attribute."""
 
     @abstractmethod
     def get_value(self, serialize=False):
@@ -164,8 +205,13 @@ class AbstractAttribute(AbstractEntityMixin, AbstractSerializableMixin, metaclas
         """This validates the value of the attribute."""
 
 
-class AbstractPort(AbstractEntityMixin, AbstractSerializableMixin, metaclass=EntityTrackerMeta):
+class AbstractPort(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
     entity_type = EntityType.Port
+
+    @property
+    @abstractmethod
+    def mode(self):
+        """This should return the mode of the port."""
 
     @abstractmethod
     def get_mode(self, serialize=False):
@@ -175,14 +221,37 @@ class AbstractPort(AbstractEntityMixin, AbstractSerializableMixin, metaclass=Ent
     def set_mode(self, _type):
         """This should set the mode of the port."""
 
+    @abstractmethod
     def del_mode(self):
         """This deletes the mode of the port."""
 
+    @abstractmethod
     def validate_mode(self, mode):
         """This validates the port mode"""
 
+    @property
+    @abstractmethod
+    def connections(self):
+        """This returns the connections of the port."""
 
-class AbstractNode(AbstractEntityMixin, AbstractSerializableMixin, metaclass=EntityTrackerMeta):
+    @abstractmethod
+    def get_connections(self, serialize=False):
+        """This returns the connections of the port."""
+
+    @abstractmethod
+    def set_connections(self, connections):
+        """This sets the connections of the port."""
+
+    @abstractmethod
+    def del_connections(self):
+        """This deletes the connections of the port."""
+
+    @abstractmethod
+    def validate_connections(self, connections):
+        """This validates the connections of the port."""
+
+
+class AbstractNode(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
     entity_type = EntityType.Node
 
     @abstractmethod
@@ -190,5 +259,5 @@ class AbstractNode(AbstractEntityMixin, AbstractSerializableMixin, metaclass=Ent
         """This method computes the node data"""
 
 
-class AbstractGraph(AbstractEntityMixin, AbstractSerializableMixin, metaclass=EntityTrackerMeta):
+class AbstractGraph(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
     entity_type = EntityType.Graph
