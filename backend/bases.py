@@ -187,7 +187,7 @@ class BaseAttribute(EntitySerializer, AbstractAttribute):
     relation_attributes = ['parent',
                            'link']
 
-    @register_events_decorator([AttributePreInitialized, AttributePostInitialized])
+    @register_events_decorator([PreAttributeInitialized, PostAttributeInitialized])
     def __init__(self, **kwargs):
         self._id = kwargs.pop('id')
 
@@ -200,7 +200,7 @@ class BaseAttribute(EntitySerializer, AbstractAttribute):
             if key in kwargs:
                 getattr(self, f'set_{key}')(kwargs[key])
 
-    @register_events_decorator([AttributePreDeleted, AttributePostDeleted])
+    @register_events_decorator([PreAttributeDeleted, PostAttributeDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)
@@ -287,6 +287,7 @@ class BaseAttribute(EntitySerializer, AbstractAttribute):
 
         return self._link
 
+    @register_events_decorator([PreAttributeLinked, PostAttributeLinked])
     def set_link(self, link: 'BaseAttribute'):
         if not self.validate_link(link):
             return False
@@ -294,6 +295,7 @@ class BaseAttribute(EntitySerializer, AbstractAttribute):
         self._link = link
         return True
 
+    @register_events_decorator([PreAttributeUnlinked, PostAttributeUnlinked])
     def del_link(self):
         self._link = None
 
@@ -404,7 +406,7 @@ class BasePort(EntitySerializer, AbstractPort):
     relation_attributes = ['parent',
                            'connections']
 
-    @register_events_decorator([PortPreInitialized, PortPostInitialized])
+    @register_events_decorator([PrePortInitialized, PostPortInitialized])
     def __init__(self, **kwargs):
         self._id = kwargs.pop('id')
 
@@ -417,7 +419,7 @@ class BasePort(EntitySerializer, AbstractPort):
             if key in kwargs:
                 getattr(self, f'set_{key}')(kwargs[key])
 
-    @register_events_decorator([PortPreDeleted, PortPostDeleted])
+    @register_events_decorator([PrePortDeleted, PostPortDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)
@@ -635,7 +637,7 @@ class BaseNode(EntitySerializer, AbstractNode):
                            'inputs',
                            'outputs']
 
-    @register_events_decorator([NodePreInitialized, NodePostInitialized])
+    @register_events_decorator([PreNodeInitialized, PostNodeInitialized])
     def __init__(self, **kwargs):
         self._id = kwargs.pop('id')
 
@@ -649,7 +651,7 @@ class BaseNode(EntitySerializer, AbstractNode):
             if key in kwargs:
                 getattr(self, f'set_{key}')(kwargs[key])
 
-    @register_events_decorator([NodePreDeleted, NodePostDeleted])
+    @register_events_decorator([PreNodeDeleted, PostNodeDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)
@@ -865,14 +867,14 @@ class BaseNodeCollection(EntitySerializer, TypedListCollection):
 
 class BaseGraph(EntitySerializer, AbstractGraph):
 
-    @register_events_decorator([GraphPreInitialized, GraphPostInitialized])
+    @register_events_decorator([PreGraphInitialized, PostGraphInitialized])
     def __init__(self):
         self._name: t.Optional[str] = None
         self.__parent = None
         self.__nodes = None
         self._graphs = None
 
-    @register_events_decorator([GraphPreDeleted, GraphPostDeleted])
+    @register_events_decorator([PreGraphDeleted, PostGraphDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)

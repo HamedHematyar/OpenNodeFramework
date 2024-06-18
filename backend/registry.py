@@ -33,27 +33,31 @@ RegisteredCollections = {entry.__name__: entry for entry in [AttributeCollection
 RegisteredGraphs = {entry.__name__: entry for entry in [Graph,
                                                         ]}
 
-RegisteredEvents = {entry.__name__: entry for entry in [NodePreInitialized,
-                                                        NodePostInitialized,
-                                                        NodePreDeleted,
-                                                        NodePostDeleted,
+RegisteredEvents = {entry.__name__: entry for entry in [PreNodeInitialized,
+                                                        PostNodeInitialized,
+                                                        PreNodeDeleted,
+                                                        PostNodeDeleted,
 
-                                                        AttributePreInitialized,
-                                                        AttributePostInitialized,
-                                                        AttributePreDeleted,
-                                                        AttributePostDeleted,
+                                                        PreAttributeInitialized,
+                                                        PostAttributeInitialized,
+                                                        PreAttributeDeleted,
+                                                        PostAttributeDeleted,
                                                         PreAttributeValueChanged,
                                                         PostAttributeValueChanged,
+                                                        PreAttributeLinked,
+                                                        PostAttributeLinked,
+                                                        PreAttributeUnlinked,
+                                                        PostAttributeUnlinked,
 
-                                                        PortPreInitialized,
-                                                        PortPostInitialized,
-                                                        PortPreDeleted,
-                                                        PortPostDeleted,
+                                                        PrePortInitialized,
+                                                        PostPortInitialized,
+                                                        PrePortDeleted,
+                                                        PostPortDeleted,
 
-                                                        GraphPreInitialized,
-                                                        GraphPostInitialized,
-                                                        GraphPreDeleted,
-                                                        GraphPostDeleted,
+                                                        PreGraphInitialized,
+                                                        PostGraphInitialized,
+                                                        PreGraphDeleted,
+                                                        PostGraphDeleted,
                                                         ]}
 
 

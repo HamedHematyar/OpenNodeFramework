@@ -90,56 +90,56 @@ class Event:
         return self._callbacks
 
 
-class NodePreInitialized(Event):
+class PreNodeInitialized(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class NodePostInitialized(Event):
+class PostNodeInitialized(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
         super().__init__()
 
 
-class NodePreDeleted(Event):
+class PreNodeDeleted(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class NodePostDeleted(Event):
+class PostNodeDeleted(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
         super().__init__()
 
 
-class AttributePreInitialized(Event):
+class PreAttributeInitialized(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class AttributePostInitialized(Event):
+class PostAttributeInitialized(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
         super().__init__()
 
 
-class AttributePreDeleted(Event):
+class PreAttributeDeleted(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class AttributePostDeleted(Event):
+class PostAttributeDeleted(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
@@ -160,56 +160,84 @@ class PostAttributeValueChanged(Event):
         super().__init__()
 
 
-class PortPreInitialized(Event):
+class PreAttributeLinked(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class PortPostInitialized(Event):
+class PostAttributeLinked(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
         super().__init__()
 
 
-class PortPreDeleted(Event):
+class PreAttributeUnlinked(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class PortPostDeleted(Event):
+class PostAttributeUnlinked(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
         super().__init__()
 
 
-class GraphPreInitialized(Event):
+class PrePortInitialized(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class GraphPostInitialized(Event):
+class PostPortInitialized(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
         super().__init__()
 
 
-class GraphPreDeleted(Event):
+class PrePortDeleted(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class GraphPostDeleted(Event):
+class PostPortDeleted(Event):
+    Phase = EventExecutionPhase.Post
+
+    def __init__(self):
+        super().__init__()
+
+
+class PreGraphInitialized(Event):
+    Phase = EventExecutionPhase.Pre
+
+    def __init__(self):
+        super().__init__()
+
+
+class PostGraphInitialized(Event):
+    Phase = EventExecutionPhase.Post
+
+    def __init__(self):
+        super().__init__()
+
+
+class PreGraphDeleted(Event):
+    Phase = EventExecutionPhase.Pre
+
+    def __init__(self):
+        super().__init__()
+
+
+class PostGraphDeleted(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
