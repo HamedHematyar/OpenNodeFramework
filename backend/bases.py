@@ -1,13 +1,11 @@
 import json
 import enum
 
-from collections.abc import MutableSequence
-
 from backend.abstracts import (AbstractAttribute,
                                AbstractNode,
                                AbstractPort,
                                AbstractGraph,
-                               AbstractMappingCollection,
+                               AbstractListCollection,
                                AbstractSerializableMixin)
 from backend.events import *
 from backend.validators import *
@@ -50,37 +48,100 @@ class SerializableMixin(AbstractSerializableMixin):
         return self
 
 
-class TypedSequence(MutableSequence):
-    def __init__(self, types: tuple):
+class TypedListCollection(AbstractListCollection):
+    valid_types = tuple()
+
+    def __init__(self):
         super().__init__()
 
-        self.internal_data = list()
-        self.types = types
+        self._internal_data = []
+        self._parent: t.Optional[BaseNode] = None
 
     def __len__(self):
-        return len(self.internal_data)
+        return len(self._internal_data)
 
     def __getitem__(self, idx):
-        return self.internal_data[idx]
+        return self._internal_data[idx]
 
     def __setitem__(self, idx, value):
-        if not isinstance(value, self.types):
-            raise TypeError(f'value must be of type {self.types}')
-
-        self.internal_data[idx] = value
+        if self.validate_item(idx, value):
+            self._internal_data[idx] = value
 
     def __delitem__(self, idx):
-        del self.internal_data[idx]
-
-    def insert(self, idx, value):
-        if not isinstance(value, self.types):
-            raise TypeError(f'value must be of type {self.types}')
-
-        self.internal_data.insert(idx, value)
+        del self._internal_data[idx]
 
     def __repr__(self):
-        return str(self.internal_data)
+        return str(self._internal_data)
 
+    def insert(self, idx, value):
+        if self.validate_item(idx, value):
+            self._internal_data.insert(idx, value)
+
+    def get_parent(self, serialize=False):
+        if serialize:
+            return self._parent.get_id()
+
+        return self._parent
+
+    def set_parent(self, parent):
+        if not self.validate_parent(parent):
+            return False
+
+        self._parent = parent
+        return True
+
+    def del_parent(self):
+        self._parent = None
+
+    def validate_parent(self, parent):
+        if not isinstance(parent, BaseNode):
+            logger.warn(f'{parent} is not an instance of {BaseNode}')
+
+        return True
+
+    def get_class(self, serialize=False):
+        if serialize:
+            return self.__class__.__name__
+
+        return self.__class__
+
+    def set_entries(self, entries: t.Iterable):
+        for entry in entries:
+            self.append(entry)
+
+        return True
+
+    def get_entries(self, serialize=False):
+        if serialize:
+            return [entry.get_id() for entry in self]
+
+        return self
+
+    def del_entries(self):
+        self._internal_data.clear()
+
+    def validate_entries(self):
+        return True
+
+    @classmethod
+    def find_entries(cls, ids):
+        entries = []
+        from backend.meta import InstanceManager
+
+        for id_ in ids:
+            instance = InstanceManager().get_instance(id_)
+            if instance:
+                entries.append(instance)
+
+        return entries
+
+    def validate_item(self, index, item):
+        if not isinstance(item, self.valid_types):
+            logger.warn(f'item value must be of type {self.valid_types}')
+            return False
+        
+        return True
+    
 
 class BaseAttribute(SerializableMixin, AbstractAttribute):
     """
@@ -242,104 +303,7 @@ class BaseAttribute(SerializableMixin, AbstractAttribute):
         return AttributeSerializer()
 
 
-class BaseMappingCollection(AbstractMappingCollection):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        self._data = {}
-        self._parent: t.Optional[BaseNode] = None
-
-    def __setitem__(self, key: str, value):
-        if self.validate_item(key, value):
-            if self.get_parent():
-                value.set_parent(self.get_parent())
-
-            self._data[key] = value
-
-    def __getitem__(self, key):
-        return self._data[key]
-
-    def __delitem__(self, key):
-        del self._data[key]
-
-    def __iter__(self):
-        return iter(self._data)
-
-    def __len__(self):
-        return len(self._data)
-
-    def __repr__(self):
-        return repr(self._data)
-
-    def update(self, **kwargs):
-        for key, value in kwargs.items():
-            self.__setitem__(key, value)
-
-    def validate_item(self, key, item):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
-    def get_parent(self, serialize=False):
-        if serialize:
-            return self._parent.get_id()
-
-        return self._parent
-
-    def set_parent(self, parent):
-        if not self.validate_parent(parent):
-            return False
-
-        self._parent = parent
-        return True
-
-    def del_parent(self):
-        self._parent = None
-
-    def validate_parent(self, parent):
-        if not isinstance(parent, BaseNode):
-            logger.warn(f'{parent} is not an instance of {BaseNode}')
-
-        return True
-
-    def get_class(self, serialize=False):
-        if serialize:
-            return self.__class__.__name__
-
-        return self.__class__
-
-    def add_entry(self, entry):
-        self.__setitem__(entry.get_name(), entry)
-
-    def add_entries(self, entries):
-        for entry in entries:
-            self.__setitem__(entry.get_name(), entry)
-
-    def set_entries(self, entries: t.Iterable):
-        for entry in entries:
-            self.__setitem__(entry.get_name(), entry)
-
-        return True
-
-    def get_entries(self, serialize=False):
-        if serialize:
-            return [entry.get_id() for entry in self.values()]
-
-        return list(self.values())
-
-    @classmethod
-    def find_entries(cls, ids):
-        entries = []
-        from backend.meta import InstanceManager
-
-        for id_ in ids:
-            instance = InstanceManager().get_instance(id_)
-            if instance:
-                entries.append(instance)
-
-        return entries
-
-
-class BaseAttributeCollection(SerializableMixin, BaseMappingCollection):
+class BaseAttributeCollection(SerializableMixin, TypedListCollection):
 
     identities = ['class',
                   ]
@@ -496,7 +460,7 @@ class BasePort(SerializableMixin, AbstractPort):
 
     def get_connections(self, serialize=False):
         if serialize:
-            return [connection.get_id() for connection in self._connections.values()]
+            return [connection.get_id() for connection in self._connections]
 
         return self._connections
 
@@ -525,8 +489,8 @@ class BasePort(SerializableMixin, AbstractPort):
         return connections
 
     def connect_to(self, port):
-        self._connections.add_entry(port)
-        port.get_connections().add_entry(self)
+        self._connections.append(port)
+        port.get_connections().append(self)
 
         return True
 
@@ -545,35 +509,24 @@ class BasePort(SerializableMixin, AbstractPort):
         return PortSerializer()
 
 
-class BasePortCollection(SerializableMixin, BaseMappingCollection):
+class BasePortCollection(SerializableMixin, TypedListCollection):
     identities = ['class',
                   ]
 
     associations = ['entries'
                     ]
 
-    def validate_item(self, key, item):
-        if not isinstance(item, BasePort):
-            logger.warn(f'{item} is not an instance of {BasePort}')
-            return False
+    def connect_to(self, port_index, port_instance):
+        return self[port_index].connect_to(port_instance)
 
-        if key in self:
-            logger.warn(f'{key}:{item} is already present in the collection')
-            return False
+    def has_connections(self, port_index):
+        return self[port_index].has_connections()
 
-        return True
+    def disconnect(self, port_index: int, connection_index: int = 0):
+        self[port_index].disconnect(connection_index)
 
-    def connect_to(self, key, port_instance):
-        return self[key].connect_to(port_instance)
-
-    def has_connections(self, key):
-        return self[key].has_connections()
-
-    def disconnect(self, key: str, connection_index: int = 0):
-        self[key].disconnect(connection_index)
-
-    def data(self, key, connection_index: int = 0):
-        return self[key].data(connection_index)
+    def data(self, port_index, connection_index: int = 0):
+        return self[port_index].data(connection_index)
 
     @classmethod
     def serializer(cls):
@@ -685,7 +638,7 @@ class BaseNode(AbstractNode):
         return NodeSerializer()
 
 
-class BaseNodeCollection(TypedSequence):
+class BaseNodeCollection(TypedListCollection):
     def __init__(self):
         super().__init__(self.__class__.__mro__)
 
@@ -796,7 +749,7 @@ class BaseGraph(AbstractGraph):
         return GraphSerializer()
 
 
-class BaseGraphCollection(TypedSequence):
+class BaseGraphCollection(TypedListCollection):
     def __init__(self):
         super().__init__(self.__class__.__mro__)
 
