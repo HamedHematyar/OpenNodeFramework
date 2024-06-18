@@ -6,21 +6,22 @@ from backend.events import *
 
 
 class Node(BaseNode):
-    def __init__(self):
-        super().__init__()
 
-        self.attributes = AttributeCollection()
-        self.inputs = PortCollection()
-        self.outputs = PortCollection()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.set_attributes(AttributeCollection())
+        self.set_inputs(PortCollection())
+        self.set_outputs(PortCollection())
 
 
 class ParameterNode(Node):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-        self.attributes = AttributeCollection()
-        self.inputs = PortCollection()
-        self.outputs = PortCollection()
+        self.set_attributes(AttributeCollection())
+        self.set_inputs(PortCollection())
+        self.set_outputs(PortCollection())
 
         self.attributes.append(DataTypeEnum(name='type'))
         self.attributes.append(GenericInt(name='value', value=int()))
@@ -32,12 +33,12 @@ class ParameterNode(Node):
 
 
 class SumNode(Node):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-        self.attributes = AttributeCollection()
-        self.inputs = PortCollection()
-        self.outputs = PortCollection()
+        self.set_attributes(AttributeCollection())
+        self.set_inputs(PortCollection())
+        self.set_outputs(PortCollection())
 
         self.inputs.append(InputPort(name='entry0', mode=PortType.INPUT))
         self.inputs.append(InputPort(name='entry1', mode=PortType.INPUT))
