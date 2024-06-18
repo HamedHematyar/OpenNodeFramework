@@ -77,6 +77,7 @@ class ListCollection(AbstractListCollection):
 
     def __setitem__(self, idx, value):
         if self.validate_item(idx, value):
+            value.set_parent(self.get_parent())
             self._internal_data[idx] = value
 
     def __delitem__(self, idx):
@@ -87,6 +88,7 @@ class ListCollection(AbstractListCollection):
 
     def insert(self, idx, value):
         if self.validate_item(idx, value):
+            value.set_parent(self.get_parent())
             self._internal_data.insert(idx, value)
 
     def get_class(self, serialize=False):
