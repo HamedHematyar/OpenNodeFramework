@@ -34,19 +34,25 @@ class AbstractEntitySerializer:
     
     @abstractmethod
     def dump(self, obj: t.Any, file_path: str):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+        """This method dumps the serialized entity to disk."""
 
-    def load(self, file_path: str):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+    @abstractmethod
+    def dumps(self, **kwargs):
+        """This method dumps the serialized entity to str."""
+
+    @classmethod
+    @abstractmethod
+    def load(cls, file_path: str):
+        """This method loads the serialized entity from disk."""
 
     @abstractmethod
     def _encode(self) -> t.Dict[str, t.Any]:
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+        """This method encodes the entity."""
 
     @classmethod
     @abstractmethod
     def _decode(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+        """This method decodes the entity."""
 
 
 class AbstractListCollection(MutableSequence):

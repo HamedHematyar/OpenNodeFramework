@@ -20,18 +20,19 @@ class EntitySerializer(AbstractEntitySerializer):
     def deserialize(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
         return cls._decode(data, *args, **kwargs)
 
-    def dump(self, obj, file_path, *args, **kwargs):
+    def dump(self, file_path, *args, **kwargs):
         with open(file_path, 'w') as file:
-            json.dump(obj, file, default=self._encode, *args, **kwargs)
+            json.dump(self, file, default=self._encode, *args, **kwargs)
 
     def dumps(self, **kwargs):
         return json.dumps(self._encode(), **kwargs)
 
-    def load(self, file_path, *args, **kwargs):
+    @classmethod
+    def load(cls, file_path, *args, **kwargs):
         with open(file_path, 'r') as file:
-            return self._decode(json.load(file, *args, **kwargs))
+            return cls._decode(json.load(file, *args, **kwargs))
 
-    def _encode(self) -> t.Dict[str, t.Any]:
+    def _encode(self, *args, **kwargs) -> t.Dict[str, t.Any]:
         serializable = set(self.id_attributes + self.primary_attributes + self.relation_attributes)
 
         data = {}
