@@ -8,10 +8,14 @@ from backend.meta import *
 
 
 class EntityType(enum.StrEnum):
-    Node: str = enum.auto()
-    Port: str = enum.auto()
-    Attribute: str = enum.auto()
-    Graph: str = enum.auto()
+    GenericNode: str = 'GenericNode'
+    NodeAttribute: str = 'NodeAttribute'
+    PortNode: str = 'PortNode'
+    Node: str = 'Node'
+    Port: str = 'Port'
+    Attribute: str = 'Attribute'
+    Graph: str = 'Graph'
+    DataType: str = 'Type'
 
 
 class AbstractEntitySerializer:
@@ -55,55 +59,6 @@ class AbstractEntitySerializer:
         """This method decodes the entity."""
 
 
-class AbstractListCollection(MutableSequence):
-
-    @abstractmethod
-    def get_class(self, serialize=False):
-        """This returns the class of the entity."""
-
-    @property
-    @abstractmethod
-    def parent(self):
-        """This returns the parent node."""
-
-    @abstractmethod
-    def get_parent(self, serialize=False):
-        """This returns the parent node."""
-
-    @abstractmethod
-    def set_parent(self, parent) -> bool:
-        """This sets the parent node."""
-
-    @abstractmethod
-    def del_parent(self):
-        """This deletes the parent node."""
-
-    @abstractmethod
-    def validate_parent(self, parent):
-        """This validates the parent node."""
-
-    @property
-    @abstractmethod
-    def entries(self):
-        """This returns the internal entries."""
-
-    @abstractmethod
-    def get_entries(self, serialize=False):
-        """This returns the internal entries."""
-
-    @abstractmethod
-    def set_entries(self, entries):
-        """This sets the internal entries."""
-
-    @abstractmethod
-    def del_entries(self):
-        """This deletes the internal entries."""
-
-    @abstractmethod
-    def validate_entries(self):
-        """This validates the internal entries."""
-
-
 class AbstractEntityMixin:
 
     @abstractmethod
@@ -122,94 +77,14 @@ class AbstractEntityMixin:
     def get_id(self, serialize=False):
         """This returns the id of the entity."""
 
-    @property
-    @abstractmethod
-    def name(self):
-        """This returns the name of the entity."""
 
-    @abstractmethod
-    def get_name(self, serialize=False):
-        """This returns the name of the entity."""
-
-    @abstractmethod
-    def set_name(self, name: str) -> bool:
-        """This sets the name of the entity."""
-
-    @abstractmethod
-    def del_name(self):
-        """This deletes the name of the entity."""
-
-    @abstractmethod
-    def validate_name(self, name):
-        """This validates the name of the entity."""
-
-    @property
-    @abstractmethod
-    def parent(self):
-        """This returns the parent node."""
-
-    @abstractmethod
-    def get_parent(self, serialize=False):
-        """This returns the parent node."""
-
-    @abstractmethod
-    def set_parent(self, parent) -> bool:
-        """This sets the parent node."""
-
-    @abstractmethod
-    def del_parent(self):
-        """This deletes the parent node."""
-
-    @abstractmethod
-    def validate_parent(self, parent):
-        """This validates the parent node."""
-
-
-class AbstractAttribute(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
-    entity_type = EntityType.Attribute
+class AbstractType(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
+    entity_type = EntityType.DataType
     valid_types = tuple()
 
-    @property
     @abstractmethod
-    def link(self):
-        """This returns the linked attribute."""
-
-    @abstractmethod
-    def get_link(self, serialize=False):
-        """This returns the linked attribute."""
-
-    @abstractmethod
-    def set_link(self, link: 'AbstractAttribute') -> bool:
-        """This sets the linked attribute."""
-
-    @abstractmethod
-    def del_link(self):
-        """This deletes the linked attribute."""
-
-    @abstractmethod
-    def validate_link(self, link):
-        """This validates the linked attribute."""
-
-    @property
-    @abstractmethod
-    def value(self):
-        """This returns the value of the attribute."""
-
-    @abstractmethod
-    def get_value(self, serialize=False):
-        """This returns the value of the attribute."""
-
-    @abstractmethod
-    def set_value(self, value: t.Any) -> bool:
-        """This sets the value of the attribute."""
-
-    @abstractmethod
-    def del_value(self):
-        """This deletes the value of the attribute."""
-
-    @abstractmethod
-    def validate_value(self, value):
-        """This validates the value of the attribute."""
+    def data(self):
+        """This returns the data of the type."""
 
 
 class AbstractPort(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
@@ -259,11 +134,11 @@ class AbstractPort(AbstractEntityMixin, AbstractEntitySerializer, metaclass=Enti
 
 
 class AbstractNode(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
-    entity_type = EntityType.Node
+    entity_type = EntityType.GenericNode
 
     @abstractmethod
-    def data(self) -> t.Optional[t.Any]:
-        """This method computes the node data"""
+    def data(self):
+        """This returns the data of the node."""
 
 
 class AbstractGraph(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
