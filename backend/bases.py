@@ -56,26 +56,30 @@ class EntitySerializer(AbstractEntitySerializer):
             if key in data:
                 relations_data[key] = data.pop(key)
 
-        instance = cls(**data)
-
         if relations:
-            instance.deserialize_relations(**relations_data)
+            data.update(cls.deserialize_relations(**relations_data))
 
+        instance = cls(**data)
         return instance
 
-    def deserialize_relations(self, **kwargs):
-        for key in self.relation_attributes:
-            value = getattr(self, f'deserialize_{key}')(kwargs.get(f'{key}'))
-            if value:
-                getattr(self, f'set_{key}')(value)
+    @classmethod
+    def deserialize_relations(cls, **kwargs):
+        data = {}
+        for key in cls.relation_attributes:
+            value = getattr(cls, f'deserialize_{key}')(kwargs.get(f'{key}'))
+            if value is not None:
+                data[key] = value
 
-        return self
+        return data
 
 
 class DictCollection(MutableMapping):
 
     def __init__(self, *args, **kwargs):
         self._internal_data = {}
+
+        if 'items' in kwargs:
+            self.update(**kwargs.get('items'))
 
     def __getitem__(self, key):
         return self._internal_data[key]
@@ -101,7 +105,7 @@ class DictCollection(MutableMapping):
 
     def get_items(self, serialize=False):
         if serialize:
-            return {key: value.get_id() for key, value in self.items()}
+            return {key: value.serialize() for key, value in self.items()}
 
         return self.items()
 
@@ -136,10 +140,17 @@ class TypedDictCollection(DictCollection):
     @classmethod
     def deserialize_items(cls, items_data):
         from backend.meta import InstanceManager
+        from backend.registry import RegisteredTypes
 
         items_dict = {}
-        for key, id_ in items_data.items():
-            instance = InstanceManager().get_instance(id_)
+        for key, data in items_data.items():
+            instance = None
+            if data.get('id'):
+                instance = InstanceManager().get_instance(data.get('id'))
+
+            if not instance:
+                instance = RegisteredTypes.get(data['class'])(**data)
+
             if instance:
                 items_dict[key] = instance
 
@@ -275,8 +286,9 @@ class BasePortNode(EntitySerializer, AbstractNode):
     def validate_attributes(self, attributes):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    def deserialize_attributes(self, data):
-        return self._attributes.deserialize(data, relations=True)
+    @classmethod
+    def deserialize_attributes(cls, data):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     def data(self):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
@@ -297,6 +309,19 @@ class BaseAttributeNode(EntitySerializer, AbstractNode):
         self._id = kwargs.pop('id')
 
         self._attributes = None
+
+        attributes = kwargs.pop('attributes', {})
+        self.set_attributes(attributes or self.init_attributes())
+
+        self.populate_data(**kwargs)
+
+    def init_attributes(self):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    def populate_data(self, **kwargs):
+        for key, value in kwargs.items():
+            if self.attributes.get(key):
+                self.attributes[key].set_data(value)
 
     @register_events_decorator([PreNodeDeleted, PostNodeDeleted])
     def delete(self):
@@ -340,8 +365,9 @@ class BaseAttributeNode(EntitySerializer, AbstractNode):
     def validate_attributes(self, attributes):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    def deserialize_attributes(self, data):
-        return self._attributes.deserialize(data, relations=True)
+    @classmethod
+    def deserialize_attributes(cls, data):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     def data(self):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
@@ -406,8 +432,9 @@ class BaseNode(EntitySerializer, AbstractNode):
     def validate_attributes(self, attributes):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    def deserialize_attributes(self, data):
-        return self._attributes.deserialize(data, relations=True)
+    @classmethod
+    def deserialize_attributes(cls, data):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     @property
     def inputs(self):
@@ -432,8 +459,9 @@ class BaseNode(EntitySerializer, AbstractNode):
     def validate_inputs(self, inputs):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    def deserialize_inputs(self, data):
-        return self._inputs.deserialize(data, relations=True)
+    @classmethod
+    def deserialize_inputs(cls, data):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     @property
     def outputs(self):
@@ -458,8 +486,9 @@ class BaseNode(EntitySerializer, AbstractNode):
     def validate_outputs(self, outputs):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    def deserialize_outputs(self, data):
-        return self._outputs.deserialize(data, relations=True)
+    @classmethod
+    def deserialize_outputs(cls, data):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     def data(self):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
