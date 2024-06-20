@@ -118,70 +118,42 @@ class PostNodeDeleted(Event):
         super().__init__()
 
 
-class PreAttributeInitialized(Event):
+class PreTypeInitialized(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class PostAttributeInitialized(Event):
+class PostTypeInitialized(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
         super().__init__()
 
 
-class PreAttributeDeleted(Event):
+class PreTypeDeleted(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class PostAttributeDeleted(Event):
+class PostTypeDeleted(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
         super().__init__()
 
 
-class PreAttributeValueChanged(Event):
+class PreTypeDataChanged(Event):
     Phase = EventExecutionPhase.Pre
 
     def __init__(self):
         super().__init__()
 
 
-class PostAttributeValueChanged(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
-
-
-class PreAttributeLinked(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-class PostAttributeLinked(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
-
-
-class PreAttributeUnlinked(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-class PostAttributeUnlinked(Event):
+class PostTypeDataChanged(Event):
     Phase = EventExecutionPhase.Post
 
     def __init__(self):
