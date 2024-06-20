@@ -22,7 +22,7 @@ class GenericInt(BaseType):
         if isinstance(data, float):
             data = int(data)
 
-        super().set_data(data)
+        return super().set_data(data)
 
 
 class GenericFloat(BaseType):
@@ -36,7 +36,7 @@ class GenericFloat(BaseType):
         if isinstance(data, int):
             data = float(data)
 
-        super().set_data(data)
+        return super().set_data(data)
 
 
 class GenericList(BaseType):
