@@ -80,6 +80,7 @@ class AbstractEntityMixin:
 class AbstractType(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
     entity_type = EntityType.DataType
     valid_types = tuple()
+    default = None
 
     @abstractmethod
     def data(self):

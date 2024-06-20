@@ -1,5 +1,6 @@
 import json
 import copy
+import pathlib
 from collections.abc import MutableMapping
 
 from backend.abstracts import (AbstractType,
@@ -19,16 +20,18 @@ class EntitySerializer(AbstractEntitySerializer):
     def deserialize(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
         return cls._decode(copy.deepcopy(data), *args, **kwargs)
 
-    def dump(self, file_path, *args, **kwargs):
-        with open(file_path, 'w') as file:
+    def dump(self, file_path: pathlib.Path, *args, **kwargs):
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(file_path.absolute().as_posix(), 'w') as file:
             json.dump(self, file, default=self._encode, *args, **kwargs)
 
     def dumps(self, **kwargs):
         return json.dumps(self._encode(), **kwargs)
 
     @classmethod
-    def load(cls, file_path, *args, **kwargs):
-        with open(file_path, 'r') as file:
+    def load(cls, file_path: pathlib.Path, *args, **kwargs):
+        with open(file_path.absolute().as_posix(), 'r') as file:
             return cls._decode(json.load(file), *args, **kwargs)
 
     def _encode(self, *args, **kwargs) -> t.Dict[str, t.Any]:
@@ -124,27 +127,27 @@ class TypedDictCollection(DictCollection):
     validate_uniqueness = True
 
     def validate_items(self, items):
-        for item in items:
+        for item in items.values():
             if not self.validate_item(item):
                 return False
 
         return True
 
     @classmethod
-    def deserialize_items(cls, ids):
+    def deserialize_items(cls, items_data):
         from backend.meta import InstanceManager
 
-        entries = []
-        for id_ in ids:
+        items_dict = {}
+        for key, id_ in items_data.items():
             instance = InstanceManager().get_instance(id_)
             if instance:
-                entries.append(instance)
+                items_dict[key] = instance
 
-        return entries
+        return items_dict
 
     def validate_item(self, item):
         if not isinstance(item, self.valid_types):
-            logger.warn(f'{self.__class__.__name__} item value must be of type {self.valid_types}')
+            logger.warn(f'{self.__class__.__name__} item value must be of type {self.valid_types} : {item}')
             return False
 
         if self.validate_uniqueness and item in self.values():
@@ -166,8 +169,9 @@ class BaseType(EntitySerializer, AbstractType):
         self._id = kwargs.pop('id')
         self._data: t.Optional[str] = None
 
-        if 'data' in kwargs:
-            self.set_data(kwargs.pop('data'))
+        init_data = kwargs.get('data', self.default)
+        if init_data is not None:
+            self.set_data(init_data)
 
     @register_events_decorator([PreTypeDeleted, PostTypeDeleted])
     def delete(self):
@@ -203,11 +207,11 @@ class BaseType(EntitySerializer, AbstractType):
         return True
 
     def del_data(self):
-        self._data = None
+        self._data = self.default
 
     def validate_data(self, data):
         if not isinstance(data, self.valid_types):
-            logger.warn(f'attribute value must be an instance of {self.valid_types} not {type(data)}.')
+            logger.warn(f'{self.__class__} attribute value must be an instance of {self.valid_types} not {type(data)}.')
             return False
 
         return True

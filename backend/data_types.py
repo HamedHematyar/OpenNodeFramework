@@ -13,9 +13,30 @@ class GenericStr(BaseType):
 
 class GenericInt(BaseType):
     valid_types = (int, float)
+    default = int()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def set_data(self, data):
+        if isinstance(data, float):
+            data = int(data)
+
+        super().set_data(data)
+
+
+class GenericFloat(BaseType):
+    valid_types = (int, float)
+    default = float()
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def set_data(self, data):
+        if isinstance(data, int):
+            data = float(data)
+
+        super().set_data(data)
 
 
 class GenericList(BaseType):
