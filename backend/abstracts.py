@@ -81,7 +81,6 @@ class AbstractType(AbstractEntityMixin, AbstractEntitySerializer, metaclass=Enti
     entity_type = EntityType.DataType
     valid_types = tuple()
 
-    @property
     @abstractmethod
     def data(self):
         """This returns the data of the type."""
@@ -99,55 +98,10 @@ class AbstractType(AbstractEntityMixin, AbstractEntitySerializer, metaclass=Enti
         """This validates the data of the type."""
 
 
-class AbstractPort(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
-    entity_type = EntityType.Port
-
-    @property
-    @abstractmethod
-    def mode(self):
-        """This should return the mode of the port."""
-
-    @abstractmethod
-    def get_mode(self, serialize=False):
-        """This should return the mode of the port."""
-
-    @abstractmethod
-    def set_mode(self, _type):
-        """This should set the mode of the port."""
-
-    @abstractmethod
-    def del_mode(self):
-        """This deletes the mode of the port."""
-
-    @abstractmethod
-    def validate_mode(self, mode):
-        """This validates the port mode"""
-
-    @property
-    @abstractmethod
-    def connections(self):
-        """This returns the connections of the port."""
-
-    @abstractmethod
-    def get_connections(self, serialize=False):
-        """This returns the connections of the port."""
-
-    @abstractmethod
-    def set_connections(self, connections):
-        """This sets the connections of the port."""
-
-    @abstractmethod
-    def del_connections(self):
-        """This deletes the connections of the port."""
-
-    @abstractmethod
-    def validate_connections(self, connections):
-        """This validates the connections of the port."""
-
-
 class AbstractNode(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
     entity_type = EntityType.GenericNode
 
     @abstractmethod
     def data(self):
         """This returns the data of the node."""
+        
