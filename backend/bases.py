@@ -80,7 +80,11 @@ class DictCollection(MutableMapping):
         return self._internal_data[key]
 
     def __setitem__(self, key, value):
+        if not self.validate_item(value):
+            return False
+
         self._internal_data[key] = value
+        return True
 
     def __delitem__(self, key):
         del self._internal_data[key]
@@ -445,14 +449,14 @@ class BaseAttributeNode(EntitySerializer, AbstractNode):
                      'type',
                      'id']
 
-    relation_attributes = ['types',
+    relation_attributes = ['attributes',
                            ]
 
     @register_events_decorator([PreNodeInitialized, PostNodeInitialized])
     def __init__(self, **kwargs):
         self._id = kwargs.pop('id')
 
-        self._types = None
+        self._attributes = None
 
     @register_events_decorator([PreNodeDeleted, PostNodeDeleted])
     def delete(self):
@@ -474,30 +478,30 @@ class BaseAttributeNode(EntitySerializer, AbstractNode):
         return self._id
 
     @property
-    def types(self):
-        return self.get_types()
+    def attributes(self):
+        return self.get_attributes()
 
-    def get_types(self, serialize=False):
+    def get_attributes(self, serialize=False):
         if serialize:
-            return self._types.serialize()
+            return self._attributes.serialize()
 
-        return self._types
+        return self._attributes
 
-    def set_types(self, attributes):
-        if not self.validate_types(attributes):
+    def set_attributes(self, attributes):
+        if not self.validate_attributes(attributes):
             return False
 
-        self._types = attributes
+        self._attributes = attributes
         return True
 
-    def del_types(self):
-        self._types.clear()
+    def del_attributes(self):
+        self._attributes.clear()
 
-    def validate_types(self, types):
+    def validate_attributes(self, attributes):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    def deserialize_types(self, data):
-        return self._types.deserialize(data, relations=True)
+    def deserialize_attributes(self, data):
+        return self._attributes.deserialize(data, relations=True)
 
     def data(self):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')

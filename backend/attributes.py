@@ -10,34 +10,34 @@ class GenericAttribute(BaseAttributeNode):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.set_types(TypeCollection())
+        self.set_attributes(TypeCollection())
 
-        self.types['parent'] = GenericNode()
-        self.types['name'] = GenericStr()
-        self.types['value'] = GenericStr()
-        self.types['default'] = GenericStr()
-        self.types['label'] = GenericStr()
-        self.types['reference'] = GenericNodeAttribute()
+        self.attributes['parent'] = GenericNode()
+        self.attributes['name'] = GenericStr()
+        self.attributes['value'] = GenericStr()
+        self.attributes['default'] = GenericStr()
+        self.attributes['label'] = GenericStr()
+        self.attributes['reference'] = GenericNodeAttribute()
 
         self.populate_data(**kwargs)
 
     def populate_data(self, **kwargs):
         for key, value in kwargs.items():
-            if self.types.get(key):
-                self.types[key].set_data(value)
+            if self.attributes.get(key):
+                self.attributes[key].set_data(value)
 
-    def validate_types(self, types):
+    def validate_attributes(self, attributes):
         return True
 
     def data(self):
-        reference = self.types['reference'].data()
+        reference = self.attributes['reference'].data()
 
         if reference is None:
             return reference
 
-        value = self.types['value'].data()
+        value = self.attributes['value'].data()
         if value is None:
             return value
 
-        default = self.types['default'].data()
+        default = self.attributes['default'].data()
         return default
