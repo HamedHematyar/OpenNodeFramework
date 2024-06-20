@@ -2,12 +2,10 @@ from backend.bases import (EntitySerializer,
                            TypedDictCollection,
                            BasePortCollection,
                            BaseNodeCollection,
-                           BaseGraphCollection,
                            BaseAttributeNode,
                            BasePort,
                            BaseType,
-                           BaseNode,
-                           BaseGraph)
+                           BaseNode)
 
 
 class CustomDictCollection(EntitySerializer, TypedDictCollection):

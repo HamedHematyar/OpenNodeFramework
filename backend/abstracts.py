@@ -2,7 +2,6 @@ import enum
 import typing as t
 
 from abc import abstractmethod
-from collections.abc import MutableSequence
 
 from backend.meta import *
 
@@ -82,6 +81,7 @@ class AbstractType(AbstractEntityMixin, AbstractEntitySerializer, metaclass=Enti
     entity_type = EntityType.DataType
     valid_types = tuple()
 
+    @property
     @abstractmethod
     def data(self):
         """This returns the data of the type."""
@@ -151,7 +151,3 @@ class AbstractNode(AbstractEntityMixin, AbstractEntitySerializer, metaclass=Enti
     @abstractmethod
     def data(self):
         """This returns the data of the node."""
-
-
-class AbstractGraph(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
-    entity_type = EntityType.Graph

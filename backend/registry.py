@@ -2,7 +2,6 @@ import threading
 
 from backend.data_types import *
 from backend.nodes import *
-from backend.graphs import *
 from backend.aggregations import *
 from backend.events import *
 from backend.validators import *
@@ -29,9 +28,6 @@ RegisteredCollections = {entry.__name__: entry for entry in [TypeCollection,
                                                              PortCollection,
                                                              NodeCollection
                                                              ]}
-
-RegisteredGraphs = {entry.__name__: entry for entry in [Graph,
-                                                        ]}
 
 RegisteredEvents = {entry.__name__: entry for entry in [PreNodeInitialized,
                                                         PostNodeInitialized,
