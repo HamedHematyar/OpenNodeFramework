@@ -1,5 +1,6 @@
 from backend.bases import BaseNode, PortType
-from backend.attributes import DataTypeEnum, GenericInt
+from backend.data_types import (DataTypeEnum,
+                                GenericInt)
 from backend.aggregations import AttributeCollection, PortCollection
 from backend.ports import OutputPort, InputPort
 from backend.events import *
