@@ -10,24 +10,28 @@ class GenericAttribute(BaseAttributeNode):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.set_attributes(TypeCollection())
-
-        self.attributes['parent'] = GenericNode()
-        self.attributes['name'] = GenericStr()
-        self.attributes['value'] = GenericStr()
-        self.attributes['default'] = GenericStr()
-        self.attributes['label'] = GenericStr()
-        self.attributes['reference'] = GenericNodeAttribute()
+        attributes = kwargs.pop('attributes', {})
+        self.set_attributes(attributes or self.init_attributes())
 
         self.populate_data(**kwargs)
 
-    def populate_data(self, **kwargs):
-        for key, value in kwargs.items():
-            if self.attributes.get(key):
-                self.attributes[key].set_data(value)
+    def init_attributes(self):
+        collection = TypeCollection()
+
+        collection['parent'] = GenericNode()
+        collection['value'] = GenericStr()
+        collection['default'] = GenericStr()
+        collection['label'] = GenericStr()
+        collection['reference'] = GenericNodeAttribute()
+
+        return collection
 
     def validate_attributes(self, attributes):
         return True
+
+    @classmethod
+    def deserialize_attributes(cls, data):
+        return TypeCollection.deserialize(data, relations=True)
 
     def data(self):
         reference = self.attributes['reference'].data()
