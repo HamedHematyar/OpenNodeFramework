@@ -1,6 +1,6 @@
 import threading
 
-from backend.attributes import *
+from backend.data_types import *
 from backend.nodes import *
 from backend.graphs import *
 from backend.aggregations import *
@@ -16,16 +16,16 @@ RegisteredNodes = {entry.__name__: entry for entry in [Node,
                                                        ParameterNode
                                                        ]}
 
-RegisteredAttributes: t.Dict[str, type] = {entry.__name__: entry for entry in [GenericStr,
-                                                                               GenericInt,
-                                                                               GenericList,
-                                                                               ]}
+RegisteredTypes: t.Dict[str, type] = {entry.__name__: entry for entry in [GenericStr,
+                                                                          GenericInt,
+                                                                          GenericList,
+                                                                          ]}
 
 RegisteredPorts = {entry.__name__: entry for entry in [InputPort,
                                                        OutputPort
                                                        ]}
 
-RegisteredCollections = {entry.__name__: entry for entry in [AttributeCollection,
+RegisteredCollections = {entry.__name__: entry for entry in [TypeCollection,
                                                              PortCollection,
                                                              NodeCollection
                                                              ]}
@@ -38,16 +38,12 @@ RegisteredEvents = {entry.__name__: entry for entry in [PreNodeInitialized,
                                                         PreNodeDeleted,
                                                         PostNodeDeleted,
 
-                                                        PreAttributeInitialized,
-                                                        PostAttributeInitialized,
-                                                        PreAttributeDeleted,
-                                                        PostAttributeDeleted,
-                                                        PreAttributeValueChanged,
-                                                        PostAttributeValueChanged,
-                                                        PreAttributeLinked,
-                                                        PostAttributeLinked,
-                                                        PreAttributeUnlinked,
-                                                        PostAttributeUnlinked,
+                                                        PreTypeInitialized,
+                                                        PostTypeInitialized,
+                                                        PreTypeDeleted,
+                                                        PostTypeDeleted,
+                                                        PreTypeDataChanged,
+                                                        PostTypeDataChanged,
 
                                                         PrePortInitialized,
                                                         PostPortInitialized,
@@ -61,8 +57,8 @@ RegisteredEvents = {entry.__name__: entry for entry in [PreNodeInitialized,
                                                         ]}
 
 
-def register_custom_attribute(cls: t.Type[BaseAttribute]) -> t.Type[BaseAttribute]:
-    RegisteredAttributes.update({cls.__name__: cls})
-    logger.debug(f'new attribute has been registered: {cls.__name__}')
+def register_custom_type(cls: t.Type[BaseType]) -> t.Type[BaseType]:
+    RegisteredTypes.update({cls.__name__: cls})
+    logger.debug(f'new type has been registered: {cls.__name__}')
 
     return cls
