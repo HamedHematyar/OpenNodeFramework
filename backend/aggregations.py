@@ -1,5 +1,5 @@
 from backend.bases import (EntitySerializer,
-                           TypedListCollection,
+                           TypedDictCollection,
                            BasePortCollection,
                            BaseNodeCollection,
                            BaseGraphCollection,
@@ -10,7 +10,7 @@ from backend.bases import (EntitySerializer,
                            BaseGraph)
 
 
-class CustomListCollection(EntitySerializer, TypedListCollection):
+class CustomDictCollection(EntitySerializer, TypedDictCollection):
 
     id_attributes = ['class',
                      ]
@@ -18,19 +18,27 @@ class CustomListCollection(EntitySerializer, TypedListCollection):
     relation_attributes = ['items']
 
 
-class TypeCollection(CustomListCollection):
+class TypeCollection(CustomDictCollection):
     valid_types = (BaseType, )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
 
-class AttributeCollection(CustomListCollection):
+class AttributeCollection(CustomDictCollection):
     valid_types = (BaseAttributeNode, )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def get_item_by_name(self, name):
+        data = {item.data(): item for item in self}
+        item = data.get(name)
+
+        if not item:
+            raise KeyError(f'requested item {name} could not be found in the list.')
+
+        return item
 
 class PortCollection(BasePortCollection):
     valid_types = (BasePort, )

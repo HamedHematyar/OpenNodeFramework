@@ -12,12 +12,22 @@ class GenericAttribute(BaseAttributeNode):
 
         self.set_types(TypeCollection())
 
-        self.types.append(GenericNode(name='parent'))
-        self.types.append(GenericStr(name='name'))
-        self.types.append(GenericStr(name='value'))
-        self.types.append(GenericStr(name='default'))
-        self.types.append(GenericStr(name='label'))
-        self.types.append(GenericNodeAttribute(name='reference'))
+        self.types['parent'] = GenericNode()
+        self.types['name'] = GenericStr()
+        self.types['value'] = GenericStr()
+        self.types['default'] = GenericStr()
+        self.types['label'] = GenericStr()
+        self.types['reference'] = GenericNodeAttribute()
+
+        self.populate_data(**kwargs)
+
+    def populate_data(self, **kwargs):
+        for key, value in kwargs.items():
+            if self.types.get(key):
+                self.types[key].set_data(value)
+
+    def validate_types(self, types):
+        return True
 
     def data(self):
         reference = self.types['reference'].data()
@@ -30,4 +40,4 @@ class GenericAttribute(BaseAttributeNode):
             return value
 
         default = self.types['default'].data()
-        return default 
+        return default

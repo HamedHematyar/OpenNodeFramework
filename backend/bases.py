@@ -1,7 +1,7 @@
 import json
 import enum
 import copy
-from collections.abc import MutableSequence
+from collections.abc import MutableMapping
 
 from backend.abstracts import (AbstractType,
                                AbstractNode,
@@ -72,63 +72,40 @@ class EntitySerializer(AbstractEntitySerializer):
         return self
 
 
-class ListCollection(MutableSequence):
-    def __init__(self, **kwargs):
-        super().__init__()
+class DictCollection(MutableMapping):
 
-        self._internal_data = []
+    def __init__(self, *args, **kwargs):
+        self._internal_data = {}
+
+    def __getitem__(self, key):
+        return self._internal_data[key]
+
+    def __setitem__(self, key, value):
+        self._internal_data[key] = value
+
+    def __delitem__(self, key):
+        del self._internal_data[key]
+
+    def __iter__(self):
+        return iter(self._internal_data)
 
     def __len__(self):
         return len(self._internal_data)
 
-    def __getitem__(self, key):
-        funcs = {str: self.get_item_by_name,
-                 int: self.get_item_by_index}
-
-        func: t.Callable = funcs[type(key)]
-        return func(key)
-
-    def __setitem__(self, idx, value):
-        if self.validate_item(value):
-            self._internal_data[idx] = value
-
-    def __delitem__(self, idx):
-        del self._internal_data[idx]
-
     def __repr__(self):
-        return str(self._internal_data)
-
-    def insert(self, idx, value):
-        if self.validate_item(value):
-            self._internal_data.insert(idx, value)
-
-    def get_item_by_name(self, name):
-        data = {item: item for item in self}
-        item = data.get(name)
-
-        if not item:
-            raise KeyError(f'requested item {name} could not be found in the list.')
-
-        return item
-
-    def get_item_by_index(self, index):
-        return self._internal_data[index]
-
-    @property
-    def items(self):
-        return self.get_items()
+        return f'{self.__class__.__name__}({self._internal_data})'
 
     def get_items(self, serialize=False):
         if serialize:
-            return [item.get_id() for item in self]
+            return {key: value.get_id() for key, value in self.items()}
 
-        return self
+        return self.items()
 
     def set_items(self, items: t.Iterable):
         if not self.validate_items(items):
             return False
 
-        self.extend(items)
+        self.update(items)
         return True
 
     def del_items(self):
@@ -141,7 +118,7 @@ class ListCollection(MutableSequence):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
 
-class TypedListCollection(ListCollection):
+class TypedDictCollection(DictCollection):
     valid_types = tuple()
     validate_uniqueness = True
 
@@ -385,7 +362,7 @@ class BasePort(EntitySerializer, AbstractPort):
             return False
 
         self._connections = connections
-        self._connections.set_parent(self)
+        # self._connections.set_parent(self)
         return True
 
     def del_connections(self):
@@ -413,7 +390,7 @@ class BasePort(EntitySerializer, AbstractPort):
         return True
 
 
-class BasePortCollection(EntitySerializer, TypedListCollection):
+class BasePortCollection(EntitySerializer, TypedDictCollection):
     id_attributes = ['class'
                      ]
 
@@ -532,14 +509,7 @@ class BaseNode(EntitySerializer, AbstractNode):
                      'type',
                      'id']
 
-    primary_attributes = ['name',
-                          'parent',
-                          'attributes',
-                          'inputs',
-                          'outputs']
-
-    relation_attributes = ['parent',
-                           'attributes',
+    relation_attributes = ['attributes',
                            'inputs',
                            'outputs']
 
@@ -547,15 +517,9 @@ class BaseNode(EntitySerializer, AbstractNode):
     def __init__(self, **kwargs):
         self._id = kwargs.pop('id')
 
-        self._name: t.Optional[str] = None
-        self._parent: t.Optional[BaseNode] = None
         self._attributes = None
-        self._inputs: t.Optional[BasePortCollection] = None
-        self._outputs: t.Optional[BasePortCollection] = None
-
-        for key in self.primary_attributes:
-            if key in kwargs:
-                getattr(self, f'set_{key}')(kwargs[key])
+        self._inputs = None
+        self._outputs = None
 
     @register_events_decorator([PreNodeDeleted, PostNodeDeleted])
     def delete(self):
@@ -577,61 +541,6 @@ class BaseNode(EntitySerializer, AbstractNode):
         return self._id
 
     @property
-    def name(self):
-        return self.get_name()
-
-    def get_name(self, serialize=False):
-        return self._name
-
-    def set_name(self, name):
-        if not self.validate_name(name):
-            return False
-
-        self._name = name
-        return True
-
-    def del_name(self):
-        self._name = None
-
-    def validate_name(self, name):
-        return node_name_validator(self, name)
-
-    @property
-    def parent(self):
-        return self.get_parent()
-
-    def get_parent(self, serialize=False):
-        if not self._parent:
-            return
-
-        if serialize:
-            return self._parent.get_id()
-
-        return self._parent
-
-    def set_parent(self, parent: 'BaseGraph'):
-        if not self.validate_parent(parent):
-            return False
-
-        self._parent = parent
-        return True
-
-    def del_parent(self):
-        self._parent = None
-
-    @classmethod
-    def deserialize_parent(cls, id_):
-        from backend.meta import InstanceManager
-        return InstanceManager().get_instance(id_)
-
-    def validate_parent(self, parent):
-        if not isinstance(parent, (BaseNodeCollection, BaseGraph)):
-            logger.warn(f'parent {parent} is not an instance of {BaseGraph}')
-            return False
-
-        return True
-
-    @property
     def attributes(self):
         return self.get_attributes()
 
@@ -646,18 +555,13 @@ class BaseNode(EntitySerializer, AbstractNode):
             return False
 
         self._attributes = attributes
-        self._attributes.set_parent(self)
         return True
 
     def del_attributes(self):
         self._attributes.clear()
 
     def validate_attributes(self, attributes):
-        if not isinstance(attributes, CustomListCollection):
-            logger.warn(f'{attributes} is not an instance of {CustomListCollection}')
-            return False
-
-        return True
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     def deserialize_attributes(self, data):
         return self._attributes.deserialize(data, relations=True)
@@ -677,18 +581,13 @@ class BaseNode(EntitySerializer, AbstractNode):
             return False
 
         self._inputs = inputs
-        self._inputs.set_parent(self)
         return True
 
     def del_inputs(self):
         self._inputs.clear()
 
     def validate_inputs(self, inputs):
-        if not isinstance(inputs, BasePortCollection):
-            logger.warn(f'{inputs} is not an instance of {BasePortCollection}')
-            return False
-
-        return True
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     def deserialize_inputs(self, data):
         return self._inputs.deserialize(data, relations=True)
@@ -708,40 +607,22 @@ class BaseNode(EntitySerializer, AbstractNode):
             return False
 
         self._outputs = outputs
-        self._outputs.set_parent(self)
         return True
 
     def del_outputs(self):
         self._outputs.clear()
 
     def validate_outputs(self, outputs):
-        if not isinstance(outputs, BasePortCollection):
-            logger.warn(f'{outputs} is not an instance of {BasePortCollection}')
-            return False
-
-        return True
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     def deserialize_outputs(self, data):
         return self._outputs.deserialize(data, relations=True)
 
-    @property
     def data(self):
-        return self.get_data()
-
-    def get_data(self, serialize=False):
-        ...
-
-    def set_data(self, data: t.Any) -> bool:
-        ...
-
-    def del_data(self):
-        ...
-
-    def validate_data(self, data):
-        ...
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
 
-class BaseNodeCollection(EntitySerializer, TypedListCollection):
+class BaseNodeCollection(EntitySerializer, TypedDictCollection):
     id_attributes = ['class'
                      ]
 
@@ -841,7 +722,7 @@ class BaseGraph(EntitySerializer, AbstractGraph):
         self._graphs = value
 
 
-class BaseGraphCollection(TypedListCollection):
+class BaseGraphCollection(TypedDictCollection):
     def __init__(self):
         super().__init__(self.__class__.__mro__)
 
