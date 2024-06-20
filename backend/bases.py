@@ -1,11 +1,9 @@
 import json
-import enum
 import copy
 from collections.abc import MutableMapping
 
 from backend.abstracts import (AbstractType,
                                AbstractNode,
-                               AbstractPort,
                                AbstractEntitySerializer,
                                EntityType)
 from backend.events import *
@@ -146,10 +144,10 @@ class TypedDictCollection(DictCollection):
 
     def validate_item(self, item):
         if not isinstance(item, self.valid_types):
-            logger.warn(f'item value must be of type {self.valid_types}')
+            logger.warn(f'{self.__class__.__name__} item value must be of type {self.valid_types}')
             return False
 
-        if self.validate_uniqueness and item in self:
+        if self.validate_uniqueness and item in self.values():
             logger.warn(f'{item} is already present in the collection')
             return False
 
@@ -190,7 +188,6 @@ class BaseType(EntitySerializer, AbstractType):
     def get_id(self, serialize=False):
         return self._id
 
-    @property
     def data(self):
         return self.get_data()
 
@@ -216,37 +213,23 @@ class BaseType(EntitySerializer, AbstractType):
         return True
 
 
-class PortType(enum.StrEnum):
-    INPUT = 'INPUT'
-    OUTPUT = 'OUTPUT'
+class BasePortNode(EntitySerializer, AbstractNode):
+    entity_type = EntityType.PortNode
 
-
-class BasePort(EntitySerializer, AbstractPort):
     id_attributes = ['class',
                      'type',
                      'id']
 
-    primary_attributes = ['name',
-                          'mode',
-                          'parent']
+    relation_attributes = ['attributes',
+                           ]
 
-    relation_attributes = ['parent',
-                           'connections']
-
-    @register_events_decorator([PrePortInitialized, PostPortInitialized])
+    @register_events_decorator([PreNodeInitialized, PostNodeInitialized])
     def __init__(self, **kwargs):
         self._id = kwargs.pop('id')
 
-        self._name: t.Optional[str] = None
-        self._mode: t.Optional[PortType] = None
-        self._parent: t.Optional[BaseNode] = None
-        self._connections: t.Optional[BasePortCollection[BasePort]] = None
+        self._attributes = None
 
-        for key in self.primary_attributes:
-            if key in kwargs:
-                getattr(self, f'set_{key}')(kwargs[key])
-
-    @register_events_decorator([PrePortDeleted, PostPortDeleted])
+    @register_events_decorator([PreNodeDeleted, PostNodeDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)
@@ -266,180 +249,33 @@ class BasePort(EntitySerializer, AbstractPort):
         return self._id
 
     @property
-    def name(self):
-        return self.get_name()
+    def attributes(self):
+        return self.get_attributes()
 
-    def get_name(self, serialize=False):
-        return self._name
-
-    def set_name(self, name):
-        if not self.validate_name(name):
-            return False
-
-        self._name = name
-        return True
-
-    def del_name(self):
-        self._name = None
-
-    def validate_name(self, name):
-        return port_name_validator(self, name)
-
-    @property
-    def parent(self):
-        return self.get_parent()
-
-    def get_parent(self, serialize=False):
-        if not self._parent:
-            return
-
+    def get_attributes(self, serialize=False):
         if serialize:
-            return self._parent.get_id()
+            return self._attributes.serialize()
 
-        return self._parent
+        return self._attributes
 
-    def set_parent(self, parent: 'BaseNode'):
-        if not self.validate_parent(parent):
+    def set_attributes(self, attributes):
+        if not self.validate_attributes(attributes):
             return False
 
-        self._parent = parent
+        self._attributes = attributes
         return True
 
-    def del_parent(self):
-        self._parent = None
+    def del_attributes(self):
+        self._attributes.clear()
 
-    @classmethod
-    def deserialize_parent(cls, id_):
-        from backend.meta import InstanceManager
-        return InstanceManager().get_instance(id_)
+    def validate_attributes(self, attributes):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    def validate_parent(self, parent):
-        if not isinstance(parent, BasePortCollection):
-            logger.warn(f'parent {parent} is not an instance of {BaseNode}')
-            return False
+    def deserialize_attributes(self, data):
+        return self._attributes.deserialize(data, relations=True)
 
-        return True
-
-    @property
-    def mode(self):
-        return self.get_mode()
-
-    def get_mode(self, serialize=False):
-        if serialize:
-            return self._mode.value
-
-        return self._mode
-
-    def set_mode(self, mode):
-        if isinstance(mode, str):
-            mode = getattr(PortType, mode)
-
-        if not self.validate_mode(mode):
-            return False
-
-        self._mode = mode
-        return True
-
-    def del_mode(self):
-        self._mode = None
-
-    def validate_mode(self, mode):
-        if not isinstance(mode, PortType):
-            logger.warn(f'port type {mode} is not an instance of {PortType}')
-            return False
-
-        return True
-
-    @property
-    def connections(self):
-        return self.get_connections()
-
-    def get_connections(self, serialize=False):
-        if serialize:
-            return self._connections.serialize()
-
-        return self._connections
-
-    def set_connections(self, connections):
-        if not self.validate_connections(connections):
-            return False
-
-        self._connections = connections
-        # self._connections.set_parent(self)
-        return True
-
-    def del_connections(self):
-        self._connections = None
-
-    def validate_connections(self, connections):
-        return True
-
-    def deserialize_connections(self, data):
-        return self._connections.deserialize(data, relations=True)
-
-    def connect_to(self, port):
-        self._connections.append(port)
-        port.connections.append(self)
-
-        return True
-
-    def has_connections(self):
-        return bool(len(self.get_connections()))
-
-    def disconnect(self, index):
-        self._connections[index].connections.remove(self)
-        self._connections.pop(index)
-
-        return True
-
-
-class BasePortCollection(EntitySerializer, TypedDictCollection):
-    id_attributes = ['class'
-                     ]
-
-    primary_attributes = ['parent']
-
-    relation_attributes = ['parent',
-                           'entries'
-                           ]
-
-    def validate_parent(self, parent):
-        if not isinstance(parent, (BasePort, BaseNode)):
-            logger.warn(f'{parent} is not an instance of {BaseNode}')
-
-        return True
-
-    @classmethod
-    def deserialize_parent(cls, id_):
-        from backend.meta import InstanceManager
-        return InstanceManager().get_instance(id_)
-
-    def validate_entries(self):
-        return True
-
-    @classmethod
-    def deserialize_entries(cls, ids):
-        entries = []
-        from backend.meta import InstanceManager
-
-        for id_ in ids:
-            instance = InstanceManager().get_instance(id_)
-            if instance:
-                entries.append(instance)
-
-        return entries
-
-    def connect_to(self, port_index, port_instance):
-        return self[port_index].connect_to(port_instance)
-
-    def has_connections(self, port_index):
-        return self[port_index].has_connections()
-
-    def disconnect(self, port_index: int, connection_index: int = 0):
-        self[port_index].disconnect(connection_index)
-
-    def data(self, port_index, connection_index: int = 0):
-        return self[port_index].data(connection_index)
+    def data(self):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
 
 class BaseAttributeNode(EntitySerializer, AbstractNode):
@@ -623,40 +459,3 @@ class BaseNode(EntitySerializer, AbstractNode):
 
     def data(self):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
-
-class BaseNodeCollection(EntitySerializer, TypedDictCollection):
-    id_attributes = ['class'
-                     ]
-
-    primary_attributes = ['parent']
-
-    relation_attributes = ['parent',
-                           'entries'
-                           ]
-
-    def validate_parent(self, parent):
-        if not isinstance(parent, BaseGraph):
-            logger.warn(f'{parent} is not an instance of {BaseGraph}')
-
-        return True
-
-    @classmethod
-    def deserialize_parent(cls, id_):
-        from backend.meta import InstanceManager
-        return InstanceManager().get_instance(id_)
-
-    def validate_entries(self):
-        return True
-
-    @classmethod
-    def deserialize_entries(cls, ids):
-        entries = []
-        from backend.meta import InstanceManager
-
-        for id_ in ids:
-            instance = InstanceManager().get_instance(id_)
-            if instance:
-                entries.append(instance)
-
-        return entries
