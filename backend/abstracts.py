@@ -31,8 +31,9 @@ class AbstractEntitySerializer:
     def deserialize(cls, **kwargs):
         """This returns deserialized class instance."""
 
+    @classmethod
     @abstractmethod
-    def deserialize_relations(self):
+    def deserialize_relations(cls):
         """This method deserializes the entity associations and return class instance."""
     
     @abstractmethod
