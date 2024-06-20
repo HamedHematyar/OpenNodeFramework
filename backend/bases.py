@@ -158,11 +158,11 @@ class TypedDictCollection(DictCollection):
 
     def validate_item(self, item):
         if not isinstance(item, self.valid_types):
-            logger.warn(f'{self.__class__.__name__} item value must be of type {self.valid_types} : {item}')
+            logger.warning(f'{self.__class__.__name__} item value must be of type {self.valid_types} : {item}')
             return False
 
         if self.validate_uniqueness and item in self.values():
-            logger.warn(f'{item} is already present in the collection')
+            logger.warning(f'{item} is already present in the collection')
             return False
 
         return True
@@ -222,7 +222,7 @@ class BaseType(EntitySerializer, AbstractType):
 
     def validate_data(self, data):
         if not isinstance(data, self.valid_types):
-            logger.warn(f'{self.__class__} attribute value must be an instance of {self.valid_types} not {type(data)}.')
+            logger.warning(f'{self.__class__} attribute value must be an instance of {self.valid_types} not {type(data)}.')
             return False
 
         return True
