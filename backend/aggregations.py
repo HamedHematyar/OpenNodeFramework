@@ -50,10 +50,3 @@ class NodeCollection(BaseNodeCollection):
 
     def __init__(self):
         super().__init__()
-
-
-class GraphCollection(BaseGraphCollection):
-    valid_types = (BaseGraph, )
-
-    def __init__(self):
-        super().__init__()

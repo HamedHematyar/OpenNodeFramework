@@ -6,7 +6,6 @@ from collections.abc import MutableMapping
 from backend.abstracts import (AbstractType,
                                AbstractNode,
                                AbstractPort,
-                               AbstractGraph,
                                AbstractEntitySerializer,
                                EntityType)
 from backend.events import *
