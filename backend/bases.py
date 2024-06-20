@@ -1,12 +1,14 @@
 import json
 import enum
+import copy
+from collections.abc import MutableSequence
 
-from backend.abstracts import (AbstractAttribute,
+from backend.abstracts import (AbstractType,
                                AbstractNode,
                                AbstractPort,
                                AbstractGraph,
-                               AbstractListCollection,
-                               AbstractEntitySerializer)
+                               AbstractEntitySerializer,
+                               EntityType)
 from backend.events import *
 from backend.validators import *
 
@@ -18,7 +20,7 @@ class EntitySerializer(AbstractEntitySerializer):
 
     @classmethod
     def deserialize(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
-        return cls._decode(data, *args, **kwargs)
+        return cls._decode(copy.deepcopy(data), *args, **kwargs)
 
     def dump(self, file_path, *args, **kwargs):
         with open(file_path, 'w') as file:
@@ -30,7 +32,7 @@ class EntitySerializer(AbstractEntitySerializer):
     @classmethod
     def load(cls, file_path, *args, **kwargs):
         with open(file_path, 'r') as file:
-            return cls._decode(json.load(file, *args, **kwargs))
+            return cls._decode(json.load(file), *args, **kwargs)
 
     def _encode(self, *args, **kwargs) -> t.Dict[str, t.Any]:
         serializable = set(self.id_attributes + self.primary_attributes + self.relation_attributes)
@@ -70,22 +72,24 @@ class EntitySerializer(AbstractEntitySerializer):
         return self
 
 
-class ListCollection(AbstractListCollection):
+class ListCollection(MutableSequence):
     def __init__(self, **kwargs):
         super().__init__()
 
         self._internal_data = []
-        self._parent: t.Optional[BaseNode] = None
 
     def __len__(self):
         return len(self._internal_data)
 
-    def __getitem__(self, idx):
-        return self._internal_data[idx]
+    def __getitem__(self, key):
+        funcs = {str: self.get_item_by_name,
+                 int: self.get_item_by_index}
+
+        func: t.Callable = funcs[type(key)]
+        return func(key)
 
     def __setitem__(self, idx, value):
-        if self.validate_item(idx, value):
-            value.set_parent(self)
+        if self.validate_item(value):
             self._internal_data[idx] = value
 
     def __delitem__(self, idx):
@@ -95,113 +99,99 @@ class ListCollection(AbstractListCollection):
         return str(self._internal_data)
 
     def insert(self, idx, value):
-        if self.validate_item(idx, value):
-
-            value.set_parent(self)
+        if self.validate_item(value):
             self._internal_data.insert(idx, value)
 
-    def get_class(self, serialize=False):
-        if serialize:
-            return self.__class__.__name__
+    def get_item_by_name(self, name):
+        data = {item: item for item in self}
+        item = data.get(name)
 
-        return self.__class__
+        if not item:
+            raise KeyError(f'requested item {name} could not be found in the list.')
 
-    @property
-    def parent(self):
-        return self.get_parent()
+        return item
 
-    def get_parent(self, serialize=False):
-        if not self._parent:
-            return
-
-        if serialize:
-            return self._parent.get_id()
-
-        return self._parent
-
-    def set_parent(self, parent):
-        if not self.validate_parent(parent):
-            return False
-
-        self._parent = parent
-        return True
-
-    def del_parent(self):
-        self._parent = None
+    def get_item_by_index(self, index):
+        return self._internal_data[index]
 
     @property
-    def entries(self):
-        return self.get_entries()
+    def items(self):
+        return self.get_items()
 
-    def get_entries(self, serialize=False):
+    def get_items(self, serialize=False):
         if serialize:
-            return [entry.get_id() for entry in self]
+            return [item.get_id() for item in self]
 
         return self
 
-    def set_entries(self, entries: t.Iterable):
-        self.extend(entries)
+    def set_items(self, items: t.Iterable):
+        if not self.validate_items(items):
+            return False
 
+        self.extend(items)
         return True
 
-    def del_entries(self):
+    def del_items(self):
         self.clear()
 
-    def validate_entries(self):
+    def validate_items(self, items):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    def validate_parent(self, parent):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
-    def validate_item(self, index, item):
+    def validate_item(self, item):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
 
 class TypedListCollection(ListCollection):
     valid_types = tuple()
+    validate_uniqueness = True
 
-    def validate_item(self, index, item):
+    def validate_items(self, items):
+        for item in items:
+            if not self.validate_item(item):
+                return False
+
+        return True
+
+    @classmethod
+    def deserialize_items(cls, ids):
+        from backend.meta import InstanceManager
+
+        entries = []
+        for id_ in ids:
+            instance = InstanceManager().get_instance(id_)
+            if instance:
+                entries.append(instance)
+
+        return entries
+
+    def validate_item(self, item):
         if not isinstance(item, self.valid_types):
             logger.warn(f'item value must be of type {self.valid_types}')
             return False
 
-        if item in self:
-            logger.warn(f'{index}:{item} is already present in the collection')
+        if self.validate_uniqueness and item in self:
+            logger.warn(f'{item} is already present in the collection')
             return False
 
         return True
 
 
-class BaseAttribute(EntitySerializer, AbstractAttribute):
-    """
-    A base attribute class that implements AbstractAttribute.
-    """
+class BaseType(EntitySerializer, AbstractType):
     id_attributes = ['class',
                      'type',
                      'id']
 
-    primary_attributes = ['name',
-                          'value',
-                          'parent',
-                          'link']
+    primary_attributes = ['data']
 
-    relation_attributes = ['parent',
-                           'link']
-
-    @register_events_decorator([PreAttributeInitialized, PostAttributeInitialized])
+    @register_events_decorator([PreTypeInitialized, PostTypeInitialized])
     def __init__(self, **kwargs):
         self._id = kwargs.pop('id')
+        self._data: t.Optional[str] = None
 
-        self._name: t.Optional[str] = None
-        self._link: t.Optional[BaseAttribute] = None
-        self._parent: t.Optional[BaseNode] = None
-        self._value: t.Optional[t.Any] = None
+        if 'data' in kwargs:
+            self.set_data(kwargs.pop('data'))
 
-        for key in self.primary_attributes:
-            if key in kwargs:
-                getattr(self, f'set_{key}')(kwargs[key])
-
-    @register_events_decorator([PreAttributeDeleted, PostAttributeDeleted])
+    @register_events_decorator([PreTypeDeleted, PostTypeDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)
@@ -221,173 +211,29 @@ class BaseAttribute(EntitySerializer, AbstractAttribute):
         return self._id
 
     @property
-    def name(self):
-        return self.get_name()
+    def data(self):
+        return self.get_data()
 
-    def get_name(self, serialize=False):
-        return self._name
+    def get_data(self, serialize=False):
+        return self._data
 
-    def set_name(self, name):
-        if not self.validate_name(name):
+    @register_events_decorator([PreTypeDataChanged, PostTypeDataChanged])
+    def set_data(self, data):
+        if not self.validate_data(data):
             return False
 
-        self._name = name
+        self._data = data
         return True
 
-    def del_name(self):
-        self._name = None
+    def del_data(self):
+        self._data = None
 
-    def validate_name(self, name):
-        return attribute_name_validator(self, name)
-
-    @property
-    def parent(self):
-        return self.get_parent()
-
-    def get_parent(self, serialize=False):
-        if not self._parent:
-            return
-
-        if serialize:
-            return self._parent.get_id()
-
-        return self._parent
-
-    def set_parent(self, parent: 'BaseNode'):
-        if not self.validate_parent(parent):
-            return False
-
-        self._parent = parent
-        return True
-
-    def del_parent(self):
-        self._parent = None
-
-    @classmethod
-    def deserialize_parent(cls, id_):
-        from backend.meta import InstanceManager
-        return InstanceManager().get_instance(id_)
-
-    def validate_parent(self, parent):
-        if not isinstance(parent, BaseAttributeCollection):
-            logger.warn(f'parent {parent} is not an instance of {BaseNode}')
+    def validate_data(self, data):
+        if not isinstance(data, self.valid_types):
+            logger.warn(f'attribute value must be an instance of {self.valid_types} not {type(data)}.')
             return False
 
         return True
-
-    @property
-    def link(self):
-        return self.get_link()
-
-    def get_link(self, serialize=False):
-        if not self._link:
-            return
-
-        if serialize:
-            return self._link.get_id()
-
-        return self._link
-
-    @register_events_decorator([PreAttributeLinked, PostAttributeLinked])
-    def set_link(self, link: 'BaseAttribute'):
-        if not self.validate_link(link):
-            return False
-
-        self._link = link
-        return True
-
-    @register_events_decorator([PreAttributeUnlinked, PostAttributeUnlinked])
-    def del_link(self):
-        self._link = None
-
-    def validate_link(self, link):
-        if not isinstance(link, BaseAttribute):
-            logger.warn(f'attribute link {link} is not an instance of {BaseAttribute}')
-            return False
-
-        return True
-
-    @classmethod
-    def deserialize_link(cls, id_):
-        from backend.meta import InstanceManager
-        return InstanceManager().get_instance(id_)
-
-    @property
-    def value(self):
-        return self.get_value()
-
-    def get_value(self, serialize=False):
-        if self.get_link() is None:
-            return self._value
-        else:
-            return self.get_link().get_value()
-
-    @register_events_decorator([PreAttributeValueChanged, PostAttributeValueChanged])
-    def set_value(self, value):
-        if not self.validate_value(value):
-            return False
-
-        self._value = value
-        return True
-
-    def del_value(self):
-        self._value = None
-
-    def validate_value(self, value):
-        if self.get_link() is not None:
-            logger.warn(f'attribute value is linked and cannot be changed directly : {self.get_link()}')
-            return False
-
-        if not isinstance(value, self.valid_types):
-            logger.warn(f'attribute value must be an instance of {self.valid_types} not {type(value)}.')
-            return False
-
-        return True
-
-
-class BaseAttributeCollection(EntitySerializer, TypedListCollection):
-
-    id_attributes = ['class',
-                     ]
-
-    primary_attributes = ['parent',
-                          ]
-
-    relation_attributes = ['parent',
-                           'entries']
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        for key in self.primary_attributes:
-            if key in kwargs:
-                getattr(self, f'set_{key}')(kwargs[key])
-
-    def validate_parent(self, parent):
-        if not isinstance(parent, BaseNode):
-            logger.warn(f'{parent} is not an instance of {BaseNode}')
-
-        return True
-
-    @classmethod
-    def deserialize_parent(cls, id_):
-        from backend.meta import InstanceManager
-        return InstanceManager().get_instance(id_)
-
-    def validate_entries(self):
-        return True
-
-    @classmethod
-    def deserialize_entries(cls, ids):
-        entries = []
-        from backend.meta import InstanceManager
-
-        for id_ in ids:
-            instance = InstanceManager().get_instance(id_)
-            if instance:
-                entries.append(instance)
-
-        return entries
 
 
 class PortType(enum.StrEnum):
@@ -438,12 +284,6 @@ class BasePort(EntitySerializer, AbstractPort):
 
     def get_id(self, serialize=False):
         return self._id
-
-    def set_id(self, _id):
-        self._id = _id
-
-    def del_id(self):
-        self._id = None
 
     @property
     def name(self):
@@ -555,7 +395,7 @@ class BasePort(EntitySerializer, AbstractPort):
         return True
 
     def deserialize_connections(self, data):
-        return self._connections.deserialize(data)
+        return self._connections.deserialize(data, relations=True)
 
     def connect_to(self, port):
         self._connections.append(port)
@@ -622,6 +462,71 @@ class BasePortCollection(EntitySerializer, TypedListCollection):
         return self[port_index].data(connection_index)
 
 
+class BaseAttributeNode(EntitySerializer, AbstractNode):
+    entity_type = EntityType.NodeAttribute
+
+    id_attributes = ['class',
+                     'type',
+                     'id']
+
+    relation_attributes = ['types',
+                           ]
+
+    @register_events_decorator([PreNodeInitialized, PostNodeInitialized])
+    def __init__(self, **kwargs):
+        self._id = kwargs.pop('id')
+
+        self._types = None
+
+    @register_events_decorator([PreNodeDeleted, PostNodeDeleted])
+    def delete(self):
+        from backend.meta import InstanceManager
+        InstanceManager().remove_instance(self)
+
+        del self
+
+    def get_class(self, serialize=False):
+        if serialize:
+            return self.__class__.__name__
+
+        return self.__class__
+
+    def get_type(self, serialize=False):
+        return self.entity_type.value
+
+    def get_id(self, serialize=False):
+        return self._id
+
+    @property
+    def types(self):
+        return self.get_types()
+
+    def get_types(self, serialize=False):
+        if serialize:
+            return self._types.serialize()
+
+        return self._types
+
+    def set_types(self, attributes):
+        if not self.validate_types(attributes):
+            return False
+
+        self._types = attributes
+        return True
+
+    def del_types(self):
+        self._types.clear()
+
+    def validate_types(self, types):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    def deserialize_types(self, data):
+        return self._types.deserialize(data, relations=True)
+
+    def data(self):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+
 class BaseNode(EntitySerializer, AbstractNode):
     id_attributes = ['class',
                      'type',
@@ -644,7 +549,7 @@ class BaseNode(EntitySerializer, AbstractNode):
 
         self._name: t.Optional[str] = None
         self._parent: t.Optional[BaseNode] = None
-        self._attributes: t.Optional[BaseAttributeCollection] = None
+        self._attributes = None
         self._inputs: t.Optional[BasePortCollection] = None
         self._outputs: t.Optional[BasePortCollection] = None
 
@@ -670,12 +575,6 @@ class BaseNode(EntitySerializer, AbstractNode):
 
     def get_id(self, serialize=False):
         return self._id
-
-    def set_id(self, _id):
-        self._id = _id
-
-    def del_id(self):
-        self._id = None
 
     @property
     def name(self):
@@ -754,14 +653,14 @@ class BaseNode(EntitySerializer, AbstractNode):
         self._attributes.clear()
 
     def validate_attributes(self, attributes):
-        if not isinstance(attributes, BaseAttributeCollection):
-            logger.warn(f'{attributes} is not an instance of {BaseAttributeCollection}')
+        if not isinstance(attributes, CustomListCollection):
+            logger.warn(f'{attributes} is not an instance of {CustomListCollection}')
             return False
 
         return True
 
     def deserialize_attributes(self, data):
-        return self._attributes.deserialize(data)
+        return self._attributes.deserialize(data, relations=True)
 
     @property
     def inputs(self):
@@ -792,7 +691,7 @@ class BaseNode(EntitySerializer, AbstractNode):
         return True
 
     def deserialize_inputs(self, data):
-        return self._inputs.deserialize(data)
+        return self._inputs.deserialize(data, relations=True)
 
     @property
     def outputs(self):
@@ -823,10 +722,23 @@ class BaseNode(EntitySerializer, AbstractNode):
         return True
 
     def deserialize_outputs(self, data):
-        return self._outputs.deserialize(data)
+        return self._outputs.deserialize(data, relations=True)
 
-    def data(self) -> t.Optional[t.Any]:
-        return
+    @property
+    def data(self):
+        return self.get_data()
+
+    def get_data(self, serialize=False):
+        ...
+
+    def set_data(self, data: t.Any) -> bool:
+        ...
+
+    def del_data(self):
+        ...
+
+    def validate_data(self, data):
+        ...
 
 
 class BaseNodeCollection(EntitySerializer, TypedListCollection):
