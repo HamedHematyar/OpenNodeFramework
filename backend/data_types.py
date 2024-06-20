@@ -61,6 +61,21 @@ class DataTypeEnum(GenericEnum):
         super().__init__(**kwargs)
 
 
+class PortModeEnum(GenericEnum):
+    class PortType(enum.StrEnum):
+        INPUT = 'INPUT'
+        OUTPUT = 'OUTPUT'
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def set_data(self, data):
+        if isinstance(data, str):
+            data = getattr(self.PortType, data, None)
+
+        return super().set_data(data)
+
+
 class GenericNodeAttribute(BaseType):
     valid_types = (BaseAttributeNode,)
 
