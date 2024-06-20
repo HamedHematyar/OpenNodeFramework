@@ -1,60 +1,33 @@
-import typing as t
-import enum
-from backend.bases import BaseAttribute
+from backend.aggregations import TypeCollection
+from backend.data_types import (GenericNode,
+                                GenericStr,
+                                GenericNodeAttribute)
+from backend.bases import BaseAttributeNode
 
 
-class GenericStr(BaseAttribute):
-    valid_types = (str, )
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-
-class GenericInt(BaseAttribute):
-    valid_types = (int, float)
+class GenericAttribute(BaseAttributeNode):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        self.set_types(TypeCollection())
 
-class GenericList(BaseAttribute):
-    valid_types = (list, tuple, set)
+        self.types.append(GenericNode(name='parent'))
+        self.types.append(GenericStr(name='name'))
+        self.types.append(GenericStr(name='value'))
+        self.types.append(GenericStr(name='default'))
+        self.types.append(GenericStr(name='label'))
+        self.types.append(GenericNodeAttribute(name='reference'))
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def data(self):
+        reference = self.types['reference'].data()
 
+        if reference is None:
+            return reference
 
-class GenericEnum(BaseAttribute):
-    valid_types = (enum.Enum, )
+        value = self.types['value'].data()
+        if value is None:
+            return value
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        self._options: t.Optional[t.List[t.Any]] = []
-
-        'options' in kwargs and self.set_options(kwargs.get('options'))
-
-    def get_options(self):
-        return self._options
-
-    def set_options(self, options):
-        if not issubclass(options, enum.Enum):
-            raise TypeError(f'options is not a subclass of {enum.Enum}.')
-
-        self._options = options
-
-    def del_options(self):
-        self._options.clear()
-
-
-class DataTypeEnum(GenericEnum):
-    class DataType(enum.Enum):
-        Str = str
-        Int = int
-        Float = float
-        Bool = bool
-
-    def __init__(self, **kwargs):
-        kwargs['options'] = self.DataType
-
-        super().__init__(**kwargs)
+        default = self.types['default'].data()
+        return default 
