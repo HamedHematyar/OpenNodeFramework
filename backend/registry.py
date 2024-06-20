@@ -5,6 +5,7 @@ from backend.nodes import *
 from backend.aggregations import *
 from backend.events import *
 from backend.validators import *
+from backend.ports import *
 
 
 Lock = threading.Lock()
@@ -20,8 +21,7 @@ RegisteredTypes: t.Dict[str, type] = {entry.__name__: entry for entry in [Generi
                                                                           GenericList,
                                                                           ]}
 
-RegisteredPorts = {entry.__name__: entry for entry in [InputPort,
-                                                       OutputPort
+RegisteredPorts = {entry.__name__: entry for entry in [GenericPort,
                                                        ]}
 
 RegisteredCollections = {entry.__name__: entry for entry in [TypeCollection,
