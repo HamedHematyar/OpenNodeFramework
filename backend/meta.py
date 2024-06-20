@@ -55,3 +55,6 @@ class InstanceManager(metaclass=SingletonMeta):
 
     def instances(self):
         return self._instances
+
+    def clear_all(self):
+        self._instances.clear()

@@ -9,6 +9,20 @@ class TestGenericInt(unittest.TestCase):
         self.constant = GenericInt()
         self.path = pathlib.Path("../dump/types/constant.json")
 
+    def test_1_instance_tracking(self):
+        self.assertIn(self.constant.get_id(), InstanceManager().instances())
+
+        deserialized_constant = GenericInt.deserialize(self.constant.serialize())
+        loaded_constant = GenericInt.load(self.path)
+
+        self.assertEqual(len(InstanceManager().instances()), 3)
+
+        self.constant.delete()
+        deserialized_constant.delete()
+        loaded_constant.delete()
+
+        self.assertEqual(len(InstanceManager().instances()), 0)
+
     def test_create_no_data(self):
         constant = GenericInt()
         self.assertEqual(constant.data(), constant.default)
@@ -75,20 +89,6 @@ class TestGenericInt(unittest.TestCase):
         loaded_constant = GenericInt.load(self.path)
         self.assertEqual(self.constant.data(), 25)
         self.assertNotEqual(loaded_constant.get_id(), self.constant.get_id())
-
-    def test_instance_tracking(self):
-        self.assertIn(self.constant.get_id(), InstanceManager().instances())
-
-        deserialized_constant = GenericInt.deserialize(self.constant.serialize())
-        loaded_constant = GenericInt.load(self.path)
-
-        self.assertEqual(len(InstanceManager().instances()), 3)
-
-        self.constant.delete()
-        deserialized_constant.delete()
-        loaded_constant.delete()
-
-        self.assertEqual(len(InstanceManager().instances()), 0)
 
 
 if __name__ == '__main__':
