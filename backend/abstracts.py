@@ -86,6 +86,18 @@ class AbstractType(AbstractEntityMixin, AbstractEntitySerializer, metaclass=Enti
     def data(self):
         """This returns the data of the type."""
 
+    def get_data(self, serialize=False):
+        """This returns the data of the type."""
+
+    def set_data(self, data):
+        """This sets the data of the type."""
+
+    def del_data(self):
+        """This deletes the data of the type."""
+
+    def validate_data(self, data):
+        """This validates the data of the type."""
+
 
 class AbstractPort(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
     entity_type = EntityType.Port
