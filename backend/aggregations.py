@@ -1,15 +1,32 @@
-from backend.bases import (BaseAttributeCollection,
+from backend.bases import (EntitySerializer,
+                           TypedListCollection,
                            BasePortCollection,
                            BaseNodeCollection,
                            BaseGraphCollection,
+                           BaseAttributeNode,
                            BasePort,
-                           BaseAttribute,
+                           BaseType,
                            BaseNode,
                            BaseGraph)
 
 
-class AttributeCollection(BaseAttributeCollection):
-    valid_types = (BaseAttribute, )
+class CustomListCollection(EntitySerializer, TypedListCollection):
+
+    id_attributes = ['class',
+                     ]
+
+    relation_attributes = ['items']
+
+
+class TypeCollection(CustomListCollection):
+    valid_types = (BaseType, )
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class AttributeCollection(CustomListCollection):
+    valid_types = (BaseAttributeNode, )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
