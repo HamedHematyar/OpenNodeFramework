@@ -8,10 +8,6 @@ from backend.aggregations import AttributeCollection
 
 
 class TestAttributeNode(unittest.TestCase):
-    def setUp(self):
-        self.collection = AttributeCollection()
-        self.dump_path = pathlib.Path("../dump/attributes/attribute.json")
-
     def test_attribute_default(self):
         attribute_node = StringAttribute(default='default')
         self.assertTrue(attribute_node.data(), 'default')
