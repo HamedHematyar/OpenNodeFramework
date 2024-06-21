@@ -32,10 +32,10 @@ class ParameterNode(Node):
         self.set_inputs(PortCollection())
         self.set_outputs(PortCollection())
 
-        self.attributes['type'] = GenericAttribute()
-        self.attributes['value'] = GenericAttribute()
+        self.attributes['type'] = GenericAttribute(parent=self)
+        self.attributes['value'] = GenericAttribute(parent=self)
 
-        self.outputs['product'] = GenericPort()
+        self.outputs['product'] = GenericPort(parent=self)
 
     def data(self) -> t.Optional[t.Any]:
         return self.attributes['value'].data
@@ -49,10 +49,10 @@ class SumNode(Node):
         self.set_inputs(PortCollection())
         self.set_outputs(PortCollection())
 
-        self.inputs['entry0'] = GenericPort()
-        self.inputs['entry1'] = GenericPort()
+        self.inputs['entry0'] = GenericPort(parent=self)
+        self.inputs['entry1'] = GenericPort(parent=self)
 
-        self.outputs['product'] = GenericPort()
+        self.outputs['product'] = GenericPort(parent=self)
 
     def data(self) -> t.Optional[t.Any]:
         data = 0

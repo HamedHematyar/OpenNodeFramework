@@ -109,3 +109,14 @@ class GenericNode(BaseType):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def get_data(self, serialize=False):
+        if not self._data:
+            return super().get_data(serialize)
+
+        self._data: BaseNode
+        if serialize:
+            return self._data.get_id()
+
+        return self._data
+
