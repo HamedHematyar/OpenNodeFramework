@@ -5,7 +5,7 @@ from backend.meta import InstanceManager
 from backend.data_types import GenericInt
 
 
-class TestGenericInt(unittest.TestCase):
+class TestDataTypes(unittest.TestCase):
     def setUp(self):
         self.constant = GenericInt()
         self.path = pathlib.Path("../dump/types/constant.json")
