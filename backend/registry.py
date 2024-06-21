@@ -1,6 +1,7 @@
 import threading
 
 from backend.data_types import *
+from backend.attributes import *
 from backend.nodes import *
 from backend.aggregations import *
 from backend.events import *
@@ -18,14 +19,26 @@ RegisteredNodes = {entry.__name__: entry for entry in [Node,
 
 RegisteredTypes: t.Dict[str, type] = {entry.__name__: entry for entry in [GenericStr,
                                                                           GenericInt,
+                                                                          GenericFloat,
                                                                           GenericList,
+                                                                          GenericEnum,
+                                                                          DataTypeEnum,
+                                                                          PortModeEnum,
+                                                                          ReferencedNodeAttribute,
+                                                                          ReferencedNodeType
                                                                           ]}
+
+RegisteredAttributes: t.Dict[str, type] = {entry.__name__: entry for entry in [StringAttribute,
+                                                                               ]}
 
 RegisteredPorts = {entry.__name__: entry for entry in [GenericPort,
                                                        ]}
 
 RegisteredCollections = {entry.__name__: entry for entry in [TypeCollection,
+                                                             AttributeTypesCollection,
+                                                             AttributeCollection,
                                                              PortCollection,
+                                                             PortAttributesCollection,
                                                              NodeCollection
                                                              ]}
 
