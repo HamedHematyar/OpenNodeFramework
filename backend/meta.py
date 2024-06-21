@@ -1,5 +1,7 @@
 import uuid
 
+from backend.logger import logger
+
 
 class SingletonMeta(type):
     _instances = {}
@@ -48,7 +50,10 @@ class InstanceManager(metaclass=SingletonMeta):
         self._instances[instance.get_id()] = instance
 
     def remove_instance(self, instance):
-        self._instances.pop(instance.get_id())
+        if instance.get_id() in self._instances:
+            self._instances.pop(instance.get_id())
+        else:
+            logger.warning(f'instance does not exist or already removed : {instance.get_id()}')
 
     def get_instance(self, instance_id):
         return self._instances.get(instance_id)

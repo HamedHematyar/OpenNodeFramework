@@ -52,7 +52,7 @@ class EntitySerializer(AbstractEntitySerializer):
         relations = data.pop('relations', kwargs.pop('relations', False))
         relations_data = {}
 
-        for key in cls.relation_attributes + cls.id_attributes:
+        for key in cls.relation_attributes:
             if key in data:
                 relations_data[key] = data.pop(key)
 
@@ -139,22 +139,11 @@ class TypedDictCollection(DictCollection):
 
     @classmethod
     def deserialize_items(cls, items_data):
-        from backend.meta import InstanceManager
         from backend.registry import RegisteredTypes
+        for name, data in items_data.items():
+            items_data[name] = RegisteredTypes[data['class']].deserialize(data, relations=True)
 
-        items_dict = {}
-        for key, data in items_data.items():
-            instance = None
-            if data.get('id'):
-                instance = InstanceManager().get_instance(data.get('id'))
-
-            if not instance:
-                instance = RegisteredTypes.get(data['class'])(**data)
-
-            if instance:
-                items_dict[key] = instance
-
-        return items_dict
+        return items_data
 
     def validate_item(self, item):
         if not isinstance(item, self.valid_types):
@@ -226,6 +215,13 @@ class BaseType(EntitySerializer, AbstractType):
             return False
 
         return True
+
+    @classmethod
+    def _decode(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
+        from backend.meta import InstanceManager
+        instance = InstanceManager().get_instance(data['id'])
+
+        return instance or cls(**data)
 
 
 class BasePortNode(EntitySerializer, AbstractNode):

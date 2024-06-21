@@ -20,11 +20,28 @@ class TypeCollection(CustomDictCollection):
         super().__init__(**kwargs)
 
 
+class AttributeTypesCollection(CustomDictCollection):
+    valid_types = (BaseType, BaseAttributeNode)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
 class AttributeCollection(CustomDictCollection):
     valid_types = (BaseAttributeNode,)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    @classmethod
+    def deserialize_items(cls, items_data):
+        from backend.registry import RegisteredTypes, RegisteredAttributes
+
+        for name, data in items_data.items():
+            subclass = RegisteredTypes.get(data['class']) or RegisteredAttributes.get(data['class'])
+            items_data[name] = subclass.deserialize(data, relations=True)
+
+        return items_data
 
 
 class PortCollection(CustomDictCollection):

@@ -38,7 +38,7 @@ class ParameterNode(Node):
         self.outputs['product'] = GenericPort(parent=self)
 
     def data(self) -> t.Optional[t.Any]:
-        return self.attributes['value'].data
+        return self.attributes['value'].data()
 
 
 class SumNode(Node):

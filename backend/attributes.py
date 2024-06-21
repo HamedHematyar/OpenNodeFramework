@@ -1,7 +1,7 @@
-from backend.aggregations import TypeCollection
-from backend.data_types import (GenericNode,
+from backend.aggregations import AttributeTypesCollection
+from backend.data_types import (ReferencedNodeType,
                                 GenericStr,
-                                GenericNodeAttribute)
+                                ReferencedNodeAttribute)
 from backend.bases import BaseAttributeNode
 
 
@@ -16,13 +16,10 @@ class GenericAttribute(BaseAttributeNode):
         self.populate_data(**kwargs)
 
     def init_attributes(self):
-        collection = TypeCollection()
+        collection = AttributeTypesCollection()
 
-        collection['parent'] = GenericNode()
-        collection['value'] = GenericStr()
-        collection['default'] = GenericStr()
-        collection['label'] = GenericStr()
-        collection['reference'] = GenericNodeAttribute()
+        collection['parent'] = ReferencedNodeType()
+        collection['reference'] = ReferencedNodeAttribute()
 
         return collection
 
@@ -31,16 +28,32 @@ class GenericAttribute(BaseAttributeNode):
 
     @classmethod
     def deserialize_attributes(cls, data):
-        return TypeCollection.deserialize(data, relations=True)
+        return AttributeTypesCollection.deserialize(data, relations=True)
 
     def data(self):
-        reference = self.attributes['reference'].data()
+        reference = self.attributes['reference']
 
-        if reference is None:
-            return reference
+        if reference is not None:
+            return reference.data()
+
+
+class StringAttribute(GenericAttribute):
+    def init_attributes(self):
+        collection = super().init_attributes()
+
+        collection['value'] = GenericStr()
+        collection['label'] = GenericStr()
+        collection['default'] = GenericStr()
+
+        return collection
+
+    def data(self):
+        super_result = super().data()
+        if super_result is not None:
+            return super_result
 
         value = self.attributes['value'].data()
-        if value is None:
+        if value is not None:
             return value
 
         default = self.attributes['default'].data()

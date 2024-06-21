@@ -1,4 +1,4 @@
-from backend.data_types import GenericNode, GenericStr, PortModeEnum, GenericList
+from backend.data_types import ReferencedNodeType, GenericStr, PortModeEnum, GenericList
 from backend.bases import BasePortNode
 from backend.aggregations import PortCollection, PortAttributesCollection
 
@@ -10,7 +10,7 @@ class GenericPort(BasePortNode):
 
         self.set_attributes(PortAttributesCollection())
 
-        self.attributes['parent'] = GenericNode()
+        self.attributes['parent'] = ReferencedNodeType()
         self.attributes['label'] = GenericStr()
         self.attributes['mode'] = PortModeEnum()
 

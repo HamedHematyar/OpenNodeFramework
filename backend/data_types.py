@@ -87,6 +87,8 @@ class PortModeEnum(GenericEnum):
         INPUT = 'INPUT'
         OUTPUT = 'OUTPUT'
 
+    default = PortType.INPUT
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -97,26 +99,60 @@ class PortModeEnum(GenericEnum):
         return super().set_data(data)
 
 
-class GenericNodeAttribute(BaseType):
+class ReferencedNodeAttribute(GenericStr):
     valid_types = (BaseAttributeNode,)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def set_data(self, data):
+        if isinstance(data, BaseAttributeNode):
+            self._data = data.get_id()
+            return True
 
-class GenericNode(BaseType):
+        return super().set_data(data)
+
+    @classmethod
+    def _decode(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
+        from backend.meta import InstanceManager
+        instance = InstanceManager().get_instance(data['id'])
+        if instance:
+            return instance
+
+        reference_instance = InstanceManager().get_instance(data['data'])
+        if reference_instance:
+            data['data'] = reference_instance
+
+        return cls(**data)
+
+    # @classmethod
+    # def deserialize(cls, data):
+    #     from backend.meta import InstanceManager
+    #     instance = InstanceManager().get_instance(data.pop('data', None))
+    #     if instance:
+    #         data['data'] = instance
+    #
+    #     return data
+
+
+class ReferencedNodeType(BaseType):
     valid_types = (BaseNode,)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def get_data(self, serialize=False):
-        if not self._data:
-            return super().get_data(serialize)
+    def set_data(self, data):
+        if isinstance(data, BaseNode):
+            self._data = data.get_id()
+            return True
 
-        self._data: BaseNode
-        if serialize:
-            return self._data.get_id()
+        return super().set_data(data)
 
-        return self._data
-
+    # @classmethod
+    # def deserialize_data(cls, data):
+    #     from backend.meta import InstanceManager
+    #     instance = InstanceManager().get_instance(data.pop('data', None))
+    #     if instance:
+    #         data['data'] = instance
+    #
+    #     return data
