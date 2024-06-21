@@ -1,7 +1,8 @@
 import pathlib
 import unittest
-from backend.data_types import GenericInt
+
 from backend.meta import InstanceManager
+from backend.data_types import GenericInt
 
 
 class TestGenericInt(unittest.TestCase):
@@ -81,6 +82,8 @@ class TestGenericInt(unittest.TestCase):
         self.assertNotEqual(deserialized_constant.get_id(), self.constant.get_id())
 
     def test_dump_and_load(self):
+        InstanceManager().clear_all()
+
         self.assertTrue(self.constant.set_data(25))
 
         self.constant.dump(self.path, indent=4)

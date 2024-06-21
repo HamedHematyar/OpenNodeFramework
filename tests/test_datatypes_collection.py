@@ -1,9 +1,9 @@
 import pathlib
 import unittest
 
+from backend.meta import InstanceManager
 from backend.data_types import GenericStr, GenericInt
 from backend.aggregations import TypeCollection
-
 
 class TestTypeCollection(unittest.TestCase):
     def setUp(self):
@@ -48,6 +48,13 @@ class TestTypeCollection(unittest.TestCase):
         # test with not relations
         loaded_collection = TypeCollection.load(self.path, relations=False)
         self.assertNotIn(self.collection['label'], loaded_collection.values())
+
+    def test_clean_load(self):
+        InstanceManager().clear_all()
+        loaded_collection = TypeCollection.load(self.path, relations=True)
+
+        self.assertIn('label', loaded_collection)
+        self.assertIn('size', loaded_collection)
 
 
 if __name__ == '__main__':
