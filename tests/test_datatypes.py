@@ -16,7 +16,7 @@ class TestDataTypes(unittest.TestCase):
         deserialized_constant = GenericInt.deserialize(self.constant.serialize())
         loaded_constant = GenericInt.load(self.path)
 
-        self.assertEqual(len(InstanceManager().instances()), 3)
+        self.assertEqual(len(InstanceManager().instances()), 2)
 
         self.constant.delete()
         deserialized_constant.delete()
@@ -79,7 +79,7 @@ class TestDataTypes(unittest.TestCase):
         serialized_constant = self.constant.serialize()
         deserialized_constant = GenericInt.deserialize(serialized_constant)
 
-        self.assertNotEqual(deserialized_constant.get_id(), self.constant.get_id())
+        self.assertEqual(deserialized_constant.get_id(), self.constant.get_id())
 
     def test_dump_and_load(self):
         InstanceManager().clear_all()

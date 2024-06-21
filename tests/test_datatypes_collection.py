@@ -5,6 +5,7 @@ from backend.meta import InstanceManager
 from backend.data_types import GenericStr, GenericInt
 from backend.aggregations import TypeCollection
 
+
 class TestDataTypeCollection(unittest.TestCase):
     def setUp(self):
         self.collection = TypeCollection()
