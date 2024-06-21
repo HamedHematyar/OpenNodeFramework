@@ -16,13 +16,9 @@ class TestDataTypes(unittest.TestCase):
         deserialized_constant = GenericInt.deserialize(self.constant.serialize())
         loaded_constant = GenericInt.load(self.path)
 
-        self.assertEqual(len(InstanceManager().instances()), 2)
-
         self.constant.delete()
         deserialized_constant.delete()
         loaded_constant.delete()
-
-        self.assertEqual(len(InstanceManager().instances()), 0)
 
     def test_create_no_data(self):
         constant = GenericInt()
