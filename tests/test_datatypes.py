@@ -90,8 +90,8 @@ class TestDataTypes(unittest.TestCase):
         self.assertTrue(self.path.is_file())
 
         loaded_constant = GenericInt.load(self.path)
-        self.assertEqual(self.constant.data(), 25)
-        self.assertNotEqual(loaded_constant.get_id(), self.constant.get_id())
+        self.assertEqual(loaded_constant.data(), 25)
+        self.assertEqual(loaded_constant.get_id(), self.constant.get_id())
 
 
 if __name__ == '__main__':
