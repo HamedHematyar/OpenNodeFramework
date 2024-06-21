@@ -7,14 +7,10 @@ from backend.meta import *
 
 
 class EntityType(enum.StrEnum):
-    GenericNode: str = 'GenericNode'
-    NodeAttribute: str = 'NodeAttribute'
-    PortNode: str = 'PortNode'
     Node: str = 'Node'
-    Port: str = 'Port'
     Attribute: str = 'Attribute'
-    Graph: str = 'Graph'
-    DataType: str = 'Type'
+    Port: str = 'Port'
+    Type: str = 'Type'
 
 
 class AbstractEntitySerializer:
@@ -79,7 +75,7 @@ class AbstractEntityMixin:
 
 
 class AbstractType(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
-    entity_type = EntityType.DataType
+    entity_type = EntityType.Type
     valid_types = tuple()
     default = None
 
@@ -101,7 +97,7 @@ class AbstractType(AbstractEntityMixin, AbstractEntitySerializer, metaclass=Enti
 
 
 class AbstractNode(AbstractEntityMixin, AbstractEntitySerializer, metaclass=EntityTrackerMeta):
-    entity_type = EntityType.GenericNode
+    entity_type = EntityType.Node
 
     @abstractmethod
     def data(self):

@@ -225,7 +225,7 @@ class BaseType(EntitySerializer, AbstractType):
 
 
 class BasePortNode(EntitySerializer, AbstractNode):
-    entity_type = EntityType.PortNode
+    entity_type = EntityType.Port
 
     id_attributes = ['class',
                      'type',
@@ -291,7 +291,7 @@ class BasePortNode(EntitySerializer, AbstractNode):
 
 
 class BaseAttributeNode(EntitySerializer, AbstractNode):
-    entity_type = EntityType.NodeAttribute
+    entity_type = EntityType.Attribute
 
     id_attributes = ['class',
                      'type',
