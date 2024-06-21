@@ -1,6 +1,7 @@
 import typing as t
 import enum
 
+from backend.logger import logger
 from backend.bases import BaseType, BaseNode, BaseAttributeNode
 
 
@@ -119,9 +120,14 @@ class ReferencedNodeAttribute(GenericStr):
         if instance:
             return instance
 
-        reference_instance = InstanceManager().get_instance(data['data'])
+        # TODO ReferenceManager task
+        reference_id = data.pop('data', None)
+        reference_instance = InstanceManager().get_instance(reference_id)
         if reference_instance:
             data['data'] = reference_instance
+
+        if reference_id and not reference_instance:
+            logger.warning(f'could not find reference to : {reference_id}')
 
         return cls(**data)
 
