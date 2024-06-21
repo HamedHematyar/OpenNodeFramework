@@ -13,6 +13,10 @@ from backend.validators import *
 
 class EntitySerializer(AbstractEntitySerializer):
 
+    id_attributes = []
+    primary_attributes = []
+    relation_attributes = []
+
     def serialize(self) -> t.Dict[str, t.Any]:
         return self._encode()
 
@@ -164,6 +168,8 @@ class BaseType(EntitySerializer, AbstractType):
 
     primary_attributes = ['data']
 
+    relation_attributes = []
+
     @register_events_decorator([PreTypeInitialized, PostTypeInitialized])
     def __init__(self, **kwargs):
         self._id = kwargs.pop('id')
@@ -231,6 +237,8 @@ class BasePortNode(EntitySerializer, AbstractNode):
                      'type',
                      'id']
 
+    primary_attributes = []
+
     relation_attributes = ['attributes',
                            ]
 
@@ -296,6 +304,8 @@ class BaseAttributeNode(EntitySerializer, AbstractNode):
     id_attributes = ['class',
                      'type',
                      'id']
+
+    primary_attributes = []
 
     relation_attributes = ['attributes',
                            ]
@@ -373,6 +383,8 @@ class BaseNode(EntitySerializer, AbstractNode):
     id_attributes = ['class',
                      'type',
                      'id']
+
+    primary_attributes = []
 
     relation_attributes = ['attributes',
                            'inputs',
