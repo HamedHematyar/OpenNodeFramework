@@ -7,13 +7,12 @@ from backend.bases import (EntitySerializer,
 
 
 class CustomDictCollection(EntitySerializer, TypedDictCollection):
-    id_attributes = ['class',
-                     ]
+    id_attributes = ['class', ]
+    primary_attributes = []
+    relation_attributes = ['items', ]
 
-    relation_attributes = ['items']
 
-
-class TypeCollection(CustomDictCollection):
+class DataTypeCollection(CustomDictCollection):
     valid_types = (BaseType,)
 
     def __init__(self, **kwargs):

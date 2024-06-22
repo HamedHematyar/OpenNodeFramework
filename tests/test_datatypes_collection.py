@@ -3,12 +3,12 @@ import unittest
 
 from backend.meta import InstanceManager
 from backend.data_types import GenericStr, GenericInt
-from backend.aggregations import TypeCollection
+from backend.aggregations import DataTypeCollection
 
 
 class TestDataTypeCollection(unittest.TestCase):
     def setUp(self):
-        self.collection = TypeCollection()
+        self.collection = DataTypeCollection()
 
         self.collection['label'] = GenericStr(data="label")
         self.collection['size'] = GenericInt(data=5)
@@ -31,11 +31,11 @@ class TestDataTypeCollection(unittest.TestCase):
         serialized_collection = self.collection.serialize()
 
         # test with relations
-        deserialized_collection = TypeCollection.deserialize(serialized_collection, relations=True)
+        deserialized_collection = DataTypeCollection.deserialize(serialized_collection, relations=True)
         self.assertIn(self.collection['label'], deserialized_collection.values())
 
         # test with not relations
-        deserialized_collection = TypeCollection.deserialize(serialized_collection, relations=False)
+        deserialized_collection = DataTypeCollection.deserialize(serialized_collection, relations=False)
         self.assertNotIn(self.collection['label'], deserialized_collection.values())
 
     def test_dump_and_load(self):
@@ -43,16 +43,16 @@ class TestDataTypeCollection(unittest.TestCase):
         self.assertTrue(pathlib.Path(self.path).exists())
 
         # test with relations
-        loaded_collection = TypeCollection.load(self.path, relations=True)
+        loaded_collection = DataTypeCollection.load(self.path, relations=True)
         self.assertIn(self.collection['label'], loaded_collection.values())
 
         # test with not relations
-        loaded_collection = TypeCollection.load(self.path, relations=False)
+        loaded_collection = DataTypeCollection.load(self.path, relations=False)
         self.assertNotIn(self.collection['label'], loaded_collection.values())
 
     def test_clean_load(self):
         InstanceManager().clear_all()
-        loaded_collection = TypeCollection.load(self.path, relations=True)
+        loaded_collection = DataTypeCollection.load(self.path, relations=True)
 
         self.assertIn('label', loaded_collection)
         self.assertIn('size', loaded_collection)

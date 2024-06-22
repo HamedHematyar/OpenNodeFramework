@@ -188,34 +188,6 @@ class PostPortDeleted(Event):
         super().__init__()
 
 
-class PreGraphInitialized(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-class PostGraphInitialized(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
-
-
-class PreGraphDeleted(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-class PostGraphDeleted(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
-
-
 class EventManager(metaclass=SingletonMeta):
     def __init__(self):
         from backend.registry import RegisteredEvents

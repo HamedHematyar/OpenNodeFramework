@@ -34,7 +34,7 @@ RegisteredAttributes: t.Dict[str, type] = {entry.__name__: entry for entry in [S
 RegisteredPorts = {entry.__name__: entry for entry in [GenericPort,
                                                        ]}
 
-RegisteredCollections = {entry.__name__: entry for entry in [TypeCollection,
+RegisteredCollections = {entry.__name__: entry for entry in [DataTypeCollection,
                                                              AttributeTypesCollection,
                                                              AttributeCollection,
                                                              PortCollection,
@@ -58,11 +58,6 @@ RegisteredEvents = {entry.__name__: entry for entry in [PreNodeInitialized,
                                                         PostPortInitialized,
                                                         PrePortDeleted,
                                                         PostPortDeleted,
-
-                                                        PreGraphInitialized,
-                                                        PostGraphInitialized,
-                                                        PreGraphDeleted,
-                                                        PostGraphDeleted,
                                                         ]}
 
 

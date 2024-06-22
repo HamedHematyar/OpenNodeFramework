@@ -131,15 +131,6 @@ class ReferencedNodeAttribute(GenericStr):
 
         return cls(**data)
 
-    # @classmethod
-    # def deserialize(cls, data):
-    #     from backend.meta import InstanceManager
-    #     instance = InstanceManager().get_instance(data.pop('data', None))
-    #     if instance:
-    #         data['data'] = instance
-    #
-    #     return data
-
 
 class ReferencedNodeType(BaseType):
     valid_types = (BaseNode,)
@@ -153,12 +144,3 @@ class ReferencedNodeType(BaseType):
             return True
 
         return super().set_data(data)
-
-    # @classmethod
-    # def deserialize_data(cls, data):
-    #     from backend.meta import InstanceManager
-    #     instance = InstanceManager().get_instance(data.pop('data', None))
-    #     if instance:
-    #         data['data'] = instance
-    #
-    #     return data
