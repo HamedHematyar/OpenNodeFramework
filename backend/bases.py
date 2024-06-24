@@ -230,6 +230,129 @@ class BaseType(EntitySerializer, AbstractType):
         return instance or cls(**data)
 
 
+class BaseNode(EntitySerializer, AbstractNode):
+    id_attributes = ['class',
+                     'type',
+                     'id']
+
+    primary_attributes = []
+
+    relation_attributes = ['attributes',
+                           'inputs',
+                           'outputs']
+
+    @register_events_decorator([PreNodeInitialized, PostNodeInitialized])
+    def __init__(self, **kwargs):
+        self._id = kwargs.pop('id')
+
+        self._attributes = None
+        self._inputs = None
+        self._outputs = None
+
+    @register_events_decorator([PreNodeDeleted, PostNodeDeleted])
+    def delete(self):
+        from backend.meta import InstanceManager
+        InstanceManager().remove_instance(self)
+
+        del self
+
+    def get_class(self, serialize=False):
+        if serialize:
+            return self.__class__.__name__
+
+        return self.__class__
+
+    def get_type(self, serialize=False):
+        return self.entity_type.value
+
+    def get_id(self, serialize=False):
+        return self._id
+
+    @property
+    def attributes(self):
+        return self.get_attributes()
+
+    def get_attributes(self, serialize=False):
+        if serialize:
+            return self._attributes.serialize()
+
+        return self._attributes
+
+    def set_attributes(self, attributes):
+        if not self.validate_attributes(attributes):
+            return False
+
+        self._attributes = attributes
+        return True
+
+    def del_attributes(self):
+        self._attributes.clear()
+
+    def validate_attributes(self, attributes):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    @classmethod
+    def deserialize_attributes(cls, data):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    @property
+    def inputs(self):
+        return self.get_inputs()
+
+    def get_inputs(self, serialize=False):
+        if serialize:
+            return self._inputs.serialize()
+
+        return self._inputs
+
+    def set_inputs(self, inputs):
+        if not self.validate_inputs(inputs):
+            return False
+
+        self._inputs = inputs
+        return True
+
+    def del_inputs(self):
+        self._inputs.clear()
+
+    def validate_inputs(self, inputs):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    @classmethod
+    def deserialize_inputs(cls, data):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    @property
+    def outputs(self):
+        return self.get_outputs()
+
+    def get_outputs(self, serialize=False):
+        if serialize:
+            return self._outputs.serialize()
+
+        return self._outputs
+
+    def set_outputs(self, outputs):
+        if not self.validate_outputs(outputs):
+            return False
+
+        self._outputs = outputs
+        return True
+
+    def del_outputs(self):
+        self._outputs.clear()
+
+    def validate_outputs(self, outputs):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    @classmethod
+    def deserialize_outputs(cls, data):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    def data(self):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+
 class BasePortNode(EntitySerializer, AbstractNode):
     entity_type = EntityType.Port
 
@@ -373,129 +496,6 @@ class BaseAttributeNode(EntitySerializer, AbstractNode):
 
     @classmethod
     def deserialize_attributes(cls, data):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
-    def data(self):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
-
-class BaseNode(EntitySerializer, AbstractNode):
-    id_attributes = ['class',
-                     'type',
-                     'id']
-
-    primary_attributes = []
-
-    relation_attributes = ['attributes',
-                           'inputs',
-                           'outputs']
-
-    @register_events_decorator([PreNodeInitialized, PostNodeInitialized])
-    def __init__(self, **kwargs):
-        self._id = kwargs.pop('id')
-
-        self._attributes = None
-        self._inputs = None
-        self._outputs = None
-
-    @register_events_decorator([PreNodeDeleted, PostNodeDeleted])
-    def delete(self):
-        from backend.meta import InstanceManager
-        InstanceManager().remove_instance(self)
-
-        del self
-
-    def get_class(self, serialize=False):
-        if serialize:
-            return self.__class__.__name__
-
-        return self.__class__
-
-    def get_type(self, serialize=False):
-        return self.entity_type.value
-
-    def get_id(self, serialize=False):
-        return self._id
-
-    @property
-    def attributes(self):
-        return self.get_attributes()
-
-    def get_attributes(self, serialize=False):
-        if serialize:
-            return self._attributes.serialize()
-
-        return self._attributes
-
-    def set_attributes(self, attributes):
-        if not self.validate_attributes(attributes):
-            return False
-
-        self._attributes = attributes
-        return True
-
-    def del_attributes(self):
-        self._attributes.clear()
-
-    def validate_attributes(self, attributes):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
-    @classmethod
-    def deserialize_attributes(cls, data):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
-    @property
-    def inputs(self):
-        return self.get_inputs()
-
-    def get_inputs(self, serialize=False):
-        if serialize:
-            return self._inputs.serialize()
-
-        return self._inputs
-
-    def set_inputs(self, inputs):
-        if not self.validate_inputs(inputs):
-            return False
-
-        self._inputs = inputs
-        return True
-
-    def del_inputs(self):
-        self._inputs.clear()
-
-    def validate_inputs(self, inputs):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
-    @classmethod
-    def deserialize_inputs(cls, data):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
-    @property
-    def outputs(self):
-        return self.get_outputs()
-
-    def get_outputs(self, serialize=False):
-        if serialize:
-            return self._outputs.serialize()
-
-        return self._outputs
-
-    def set_outputs(self, outputs):
-        if not self.validate_outputs(outputs):
-            return False
-
-        self._outputs = outputs
-        return True
-
-    def del_outputs(self):
-        self._outputs.clear()
-
-    def validate_outputs(self, outputs):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
-    @classmethod
-    def deserialize_outputs(cls, data):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     def data(self):
