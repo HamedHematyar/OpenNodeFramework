@@ -291,10 +291,6 @@ class BaseNode(EntitySerializer, AbstractNode):
     def validate_attributes(self, attributes):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    @classmethod
-    def deserialize_attributes(cls, data):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
     @property
     def inputs(self):
         return self.get_inputs()
@@ -318,10 +314,6 @@ class BaseNode(EntitySerializer, AbstractNode):
     def validate_inputs(self, inputs):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    @classmethod
-    def deserialize_inputs(cls, data):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
     @property
     def outputs(self):
         return self.get_outputs()
@@ -343,10 +335,6 @@ class BaseNode(EntitySerializer, AbstractNode):
         self._outputs.clear()
 
     def validate_outputs(self, outputs):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
-    @classmethod
-    def deserialize_outputs(cls, data):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     def data(self):
@@ -411,10 +399,6 @@ class BasePortNode(EntitySerializer, AbstractNode):
         self._attributes.clear()
 
     def validate_attributes(self, attributes):
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
-
-    @classmethod
-    def deserialize_attributes(cls, data):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
     def data(self):
@@ -494,9 +478,36 @@ class BaseAttributeNode(EntitySerializer, AbstractNode):
     def validate_attributes(self, attributes):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    @classmethod
-    def deserialize_attributes(cls, data):
+    def data(self):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    def data(self):
+
+class BaseMacroNode(BaseNode):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self._nodes = None
+
+    @property
+    def nodes(self):
+        return self.get_nodes()
+
+    def get_nodes(self, serialize=False):
+        if serialize:
+            return self._nodes.serialize()
+
+        return self._nodes
+
+    def set_nodes(self, nodes):
+        if not self.validate_nodes(nodes):
+            return False
+
+        self._nodes = nodes
+        return True
+
+    def del_nodes(self):
+        self._nodes.clear()
+
+    def validate_nodes(self, nodes):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
