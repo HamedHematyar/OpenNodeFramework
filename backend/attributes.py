@@ -1,5 +1,5 @@
 from backend.aggregations import AttributeTypesCollection
-from backend.data_types import (ReferencedNodeType,
+from backend.data_types import (ReferencedNode,
                                 GenericStr,
                                 ReferencedNodeAttribute)
 from backend.bases import BaseAttributeNode
@@ -18,7 +18,7 @@ class GenericAttribute(BaseAttributeNode):
     def init_attributes(self):
         collection = AttributeTypesCollection()
 
-        collection['parent'] = ReferencedNodeType()
+        collection['parent'] = ReferencedNode()
         collection['reference'] = ReferencedNodeAttribute()
 
         return collection

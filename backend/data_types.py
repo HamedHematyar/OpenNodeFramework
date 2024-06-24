@@ -2,7 +2,7 @@ import typing as t
 import enum
 
 from backend.logger import logger
-from backend.bases import BaseType, BaseNode, BaseAttributeNode
+from backend.bases import BaseType, BasePortNode, BaseAttributeNode, BaseNode
 
 
 class GenericStr(BaseType):
@@ -41,10 +41,20 @@ class GenericFloat(BaseType):
 
 
 class GenericList(BaseType):
-    valid_types = (list, tuple, set)
+    valid_types = ()
+    default = []
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def validate_data(self, data):
+        for sub_data in data:
+            if not isinstance(sub_data, self.valid_types):
+                logger.warning(f'{self.__class__} attribute value must be an instance of '
+                               f'{self.valid_types} not {type(sub_data)}.')
+                return False
+
+        return True
 
 
 class GenericEnum(BaseType):
@@ -100,14 +110,15 @@ class PortModeEnum(GenericEnum):
         return super().set_data(data)
 
 
-class ReferencedNodeAttribute(GenericStr):
-    valid_types = (BaseAttributeNode,)
+class GenericReferencedType(GenericStr):
+    valid_types = tuple()
+    reference_type = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def set_data(self, data):
-        if isinstance(data, BaseAttributeNode):
+        if isinstance(data, self.reference_type):
             self._data = data.get_id()
             return True
 
@@ -132,15 +143,69 @@ class ReferencedNodeAttribute(GenericStr):
         return cls(**data)
 
 
-class ReferencedNodeType(BaseType):
-    valid_types = (BaseNode,)
-
+class GenericReferencedList(GenericList):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def set_data(self, data):
-        if isinstance(data, BaseNode):
-            self._data = data.get_id()
-            return True
+        if not self.validate_data(data):
+            return False
 
-        return super().set_data(data)
+        self._data = []
+        for sub_item in data:
+            self._data.append(sub_item.get_id())
+
+        return True
+
+    @classmethod
+    def _decode(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
+        from backend.meta import InstanceManager
+        instance = InstanceManager().get_instance(data['id'])
+        if instance:
+            return instance
+
+        # TODO ReferenceManager task
+        reference_ids = data.pop('data', [])
+        decoded_data = []
+        for id_ in reference_ids:
+            reference_instance = InstanceManager().get_instance(id_)
+            if reference_instance:
+                decoded_data.append(reference_instance)
+
+            if id_ and not reference_instance:
+                logger.warning(f'could not find reference to : {id_}')
+
+        data['data'] = decoded_data
+        return cls(**data)
+
+
+class ReferencedPortList(GenericReferencedList):
+    valid_types = (BasePortNode, )
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class ReferencedNodeAttribute(GenericReferencedType):
+    valid_types = (BaseAttributeNode,)
+    reference_type = BaseAttributeNode
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class ReferencedNode(GenericReferencedType):
+    valid_types = (BaseNode, )
+    reference_type = BaseNode
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class ReferencedPort(GenericReferencedType):
+    valid_types = (BasePortNode,)
+    reference_type = BasePortNode
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+

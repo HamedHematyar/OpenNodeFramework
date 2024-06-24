@@ -25,7 +25,7 @@ RegisteredTypes: t.Dict[str, type] = {entry.__name__: entry for entry in [Generi
                                                                           DataTypeEnum,
                                                                           PortModeEnum,
                                                                           ReferencedNodeAttribute,
-                                                                          ReferencedNodeType
+                                                                          ReferencedNode
                                                                           ]}
 
 RegisteredAttributes: t.Dict[str, type] = {entry.__name__: entry for entry in [StringAttribute,
