@@ -1,64 +1,66 @@
-from backend.bases import (EntitySerializer,
-                           TypedDictCollection,
+import typing as t
+
+from backend.registry import register_collection
+from backend.bases import (CustomDictCollection,
                            BaseAttributeNode,
                            BasePortNode,
                            BaseType,
                            BaseNode)
 
 
-class CustomDictCollection(EntitySerializer, TypedDictCollection):
-    id_attributes = ['class', ]
-    primary_attributes = []
-    relation_attributes = ['items', ]
-
-
+@register_collection
 class DataTypeCollection(CustomDictCollection):
     valid_types = (BaseType,)
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    @classmethod
+    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
+        from backend.registry import RegisteredTypes
+
+        # remove class to avoid issues with dict constructor
+        data.pop('class')
+
+        for name, item_data in data.items():
+            data[name] = RegisteredTypes[item_data['class']].deserialize(item_data, relations=relations)
+
+        return cls(**data)
 
 
-class AttributeTypesCollection(CustomDictCollection):
-    valid_types = (BaseType, BaseAttributeNode)
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-
+@register_collection
 class AttributeCollection(CustomDictCollection):
     valid_types = (BaseAttributeNode,)
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     @classmethod
-    def deserialize_items(cls, items_data):
+    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
         from backend.registry import RegisteredTypes, RegisteredAttributes
 
-        for name, data in items_data.items():
-            subclass = RegisteredTypes.get(data['class']) or RegisteredAttributes.get(data['class'])
-            items_data[name] = subclass.deserialize(data, relations=True)
+        # remove class to avoid issues with dict constructor
+        data.pop('class')
 
-        return items_data
+        for name, item_data in data.items():
+            subclass = RegisteredTypes.get(item_data['class']) or RegisteredAttributes.get(item_data['class'])
+            data[name] = subclass.deserialize(item_data, relations=True)
+
+        return cls(**data)
 
 
+@register_collection
 class PortCollection(CustomDictCollection):
     valid_types = (BasePortNode,)
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    @classmethod
+    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
+        from backend.registry import RegisteredTypes, RegisteredPorts
+
+        # remove class to avoid issues with dict constructor
+        data.pop('class')
+
+        for name, item_data in data.items():
+            subclass = RegisteredTypes.get(data['class']) or RegisteredPorts.get(item_data['class'])
+            data[name] = subclass.deserialize(item_data, relations=True)
+
+        return cls(**data)
 
 
-class PortAttributesCollection(CustomDictCollection):
-    valid_types = (BaseType, PortCollection)
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-
+@register_collection
 class NodeCollection(CustomDictCollection):
     valid_types = (BaseNode,)
-
-    def __init__(self):
-        super().__init__()
