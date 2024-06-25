@@ -25,7 +25,8 @@ class TestDataTypeCollection(unittest.TestCase):
 
     def test_serialization(self):
         serialized_collection = self.collection.serialize()
-        self.assertIn('items', serialized_collection)
+        self.assertIn('label', serialized_collection)
+        self.assertIn('size', serialized_collection)
 
     def test_deserialization(self):
         serialized_collection = self.collection.serialize()
