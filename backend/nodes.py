@@ -1,10 +1,12 @@
+from backend.registry import register_node
 from backend.bases import BaseNode
 from backend.attributes import GenericAttribute
 from backend.aggregations import AttributeCollection, PortCollection
-from backend.ports import GenericPort
+from backend.ports import InputPort, OutputPort
 from backend.events import *
 
 
+@register_node
 class Node(BaseNode):
 
     def __init__(self, **kwargs):
@@ -24,6 +26,7 @@ class Node(BaseNode):
         return True
 
 
+@register_node
 class ParameterNode(Node):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -35,12 +38,13 @@ class ParameterNode(Node):
         self.attributes['type'] = GenericAttribute(parent=self)
         self.attributes['value'] = GenericAttribute(parent=self)
 
-        self.outputs['product'] = GenericPort(parent=self)
+        self.outputs['product'] = OutputPort(parent=self)
 
     def data(self) -> t.Optional[t.Any]:
         return self.attributes['value'].data()
 
 
+@register_node
 class SumNode(Node):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -49,10 +53,10 @@ class SumNode(Node):
         self.set_inputs(PortCollection())
         self.set_outputs(PortCollection())
 
-        self.inputs['entry0'] = GenericPort(parent=self)
-        self.inputs['entry1'] = GenericPort(parent=self)
+        self.inputs['entry0'] = InputPort(parent=self)
+        self.inputs['entry1'] = InputPort(parent=self)
 
-        self.outputs['product'] = GenericPort(parent=self)
+        self.outputs['product'] = OutputPort(parent=self)
 
     def data(self) -> t.Optional[t.Any]:
         data = 0
