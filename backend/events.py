@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from functools import wraps
 from enum import Enum
 
+from backend.registry import register_event
 from backend.logger import logger
 from backend.meta import SingletonMeta
 
@@ -90,6 +91,7 @@ class Event:
         return self._callbacks
 
 
+@register_event
 class PreNodeInitialized(Event):
     Phase = EventExecutionPhase.Pre
 
@@ -97,6 +99,7 @@ class PreNodeInitialized(Event):
         super().__init__()
 
 
+@register_event
 class PostNodeInitialized(Event):
     Phase = EventExecutionPhase.Post
 
@@ -104,6 +107,7 @@ class PostNodeInitialized(Event):
         super().__init__()
 
 
+@register_event
 class PreNodeDeleted(Event):
     Phase = EventExecutionPhase.Pre
 
@@ -111,6 +115,7 @@ class PreNodeDeleted(Event):
         super().__init__()
 
 
+@register_event
 class PostNodeDeleted(Event):
     Phase = EventExecutionPhase.Post
 
@@ -118,6 +123,7 @@ class PostNodeDeleted(Event):
         super().__init__()
 
 
+@register_event
 class PreTypeInitialized(Event):
     Phase = EventExecutionPhase.Pre
 
@@ -125,6 +131,7 @@ class PreTypeInitialized(Event):
         super().__init__()
 
 
+@register_event
 class PostTypeInitialized(Event):
     Phase = EventExecutionPhase.Post
 
@@ -132,6 +139,7 @@ class PostTypeInitialized(Event):
         super().__init__()
 
 
+@register_event
 class PreTypeDeleted(Event):
     Phase = EventExecutionPhase.Pre
 
@@ -139,6 +147,7 @@ class PreTypeDeleted(Event):
         super().__init__()
 
 
+@register_event
 class PostTypeDeleted(Event):
     Phase = EventExecutionPhase.Post
 
@@ -146,6 +155,7 @@ class PostTypeDeleted(Event):
         super().__init__()
 
 
+@register_event
 class PreTypeDataChanged(Event):
     Phase = EventExecutionPhase.Pre
 
@@ -153,6 +163,7 @@ class PreTypeDataChanged(Event):
         super().__init__()
 
 
+@register_event
 class PostTypeDataChanged(Event):
     Phase = EventExecutionPhase.Post
 
@@ -160,6 +171,7 @@ class PostTypeDataChanged(Event):
         super().__init__()
 
 
+@register_event
 class PrePortInitialized(Event):
     Phase = EventExecutionPhase.Pre
 
@@ -167,6 +179,7 @@ class PrePortInitialized(Event):
         super().__init__()
 
 
+@register_event
 class PostPortInitialized(Event):
     Phase = EventExecutionPhase.Post
 
@@ -174,6 +187,7 @@ class PostPortInitialized(Event):
         super().__init__()
 
 
+@register_event
 class PrePortDeleted(Event):
     Phase = EventExecutionPhase.Pre
 
@@ -181,6 +195,7 @@ class PrePortDeleted(Event):
         super().__init__()
 
 
+@register_event
 class PostPortDeleted(Event):
     Phase = EventExecutionPhase.Post
 
