@@ -1,6 +1,7 @@
+from backend.registry import register_port
 from backend.data_types import ReferencedNode, GenericStr, PortModeEnum, ReferencedPortList
 from backend.bases import BasePortNode
-from backend.aggregations import PortCollection, PortAttributesCollection
+from backend.aggregations import DataTypeCollection
 
 
 class GenericPort(BasePortNode):
@@ -8,14 +9,20 @@ class GenericPort(BasePortNode):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.set_attributes(PortAttributesCollection())
-
-        self.attributes['parent'] = ReferencedNode()
-        self.attributes['label'] = GenericStr()
-        self.attributes['mode'] = PortModeEnum()
-        self.attributes['connections'] = ReferencedPortList()
+        attributes = kwargs.pop('attributes', {})
+        self.set_attributes(attributes or self.init_attributes())
 
         self.populate_data(**kwargs)
+
+    def init_attributes(self):
+        collection = DataTypeCollection()
+
+        collection['parent'] = ReferencedNode()
+        collection['label'] = GenericStr()
+        collection['mode'] = PortModeEnum()
+        collection['connections'] = ReferencedPortList()
+
+        return collection
 
     def populate_data(self, **kwargs):
         for key, value in kwargs.items():
@@ -25,84 +32,25 @@ class GenericPort(BasePortNode):
     def validate_attributes(self, attributes):
         return True
 
+    @classmethod
+    def deserialize_attributes(cls, data):
+        from backend.registry import RegisteredCollections
+        return {'attributes': RegisteredCollections[data['class']].deserialize(data, relations=True)}
+
     def data(self):
         return
 
 
+@register_port
 class InputPort(GenericPort):
-    relation_attributes = ['attributes',
-                           'inputs']
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self._inputs = None
-
-        self.set_inputs(PortCollection())
         self.attributes['mode'].set_data('INPUT')
 
-    @property
-    def inputs(self):
-        return self.get_inputs()
 
-    def get_inputs(self, serialize=False):
-        if serialize:
-            return self._inputs.serialize()
-
-        return self._inputs
-
-    def set_inputs(self, inputs):
-        if not self.validate_inputs(inputs):
-            return False
-
-        self._inputs = inputs
-        return True
-
-    def del_inputs(self):
-        self._inputs.clear()
-
-    def validate_inputs(self, inputs):
-        return True
-
-    def deserialize_inputs(self, data):
-        return self._inputs.deserialize(data, relations=True)
-
-
+@register_port
 class OutputPort(GenericPort):
-    relation_attributes = ['attributes',
-                           'outputs']
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-        self._outputs = None
-
-        self.set_outputs(PortCollection())
         self.attributes['mode'].set_data('OUTPUT')
-
-    @property
-    def outputs(self):
-        return self.get_outputs()
-
-    def get_outputs(self, serialize=False):
-        if serialize:
-            return self._outputs.serialize()
-
-        return self._outputs
-
-    def set_outputs(self, outputs):
-        if not self.validate_outputs(outputs):
-            return False
-
-        self._outputs = outputs
-        return True
-
-    def del_outputs(self):
-        self._outputs.clear()
-
-    def validate_outputs(self, outputs):
-        return True
-
-    def deserialize_outputs(self, data):
-        return self._outputs.deserialize(data, relations=True)
-    
