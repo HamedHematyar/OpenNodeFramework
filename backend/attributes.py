@@ -1,10 +1,12 @@
-from backend.aggregations import AttributeTypesCollection
+from backend.registry import register_attribute
+from backend.aggregations import DataTypeCollection
 from backend.data_types import (ReferencedNode,
                                 GenericStr,
                                 ReferencedNodeAttribute)
 from backend.bases import BaseAttributeNode
 
 
+@register_attribute
 class GenericAttribute(BaseAttributeNode):
 
     def __init__(self, **kwargs):
@@ -16,7 +18,7 @@ class GenericAttribute(BaseAttributeNode):
         self.populate_data(**kwargs)
 
     def init_attributes(self):
-        collection = AttributeTypesCollection()
+        collection = DataTypeCollection()
 
         collection['parent'] = ReferencedNode()
         collection['reference'] = ReferencedNodeAttribute()
@@ -28,7 +30,8 @@ class GenericAttribute(BaseAttributeNode):
 
     @classmethod
     def deserialize_attributes(cls, data):
-        return AttributeTypesCollection.deserialize(data, relations=True)
+        from backend.registry import RegisteredCollections
+        return {'attributes': RegisteredCollections[data['class']].deserialize(data, relations=True)}
 
     def data(self):
         reference = self.attributes['reference']
@@ -37,6 +40,7 @@ class GenericAttribute(BaseAttributeNode):
             return reference.data()
 
 
+@register_attribute
 class StringAttribute(GenericAttribute):
     def init_attributes(self):
         collection = super().init_attributes()
