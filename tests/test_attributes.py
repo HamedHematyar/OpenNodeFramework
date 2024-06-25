@@ -1,10 +1,9 @@
 import pathlib
 import unittest
 
-from backend.meta import InstanceManager
+from backend.meta import ReferenceManager, InstanceManager
 from backend.data_types import GenericStr
 from backend.attributes import StringAttribute
-from backend.aggregations import AttributeCollection
 
 
 class TestAttributeNode(unittest.TestCase):
@@ -60,8 +59,9 @@ class TestAttributeNode(unittest.TestCase):
         self.assertEqual(driver.get_id(), loaded_driven.attributes['reference'].data())
 
         InstanceManager().clear_all()
-        loaded_driver = StringAttribute.load(driver_path, relations=True)
-        loaded_driven = StringAttribute.load(driven_path, relations=True)
+        with ReferenceManager() as reference_manager:
+            loaded_driver = StringAttribute.load(driver_path, relations=True)
+            loaded_driven = StringAttribute.load(driven_path, relations=True)
 
         # driver object is loaded so referencing that
         self.assertEqual(loaded_driver.get_id(), loaded_driven.attributes['reference'].data())

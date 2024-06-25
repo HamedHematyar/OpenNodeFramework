@@ -63,3 +63,48 @@ class InstanceManager(metaclass=SingletonMeta):
 
     def clear_all(self):
         self._instances.clear()
+
+
+class ReferenceManager(metaclass=SingletonMeta):
+    def __init__(self):
+        self._references = {}
+
+    def __enter__(self):
+
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._resolve_references()
+        self._references.clear()
+
+    def request_instant_reference(self, instance_id):
+        return InstanceManager().get_instance(instance_id)
+
+    def request_deferred_reference(self, instance_id, reference_setter):
+        if not instance_id:
+            return
+
+        if not reference_setter:
+            return
+
+        self._request_reference(instance_id, reference_setter)
+
+    def _request_reference(self, instance_id, reference_setter):
+        logger.debug(f'requesting deferred reference : {instance_id} : {reference_setter}')
+
+        if instance_id in self._references:
+            self._references[instance_id].append(reference_setter)
+        else:
+            self._references[instance_id] = [reference_setter, ]
+
+    def _resolve_references(self):
+        for instance_id, setters in self._references.items():
+            instance = InstanceManager().get_instance(instance_id)
+            if not instance:
+                logger.error(f'reference instance does not exist: {instance_id}')
+                continue
+
+            for setter in setters:
+                logger.debug(f'resolving reference : {instance} : {setter}')
+                setter(instance)
+

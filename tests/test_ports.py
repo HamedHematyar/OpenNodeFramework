@@ -1,10 +1,9 @@
 import pathlib
 import unittest
 
-from backend.meta import InstanceManager
+from backend.meta import InstanceManager, ReferenceManager
 from backend.data_types import GenericStr
 from backend.ports import InputPort, OutputPort
-from backend.aggregations import PortCollection
 
 
 class TestAttributeNode(unittest.TestCase):
@@ -70,8 +69,9 @@ class TestAttributeNode(unittest.TestCase):
         self.assertIn(out_port.get_id(), loaded_in_port.attributes['connections'].data())
 
         InstanceManager().clear_all()
-        loaded_out_port = OutputPort.load(out_port_path, relations=True)
-        loaded_in_port = InputPort.load(in_port_path, relations=True)
+        with ReferenceManager() as reference_manager:
+            loaded_out_port = OutputPort.load(out_port_path, relations=True)
+            loaded_in_port = InputPort.load(in_port_path, relations=True)
 
         # driver object is loaded so referencing that
         self.assertIn(loaded_out_port.get_id(), loaded_in_port.attributes['connections'].data())

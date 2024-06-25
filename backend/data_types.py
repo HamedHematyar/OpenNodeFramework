@@ -134,21 +134,16 @@ class GenericReferencedType(GenericStr):
 
     @classmethod
     def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
-        from backend.meta import InstanceManager
-        instance = InstanceManager().get_instance(data['id'])
+        from backend.meta import ReferenceManager
+        instance = ReferenceManager().request_instant_reference(data['id'])
         if instance:
             return instance
 
-        # TODO ReferenceManager task
         reference_id = data.pop('data', None)
-        reference_instance = InstanceManager().get_instance(reference_id)
-        if reference_instance:
-            data['data'] = reference_instance
+        instance = cls(**data)
 
-        if reference_id and not reference_instance:
-            logger.error(f'could not find reference to : {reference_id}')
-
-        return cls(**data)
+        ReferenceManager().request_deferred_reference(reference_id, instance.set_data)
+        return instance
 
 
 class GenericReferencedList(GenericList):
@@ -165,26 +160,27 @@ class GenericReferencedList(GenericList):
 
         return True
 
+    def append_data(self, data):
+        if not self.validate_data([data, ]):
+            return False
+
+        self._data.append(data.get_id())
+        return True
+
     @classmethod
     def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
-        from backend.meta import InstanceManager
-        instance = InstanceManager().get_instance(data['id'])
+        from backend.meta import ReferenceManager
+        instance = ReferenceManager().request_instant_reference(data['id'])
         if instance:
             return instance
 
-        # TODO ReferenceManager task
         reference_ids = data.pop('data', [])
-        decoded_data = []
+        instance = cls(**data)
+
         for id_ in reference_ids:
-            reference_instance = InstanceManager().get_instance(id_)
-            if reference_instance:
-                decoded_data.append(reference_instance)
+            ReferenceManager().request_deferred_reference(id_, instance.append_data)
 
-            if id_ and not reference_instance:
-                logger.error(f'could not find reference to : {id_}')
-
-        data['data'] = decoded_data
-        return cls(**data)
+        return instance
 
 
 @register_data_type
