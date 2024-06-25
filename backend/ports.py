@@ -37,9 +37,6 @@ class GenericPort(BasePortNode):
         from backend.registry import RegisteredCollections
         return {'attributes': RegisteredCollections[data['class']].deserialize(data, relations=True)}
 
-    def data(self):
-        return
-
 
 @register_port
 class InputPort(GenericPort):
@@ -48,9 +45,25 @@ class InputPort(GenericPort):
 
         self.attributes['mode'].set_data('INPUT')
 
+    def data(self):
+        data = 0
+        for connection in self.attributes['connections'].data():
+            from backend.meta import InstanceManager
+            connected_port = InstanceManager().get_instance(connection)
+            data += connected_port.data()
+
+        return data
+
 
 @register_port
 class OutputPort(GenericPort):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.attributes['mode'].set_data('OUTPUT')
+
+    def data(self):
+        from backend.meta import InstanceManager
+
+        node = InstanceManager().get_instance(self.attributes['parent'].data())
+
+        return node.data()

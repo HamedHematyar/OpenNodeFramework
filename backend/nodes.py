@@ -1,6 +1,6 @@
 from backend.registry import register_node
 from backend.bases import BaseNode
-from backend.attributes import GenericAttribute
+from backend.attributes import StringAttribute, IntAttribute
 from backend.aggregations import AttributeCollection, PortCollection
 from backend.ports import InputPort, OutputPort
 from backend.events import *
@@ -9,12 +9,14 @@ from backend.events import *
 @register_node
 class Node(BaseNode):
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def init_attributes(self):
+        return AttributeCollection()
 
-        self.set_attributes(AttributeCollection())
-        self.set_inputs(PortCollection())
-        self.set_outputs(PortCollection())
+    def init_inputs(self):
+        return PortCollection()
+
+    def init_outputs(self):
+        return PortCollection()
 
     def validate_attributes(self, attributes):
         return True
@@ -28,17 +30,25 @@ class Node(BaseNode):
 
 @register_node
 class ParameterNode(Node):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
-        self.set_attributes(AttributeCollection())
-        self.set_inputs(PortCollection())
-        self.set_outputs(PortCollection())
+    def init_attributes(self):
+        collection = AttributeCollection()
 
-        self.attributes['type'] = GenericAttribute(parent=self)
-        self.attributes['value'] = GenericAttribute(parent=self)
+        collection['value'] = IntAttribute(parent=self)
 
-        self.outputs['product'] = OutputPort(parent=self)
+        return collection
+
+    def init_inputs(self):
+        collection = PortCollection()
+
+        return collection
+
+    def init_outputs(self):
+        collection = PortCollection()
+
+        collection['product'] = OutputPort(parent=self)
+
+        return collection
 
     def data(self) -> t.Optional[t.Any]:
         return self.attributes['value'].data()
@@ -61,8 +71,8 @@ class SumNode(Node):
     def data(self) -> t.Optional[t.Any]:
         data = 0
 
-        for input_port in self.inputs:
-            data += input_port.data(0)
+        for input_name, input_port in self.inputs.items():
+            data += input_port.data()
 
         return data
 

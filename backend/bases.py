@@ -233,6 +233,31 @@ class BaseNode(EntitySerializer, AbstractNode):
         self._inputs = None
         self._outputs = None
 
+        attributes = kwargs.pop('attributes', {})
+        self.set_attributes(attributes or self.init_attributes())
+
+        inputs = kwargs.pop('inputs', {})
+        self.set_inputs(inputs or self.init_inputs())
+
+        outputs = kwargs.pop('outputs', {})
+        self.set_outputs(outputs or self.init_outputs())
+
+        self.populate_data(**kwargs)
+
+    def init_attributes(self):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    def init_inputs(self):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    def init_outputs(self):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    def populate_data(self, **kwargs):
+        for key, value in kwargs.items():
+            if self.attributes.get(key):
+                self.attributes[key].attributes['value'].set_data(value)
+
     @register_events_decorator([PreNodeDeleted, PostNodeDeleted])
     def delete(self):
         from backend.meta import InstanceManager
@@ -358,6 +383,19 @@ class BasePortNode(EntitySerializer, AbstractNode):
         self._id = kwargs.pop('id')
 
         self._attributes = None
+
+        attributes = kwargs.pop('attributes', {})
+        self.set_attributes(attributes or self.init_attributes())
+
+        self.populate_data(**kwargs)
+
+    def init_attributes(self):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
+    def populate_data(self, **kwargs):
+        for key, value in kwargs.items():
+            if self.attributes.get(key):
+                self.attributes[key].set_data(value)
 
     @register_events_decorator([PreNodeDeleted, PostNodeDeleted])
     def delete(self):

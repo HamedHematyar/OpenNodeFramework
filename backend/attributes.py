@@ -2,20 +2,12 @@ from backend.registry import register_attribute
 from backend.aggregations import DataTypeCollection
 from backend.data_types import (ReferencedNode,
                                 GenericStr,
+                                GenericInt,
                                 ReferencedNodeAttribute)
 from backend.bases import BaseAttributeNode
 
 
-@register_attribute
 class GenericAttribute(BaseAttributeNode):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        attributes = kwargs.pop('attributes', {})
-        self.set_attributes(attributes or self.init_attributes())
-
-        self.populate_data(**kwargs)
 
     def init_attributes(self):
         collection = DataTypeCollection()
@@ -46,6 +38,30 @@ class StringAttribute(GenericAttribute):
         collection = super().init_attributes()
 
         collection['value'] = GenericStr()
+        collection['label'] = GenericStr()
+        collection['default'] = GenericStr()
+
+        return collection
+
+    def data(self):
+        super_result = super().data()
+        if super_result is not None:
+            return super_result
+
+        value = self.attributes['value'].data()
+        if value is not None:
+            return value
+
+        default = self.attributes['default'].data()
+        return default
+
+
+@register_attribute
+class IntAttribute(GenericAttribute):
+    def init_attributes(self):
+        collection = super().init_attributes()
+
+        collection['value'] = GenericInt()
         collection['label'] = GenericStr()
         collection['default'] = GenericStr()
 
