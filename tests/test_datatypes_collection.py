@@ -31,25 +31,16 @@ class TestDataTypeCollection(unittest.TestCase):
     def test_deserialization(self):
         serialized_collection = self.collection.serialize()
 
-        # test with relations
-        deserialized_collection = DataTypeCollection.deserialize(serialized_collection, relations=True)
+        deserialized_collection = DataTypeCollection.deserialize(serialized_collection)
         self.assertIn(self.collection['label'], deserialized_collection.values())
-
-        # test with not relations
-        deserialized_collection = DataTypeCollection.deserialize(serialized_collection, relations=False)
-        self.assertNotIn(self.collection['label'], deserialized_collection.values())
 
     def test_dump_and_load(self):
         self.collection.dump(self.path, indent=4)
         self.assertTrue(pathlib.Path(self.path).exists())
 
         # test with relations
-        loaded_collection = DataTypeCollection.load(self.path, relations=True)
+        loaded_collection = DataTypeCollection.load(self.path)
         self.assertIn(self.collection['label'], loaded_collection.values())
-
-        # test with not relations
-        loaded_collection = DataTypeCollection.load(self.path, relations=False)
-        self.assertNotIn(self.collection['label'], loaded_collection.values())
 
     def test_clean_load(self):
         InstanceManager().clear_all()
