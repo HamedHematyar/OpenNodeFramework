@@ -12,17 +12,15 @@ from backend.validators import *
 
 
 class EntitySerializer(AbstractEntitySerializer):
-
-    id_attributes = []
-    primary_attributes = []
+    serializable_attributes = []
     relation_attributes = []
 
     def serialize(self) -> t.Dict[str, t.Any]:
         return self._encode()
 
     @classmethod
-    def deserialize(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
-        return cls._decode(copy.deepcopy(data), *args, **kwargs)
+    def deserialize(cls, data, **kwargs) -> t.Any:
+        return cls._decode(copy.deepcopy(data), **kwargs)
 
     def dump(self, file_path: pathlib.Path, *args, **kwargs):
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -39,51 +37,28 @@ class EntitySerializer(AbstractEntitySerializer):
             return cls._decode(json.load(file), *args, **kwargs)
 
     def _encode(self, *args, **kwargs) -> t.Dict[str, t.Any]:
-        serializable = set(self.id_attributes + self.primary_attributes + self.relation_attributes)
-
         data = {}
-        for key in serializable:
-            getter = getattr(self, f'get_{key}', None)
-            if not getter:
-                continue
 
-            data[key] = getter(serialize=True)
+        for key in self.serializable_attributes:
+            data.update(getattr(self, f'get_{key}')(serialize=True))
 
         return data
 
     @classmethod
-    def _decode(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
-        relations = data.pop('relations', kwargs.pop('relations', False))
-        relations_data = {}
-
+    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
         for key in cls.relation_attributes:
-            if key in data:
-                relations_data[key] = data.pop(key)
-
-        if relations:
-            data.update(cls.deserialize_relations(**relations_data))
+            data.update(getattr(cls, f'deserialize_{key}')(data.pop(key)))
 
         instance = cls(**data)
         return instance
 
-    @classmethod
-    def deserialize_relations(cls, **kwargs):
-        data = {}
-        for key in cls.relation_attributes:
-            value = getattr(cls, f'deserialize_{key}')(kwargs.get(f'{key}'))
-            if value is not None:
-                data[key] = value
-
-        return data
-
 
 class DictCollection(MutableMapping):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         self._internal_data = {}
 
-        if 'items' in kwargs:
-            self.update(**kwargs.get('items'))
+        self.update(**kwargs)
 
     def __getitem__(self, key):
         return self._internal_data[key]
@@ -130,24 +105,18 @@ class DictCollection(MutableMapping):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
 
-class TypedDictCollection(DictCollection):
+class CustomDictCollection(EntitySerializer, DictCollection):
     valid_types = tuple()
     validate_uniqueness = True
 
-    def validate_items(self, items):
-        for item in items.values():
-            if not self.validate_item(item):
-                return False
+    serializable_attributes = ['class',
+                               'items']
 
-        return True
+    def get_class(self, serialize=False):
+        if serialize:
+            return {'class': self.__class__.__name__}
 
-    @classmethod
-    def deserialize_items(cls, items_data):
-        from backend.registry import RegisteredTypes
-        for name, data in items_data.items():
-            items_data[name] = RegisteredTypes[data['class']].deserialize(data, relations=True)
-
-        return items_data
+        return self.__class__
 
     def validate_item(self, item):
         if not isinstance(item, self.valid_types):
@@ -160,15 +129,19 @@ class TypedDictCollection(DictCollection):
 
         return True
 
+    def validate_items(self, items):
+        for item in items.values():
+            if not self.validate_item(item):
+                return False
+
+        return True
+
 
 class BaseType(EntitySerializer, AbstractType):
-    id_attributes = ['class',
-                     'type',
-                     'id']
-
-    primary_attributes = ['data']
-
-    relation_attributes = []
+    serializable_attributes = ['class',
+                               'type',
+                               'id',
+                               'data']
 
     @register_events_decorator([PreTypeInitialized, PostTypeInitialized])
     def __init__(self, **kwargs):
@@ -188,20 +161,29 @@ class BaseType(EntitySerializer, AbstractType):
 
     def get_class(self, serialize=False):
         if serialize:
-            return self.__class__.__name__
+            return {'class': self.__class__.__name__}
 
         return self.__class__
 
     def get_type(self, serialize=False):
+        if serialize:
+            return {'type': self.entity_type.value}
+
         return self.entity_type.value
 
     def get_id(self, serialize=False):
+        if serialize:
+            return {'id': self._id}
+
         return self._id
 
     def data(self):
         return self.get_data()
 
     def get_data(self, serialize=False):
+        if serialize:
+            return {'data': self._data}
+
         return self._data
 
     @register_events_decorator([PreTypeDataChanged, PostTypeDataChanged])
@@ -217,13 +199,14 @@ class BaseType(EntitySerializer, AbstractType):
 
     def validate_data(self, data):
         if not isinstance(data, self.valid_types):
-            logger.warning(f'{self.__class__} attribute value must be an instance of {self.valid_types} not {type(data)}.')
+            logger.warning(
+                f'{self.__class__} attribute value must be an instance of {self.valid_types} not {type(data)}.')
             return False
 
         return True
 
     @classmethod
-    def _decode(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
+    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
         from backend.meta import InstanceManager
         instance = InstanceManager().get_instance(data['id'])
 
@@ -231,11 +214,12 @@ class BaseType(EntitySerializer, AbstractType):
 
 
 class BaseNode(EntitySerializer, AbstractNode):
-    id_attributes = ['class',
-                     'type',
-                     'id']
-
-    primary_attributes = []
+    serializable_attributes = ['class',
+                               'type',
+                               'id',
+                               'attributes',
+                               'inputs',
+                               'outputs']
 
     relation_attributes = ['attributes',
                            'inputs',
@@ -258,14 +242,20 @@ class BaseNode(EntitySerializer, AbstractNode):
 
     def get_class(self, serialize=False):
         if serialize:
-            return self.__class__.__name__
+            return {'class': self.__class__.__name__}
 
         return self.__class__
 
     def get_type(self, serialize=False):
+        if serialize:
+            return {'type': self.entity_type.value}
+
         return self.entity_type.value
 
     def get_id(self, serialize=False):
+        if serialize:
+            return {'id': self._id}
+
         return self._id
 
     @property
@@ -274,7 +264,7 @@ class BaseNode(EntitySerializer, AbstractNode):
 
     def get_attributes(self, serialize=False):
         if serialize:
-            return self._attributes.serialize()
+            return {'attributes': self._attributes.serialize()}
 
         return self._attributes
 
@@ -291,13 +281,17 @@ class BaseNode(EntitySerializer, AbstractNode):
     def validate_attributes(self, attributes):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
+    @classmethod
+    def deserialize_attributes(cls, data):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
     @property
     def inputs(self):
         return self.get_inputs()
 
     def get_inputs(self, serialize=False):
         if serialize:
-            return self._inputs.serialize()
+            return {'inputs': self._inputs.serialize()}
 
         return self._inputs
 
@@ -314,13 +308,17 @@ class BaseNode(EntitySerializer, AbstractNode):
     def validate_inputs(self, inputs):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
+    @classmethod
+    def deserialize_inputs(cls, data):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
     @property
     def outputs(self):
         return self.get_outputs()
 
     def get_outputs(self, serialize=False):
         if serialize:
-            return self._outputs.serialize()
+            return {'outputs': self._outputs.serialize()}
 
         return self._outputs
 
@@ -337,6 +335,10 @@ class BaseNode(EntitySerializer, AbstractNode):
     def validate_outputs(self, outputs):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
+    @classmethod
+    def deserialize_outputs(cls, data):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
     def data(self):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
@@ -344,14 +346,12 @@ class BaseNode(EntitySerializer, AbstractNode):
 class BasePortNode(EntitySerializer, AbstractNode):
     entity_type = EntityType.Port
 
-    id_attributes = ['class',
-                     'type',
-                     'id']
+    serializable_attributes = ['class',
+                               'type',
+                               'id',
+                               'attributes']
 
-    primary_attributes = []
-
-    relation_attributes = ['attributes',
-                           ]
+    relation_attributes = ['attributes']
 
     @register_events_decorator([PreNodeInitialized, PostNodeInitialized])
     def __init__(self, **kwargs):
@@ -368,14 +368,20 @@ class BasePortNode(EntitySerializer, AbstractNode):
 
     def get_class(self, serialize=False):
         if serialize:
-            return self.__class__.__name__
+            return {'class': self.__class__.__name__}
 
         return self.__class__
 
     def get_type(self, serialize=False):
+        if serialize:
+            return {'type': self.entity_type.value}
+
         return self.entity_type.value
 
     def get_id(self, serialize=False):
+        if serialize:
+            return {'id': self._id}
+
         return self._id
 
     @property
@@ -384,7 +390,7 @@ class BasePortNode(EntitySerializer, AbstractNode):
 
     def get_attributes(self, serialize=False):
         if serialize:
-            return self._attributes.serialize()
+            return {'attributes': self._attributes.serialize()}
 
         return self._attributes
 
@@ -401,6 +407,10 @@ class BasePortNode(EntitySerializer, AbstractNode):
     def validate_attributes(self, attributes):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
+    @classmethod
+    def deserialize_attributes(cls, data):
+        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+
     def data(self):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
@@ -408,14 +418,12 @@ class BasePortNode(EntitySerializer, AbstractNode):
 class BaseAttributeNode(EntitySerializer, AbstractNode):
     entity_type = EntityType.Attribute
 
-    id_attributes = ['class',
-                     'type',
-                     'id']
+    serializable_attributes = ['class',
+                               'type',
+                               'id',
+                               'attributes']
 
-    primary_attributes = []
-
-    relation_attributes = ['attributes',
-                           ]
+    relation_attributes = ['attributes']
 
     @register_events_decorator([PreNodeInitialized, PostNodeInitialized])
     def __init__(self, **kwargs):
@@ -445,14 +453,20 @@ class BaseAttributeNode(EntitySerializer, AbstractNode):
 
     def get_class(self, serialize=False):
         if serialize:
-            return self.__class__.__name__
+            return {'class': self.__class__.__name__}
 
         return self.__class__
 
     def get_type(self, serialize=False):
+        if serialize:
+            return {'type': self.entity_type.value}
+
         return self.entity_type.value
 
     def get_id(self, serialize=False):
+        if serialize:
+            return {'id': self._id}
+
         return self._id
 
     @property
@@ -461,7 +475,7 @@ class BaseAttributeNode(EntitySerializer, AbstractNode):
 
     def get_attributes(self, serialize=False):
         if serialize:
-            return self._attributes.serialize()
+            return {'attributes': self._attributes.serialize()}
 
         return self._attributes
 
@@ -478,36 +492,9 @@ class BaseAttributeNode(EntitySerializer, AbstractNode):
     def validate_attributes(self, attributes):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-    def data(self):
+    @classmethod
+    def deserialize_attributes(cls, data):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
-
-class BaseMacroNode(BaseNode):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        self._nodes = None
-
-    @property
-    def nodes(self):
-        return self.get_nodes()
-
-    def get_nodes(self, serialize=False):
-        if serialize:
-            return self._nodes.serialize()
-
-        return self._nodes
-
-    def set_nodes(self, nodes):
-        if not self.validate_nodes(nodes):
-            return False
-
-        self._nodes = nodes
-        return True
-
-    def del_nodes(self):
-        self._nodes.clear()
-
-    def validate_nodes(self, nodes):
+    def data(self):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
