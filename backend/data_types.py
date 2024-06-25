@@ -2,9 +2,11 @@ import typing as t
 import enum
 
 from backend.logger import logger
+from backend.registry import register_data_type
 from backend.bases import BaseType, BasePortNode, BaseAttributeNode, BaseNode
 
 
+@register_data_type
 class GenericStr(BaseType):
     valid_types = (str, )
 
@@ -12,6 +14,7 @@ class GenericStr(BaseType):
         super().__init__(**kwargs)
 
 
+@register_data_type
 class GenericInt(BaseType):
     valid_types = (int, float)
     default = int()
@@ -26,6 +29,7 @@ class GenericInt(BaseType):
         return super().set_data(data)
 
 
+@register_data_type
 class GenericFloat(BaseType):
     valid_types = (int, float)
     default = float()
@@ -40,6 +44,7 @@ class GenericFloat(BaseType):
         return super().set_data(data)
 
 
+@register_data_type
 class GenericList(BaseType):
     valid_types = ()
     default = []
@@ -57,6 +62,7 @@ class GenericList(BaseType):
         return True
 
 
+@register_data_type
 class GenericEnum(BaseType):
     valid_types = (enum.Enum, )
 
@@ -80,6 +86,7 @@ class GenericEnum(BaseType):
         self._options.clear()
 
 
+@register_data_type
 class DataTypeEnum(GenericEnum):
     class DataType(enum.Enum):
         Str = str
@@ -93,6 +100,7 @@ class DataTypeEnum(GenericEnum):
         super().__init__(**kwargs)
 
 
+@register_data_type
 class PortModeEnum(GenericEnum):
     class PortType(enum.StrEnum):
         INPUT = 'INPUT'
@@ -179,6 +187,7 @@ class GenericReferencedList(GenericList):
         return cls(**data)
 
 
+@register_data_type
 class ReferencedPortList(GenericReferencedList):
     valid_types = (BasePortNode, )
 
@@ -186,6 +195,7 @@ class ReferencedPortList(GenericReferencedList):
         super().__init__(**kwargs)
 
 
+@register_data_type
 class ReferencedNodeAttribute(GenericReferencedType):
     valid_types = (BaseAttributeNode,)
     reference_type = BaseAttributeNode
@@ -194,6 +204,7 @@ class ReferencedNodeAttribute(GenericReferencedType):
         super().__init__(**kwargs)
 
 
+@register_data_type
 class ReferencedNode(GenericReferencedType):
     valid_types = (BaseNode, )
     reference_type = BaseNode
@@ -202,6 +213,7 @@ class ReferencedNode(GenericReferencedType):
         super().__init__(**kwargs)
 
 
+@register_data_type
 class ReferencedPort(GenericReferencedType):
     valid_types = (BasePortNode,)
     reference_type = BasePortNode
