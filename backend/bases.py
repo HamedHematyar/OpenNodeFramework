@@ -60,6 +60,12 @@ class DictCollection(MutableMapping):
 
         self.update(**kwargs)
 
+    def __getattr__(self, key):
+        if key in self._internal_data:
+            return self._internal_data[key]
+
+        raise AttributeError(f'{self.__class__.__name__} object has no attribute {key}')
+
     def __getitem__(self, key):
         return self._internal_data[key]
 
@@ -244,6 +250,12 @@ class BaseNode(EntitySerializer, AbstractNode):
 
         self.populate_data(**kwargs)
 
+    def __getattr__(self, key):
+        if key in self.attributes:
+            return self.attributes[key]
+
+        raise AttributeError(f'{self.__class__.__name__} object has no attribute {key}')
+
     def init_attributes(self):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
@@ -389,6 +401,12 @@ class BasePortNode(EntitySerializer, AbstractNode):
 
         self.populate_data(**kwargs)
 
+    def __getattr__(self, key):
+        if key in self.attributes:
+            return self.attributes[key]
+
+        raise AttributeError(f'{self.__class__.__name__} object has no attribute {key}')
+
     def init_attributes(self):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
 
@@ -473,6 +491,12 @@ class BaseAttributeNode(EntitySerializer, AbstractNode):
         self.set_attributes(attributes or self.init_attributes())
 
         self.populate_data(**kwargs)
+
+    def __getattr__(self, key):
+        if key in self.attributes:
+            return self.attributes[key]
+
+        raise AttributeError(f'{self.__class__.__name__} object has no attribute {key}')
 
     def init_attributes(self):
         raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
