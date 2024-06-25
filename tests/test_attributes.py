@@ -27,8 +27,8 @@ class TestAttributeNode(unittest.TestCase):
         attribute_node.attributes['runtime_type'] = GenericStr(data='username')
 
         self.assertIsInstance(attribute_node.serialize(), dict)
-        self.assertIn('runtime_type', attribute_node.serialize()['attributes']['items'])
-        self.assertIn('value', attribute_node.serialize()['attributes']['items'])
+        self.assertIn('runtime_type', attribute_node.serialize()['attributes'])
+        self.assertIn('value', attribute_node.serialize()['attributes'])
 
     def test_serialization_and_deserialization(self):
         driver = StringAttribute(value='driver')
@@ -36,7 +36,7 @@ class TestAttributeNode(unittest.TestCase):
 
         driven.attributes['reference'].set_data(driver)
         self.assertTrue(driven.attributes['reference'].get_data(serialize=True), driver)
-        self.assertEqual(driver.get_id(), driven.serialize()['attributes']['items']['reference']['data'])
+        self.assertEqual(driver.get_id(), driven.serialize()['attributes']['reference']['data'])
 
         deserialized_driven = StringAttribute.deserialize(driven.serialize(), relations=True)
         self.assertTrue(deserialized_driven.attributes['reference'].get_data(serialize=True), driver)
