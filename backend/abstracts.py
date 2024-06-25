@@ -14,8 +14,7 @@ class EntityType(enum.StrEnum):
 
 
 class AbstractEntitySerializer:
-    id_attributes: list = None
-    primary_attributes: list = None
+    serializable_attributes: list = None
     relation_attributes: list = None
 
     @abstractmethod
@@ -25,16 +24,10 @@ class AbstractEntitySerializer:
 
     @classmethod
     @abstractmethod
-    def deserialize(cls, **kwargs):
+    def deserialize(cls, data, **kwargs):
         """This returns deserialized class instance."""
         raise NotImplementedError
 
-    @classmethod
-    @abstractmethod
-    def deserialize_relations(cls):
-        """This method deserializes the entity associations and return class instance."""
-        raise NotImplementedError
-    
     @abstractmethod
     def dump(self, obj: t.Any, file_path: str):
         """This method dumps the serialized entity to disk."""
@@ -58,7 +51,7 @@ class AbstractEntitySerializer:
 
     @classmethod
     @abstractmethod
-    def _decode(cls, data: t.Dict[str, t.Any], *args, **kwargs) -> t.Any:
+    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
         """This method decodes the entity."""
         raise NotImplementedError
 
