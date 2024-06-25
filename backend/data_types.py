@@ -146,7 +146,7 @@ class GenericReferencedType(GenericStr):
             data['data'] = reference_instance
 
         if reference_id and not reference_instance:
-            logger.warning(f'could not find reference to : {reference_id}')
+            logger.error(f'could not find reference to : {reference_id}')
 
         return cls(**data)
 
@@ -181,7 +181,7 @@ class GenericReferencedList(GenericList):
                 decoded_data.append(reference_instance)
 
             if id_ and not reference_instance:
-                logger.warning(f'could not find reference to : {id_}')
+                logger.error(f'could not find reference to : {id_}')
 
         data['data'] = decoded_data
         return cls(**data)
