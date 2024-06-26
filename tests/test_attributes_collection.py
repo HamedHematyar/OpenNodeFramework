@@ -1,8 +1,7 @@
 import pathlib
 import unittest
 
-from backend.meta import InstanceManager
-from backend.data_types import GenericStr
+from backend.meta import InstanceManager, ReferenceManager
 from backend.attributes import StringAttribute
 from backend.aggregations import AttributeCollection
 
@@ -25,7 +24,9 @@ class TestAttributeNode(unittest.TestCase):
 
         InstanceManager().clear_all()
 
-        loaded_collection = AttributeCollection.load(self.dump_path)
+        with ReferenceManager() as reference_manager:
+            loaded_collection = AttributeCollection.load(self.dump_path)
+
         self.assertEqual(len(self.collection), len(loaded_collection))
         self.assertEqual(self.collection['driver'].data(), loaded_collection['driver'].data())
         self.assertEqual(self.collection['driven'].data(), loaded_collection['driven'].data())
