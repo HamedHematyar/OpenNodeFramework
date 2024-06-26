@@ -1,6 +1,6 @@
 from backend.registry import register_node
 from backend.bases import BaseNode
-from backend.attributes import StringAttribute, IntAttribute
+from backend.attributes import IntAttribute
 from backend.aggregations import AttributeCollection, PortCollection
 from backend.ports import InputPort, OutputPort
 from backend.events import *

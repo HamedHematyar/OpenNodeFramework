@@ -139,7 +139,7 @@ class GenericReferencedType(GenericStr):
         if instance:
             return instance
 
-        reference_id = data.pop('data', None)
+        reference_id = data.pop('data', str())
         instance = cls(**data)
 
         ReferenceManager().request_deferred_reference(reference_id, instance.set_data)

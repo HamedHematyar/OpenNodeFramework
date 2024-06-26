@@ -16,7 +16,6 @@ class SingletonMeta(type):
 
 
 class EntityTrackerMeta(type):
-    TYPE = None
 
     def __init__(cls, name, bases, dct) -> None:
         super().__init__(name, bases, dct)

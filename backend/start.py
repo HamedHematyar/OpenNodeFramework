@@ -1,5 +1,4 @@
-from backend import registry
-from custom.data_types import data_types
+from backend.logger import logger
 
 if __name__ == '__main__':
-    print(registry.RegisteredTypes)
+    logger.info('starting application core')
