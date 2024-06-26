@@ -9,22 +9,23 @@ from backend.meta import SingletonMeta
 
 
 class EventExecutionPhase(Enum):
-    Undefined = 'undefined'
-    Pre = 'pre'
-    Post = 'post'
+    UNDEFINED = 'undefined'
+    PRE = 'pre'
+    POST = 'post'
 
 
 def register_events_decorator(events):
     def decorator(func):
         @wraps(func)
         def wrapped(*args, **kwargs):
-            for event in [event for event in events if event.Phase == EventExecutionPhase.Pre]:
-                EventManager().trigger(event, *args, **kwargs)
+            event_manager = EventManager()
+            for event in (e for e in events if e.Phase == EventExecutionPhase.PRE):
+                event_manager.trigger(event, *args, **kwargs)
 
             result = func(*args, **kwargs)
 
-            for event in [event for event in events if event.Phase == EventExecutionPhase.Post]:
-                EventManager().trigger(event, *args, **kwargs)
+            for event in (e for e in events if e.Phase == EventExecutionPhase.POST):
+                event_manager.trigger(event, *args, **kwargs)
 
             return result
         return wrapped
@@ -34,47 +35,39 @@ def register_events_decorator(events):
 class AbstractEvent(ABC):
     @abstractmethod
     def __str__(self) -> str:
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+        raise NotImplementedError('This method must be defined in the subclass.')
 
     @abstractmethod
     def register(self, callback: t.Callable) -> bool:
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+        raise NotImplementedError('This method must be defined in the subclass.')
 
     @abstractmethod
     def deregister(self, callback: t.Callable) -> bool:
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+        raise NotImplementedError('This method must be defined in the subclass.')
 
     @abstractmethod
-    def trigger(self, callback: t.Callable) -> bool:
-        raise NotImplementedError('This method is not implemented and must be defined in the subclass.')
+    def trigger(self, *args, **kwargs) -> bool:
+        raise NotImplementedError('This method must be defined in the subclass.')
 
 
-class Event:
-    Phase = EventExecutionPhase.Undefined
+class Event(AbstractEvent):
+    Phase = EventExecutionPhase.UNDEFINED
 
     def __init__(self):
         self._callbacks = []
 
-    def __str__(self):
-        """
-        Returns a string representation of the event.
-        """
+    def __str__(self) -> str:
         return self.__class__.__name__
 
-    def register_callback(self, callback: t.Callable) -> bool:
+    def register(self, callback: t.Callable) -> bool:
         if not callable(callback):
-            raise TypeError(f'callback must be a callable function : {type(callback)}')
-
+            raise TypeError(f'Callback must be a callable function, got {type(callback)}.')
         self._callbacks.append(callback)
         return True
 
-    def deregister_callback(self, callback: t.Callable) -> bool:
-        if not callable(callback):
-            raise TypeError(f'callback must be a callable function : {type(callback)}')
-
+    def deregister(self, callback: t.Callable) -> bool:
         if callback not in self._callbacks:
-            raise KeyError(f'callback {callback} is not registered.')
-
+            raise KeyError(f'Callback {callback} is not registered.')
         self._callbacks.remove(callback)
         return True
 
@@ -84,143 +77,53 @@ class Event:
                 callback(*args, **kwargs)
             except Exception as e:
                 logger.exception(e)
-
         return True
 
-    def callbacks(self):
+    def callbacks(self) -> t.List[t.Callable]:
         return self._callbacks
 
 
-@register_event
-class PreNodeInitialized(Event):
-    Phase = EventExecutionPhase.Pre
+def create_event_class(name: str, execution_phase: EventExecutionPhase) -> t.Type[Event]:
+    event_class = type(name, (Event,), {'Phase': execution_phase})
 
-    def __init__(self):
-        super().__init__()
+    return t.cast(t.Type[Event], event_class)
 
 
-@register_event
-class PostNodeInitialized(Event):
-    Phase = EventExecutionPhase.Post
+_event_classes = [
+    ('PreNodeInitialized', EventExecutionPhase.PRE),
+    ('PostNodeInitialized', EventExecutionPhase.POST),
+    ('PreNodeDeleted', EventExecutionPhase.PRE),
+    ('PostNodeDeleted', EventExecutionPhase.POST),
+    ('PreTypeInitialized', EventExecutionPhase.PRE),
+    ('PostTypeInitialized', EventExecutionPhase.POST),
+    ('PreTypeDeleted', EventExecutionPhase.PRE),
+    ('PostTypeDeleted', EventExecutionPhase.POST),
+    ('PreTypeDataChanged', EventExecutionPhase.PRE),
+    ('PostTypeDataChanged', EventExecutionPhase.POST),
+    ('PrePortInitialized', EventExecutionPhase.PRE),
+    ('PostPortInitialized', EventExecutionPhase.POST),
+    ('PrePortDeleted', EventExecutionPhase.PRE),
+    ('PostPortDeleted', EventExecutionPhase.POST)
+]
 
-    def __init__(self):
-        super().__init__()
-
-
-@register_event
-class PreNodeDeleted(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-@register_event
-class PostNodeDeleted(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
-
-
-@register_event
-class PreTypeInitialized(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-@register_event
-class PostTypeInitialized(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
-
-
-@register_event
-class PreTypeDeleted(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-@register_event
-class PostTypeDeleted(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
-
-
-@register_event
-class PreTypeDataChanged(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-@register_event
-class PostTypeDataChanged(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
-
-
-@register_event
-class PrePortInitialized(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-@register_event
-class PostPortInitialized(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
-
-
-@register_event
-class PrePortDeleted(Event):
-    Phase = EventExecutionPhase.Pre
-
-    def __init__(self):
-        super().__init__()
-
-
-@register_event
-class PostPortDeleted(Event):
-    Phase = EventExecutionPhase.Post
-
-    def __init__(self):
-        super().__init__()
+for event_name, phase in _event_classes:
+    globals()[event_name] = register_event(create_event_class(event_name, phase))
 
 
 class EventManager(metaclass=SingletonMeta):
     def __init__(self):
         from backend import registry
         event_types = registry.registered_types(registry.Category.EVENT)
-
         self._events = {name: event() for name, event in event_types.items()}
 
-    def get_event(self, event):
+    def get_event(self, event: t.Type[Event]) -> t.Optional[Event]:
         return self._events.get(event.__name__)
 
-    def register_callback(self, event, callback: t.Callable) -> bool:
-        return self._events[event.__name__].register_callback(callback)
+    def register_callback(self, event: t.Type[Event], callback: t.Callable) -> bool:
+        return self._events[event.__name__].register(callback)
 
-    def deregister_callback(self, event, callback: t.Callable) -> bool:
-        return self._events[event.__name__].deregister_callback(callback)
+    def deregister_callback(self, event: t.Type[Event], callback: t.Callable) -> bool:
+        return self._events[event.__name__].deregister(callback)
 
-    def trigger(self, event, *args, **kwargs) -> bool:
+    def trigger(self, event: t.Type[Event], *args, **kwargs) -> bool:
         return self._events[event.__name__].trigger(*args, **kwargs)
-
-
-
