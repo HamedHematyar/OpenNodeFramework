@@ -56,17 +56,25 @@ class ParameterNode(Node):
 
 @register_node
 class SumNode(Node):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def init_attributes(self):
+        collection = AttributeCollection()
 
-        self.set_attributes(AttributeCollection())
-        self.set_inputs(PortCollection())
-        self.set_outputs(PortCollection())
+        return collection
 
-        self.inputs['entry0'] = InputPort(parent=self)
-        self.inputs['entry1'] = InputPort(parent=self)
+    def init_inputs(self):
+        collection = PortCollection()
 
-        self.outputs['product'] = OutputPort(parent=self)
+        collection['entry0'] = InputPort(parent=self)
+        collection['entry1'] = InputPort(parent=self)
+
+        return collection
+
+    def init_outputs(self):
+        collection = PortCollection()
+
+        collection['product'] = OutputPort(parent=self)
+
+        return collection
 
     def data(self) -> t.Optional[t.Any]:
         data = 0
