@@ -45,7 +45,7 @@ class EntitySerializer(AbstractEntitySerializer):
         return data
 
     @classmethod
-    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
+    def _decode(cls, data: t.Dict[str, t.Any]) -> t.Any:
         for key in cls.relation_attributes:
             data.update(getattr(cls, f'deserialize_{key}')(data.pop(key)))
 
@@ -212,7 +212,7 @@ class BaseType(EntitySerializer, AbstractType):
         return True
 
     @classmethod
-    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
+    def _decode(cls, data: t.Dict[str, t.Any]) -> t.Any:
         from backend.meta import InstanceManager
         instance = InstanceManager().get_instance(data['id'])
 

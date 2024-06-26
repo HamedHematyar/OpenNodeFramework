@@ -35,7 +35,7 @@ class GenericPort(BasePortNode):
     @classmethod
     def deserialize_attributes(cls, data):
         from backend.registry import RegisteredCollections
-        return {'attributes': RegisteredCollections[data['class']].deserialize(data, relations=True)}
+        return {'attributes': RegisteredCollections[data['class']].deserialize(data)}
 
 
 @register_port

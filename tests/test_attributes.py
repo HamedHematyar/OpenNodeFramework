@@ -37,7 +37,7 @@ class TestAttributeNode(unittest.TestCase):
         self.assertTrue(driven.attributes['reference'].get_data(serialize=True), driver)
         self.assertEqual(driver.get_id(), driven.serialize()['attributes']['reference']['data'])
 
-        deserialized_driven = StringAttribute.deserialize(driven.serialize(), relations=True)
+        deserialized_driven = StringAttribute.deserialize(driven.serialize())
         self.assertTrue(deserialized_driven.attributes['reference'].get_data(serialize=True), driver)
 
     def test_dump_and_load(self):
@@ -52,16 +52,16 @@ class TestAttributeNode(unittest.TestCase):
         driven.dump(driven_path, indent=4)
         driver.dump(driver_path, indent=4)
 
-        loaded_driver = StringAttribute.load(driver_path, relations=True)
-        loaded_driven = StringAttribute.load(driven_path, relations=True)
+        loaded_driver = StringAttribute.load(driver_path)
+        loaded_driven = StringAttribute.load(driven_path)
 
         # driver object is still live so referencing to that not the loaded one
         self.assertEqual(driver.get_id(), loaded_driven.attributes['reference'].data())
 
         InstanceManager().clear_all()
         with ReferenceManager() as reference_manager:
-            loaded_driver = StringAttribute.load(driver_path, relations=True)
-            loaded_driven = StringAttribute.load(driven_path, relations=True)
+            loaded_driver = StringAttribute.load(driver_path)
+            loaded_driven = StringAttribute.load(driven_path)
 
         # driver object is loaded so referencing that
         self.assertEqual(loaded_driver.get_id(), loaded_driven.attributes['reference'].data())

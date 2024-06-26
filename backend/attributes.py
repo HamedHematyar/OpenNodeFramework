@@ -23,7 +23,7 @@ class GenericAttribute(BaseAttributeNode):
     @classmethod
     def deserialize_attributes(cls, data):
         from backend.registry import RegisteredCollections
-        return {'attributes': RegisteredCollections[data['class']].deserialize(data, relations=True)}
+        return {'attributes': RegisteredCollections[data['class']].deserialize(data)}
 
     def data(self):
         reference = self.attributes['reference']

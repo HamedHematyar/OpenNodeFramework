@@ -47,7 +47,7 @@ class TestAttributeNode(unittest.TestCase):
 
         in_port.attributes['connections'].set_data([out_port])
 
-        deserialized_in_port = InputPort.deserialize(in_port.serialize(), relations=True)
+        deserialized_in_port = InputPort.deserialize(in_port.serialize())
         self.assertIn(out_port.get_id(), deserialized_in_port.attributes['connections'].data())
 
     def test_dump_and_load(self):
@@ -62,16 +62,16 @@ class TestAttributeNode(unittest.TestCase):
         out_port_path = pathlib.Path("../dump/ports/output_port.json")
         out_port.dump(out_port_path, indent=4)
 
-        loaded_in_port = InputPort.load(in_port_path, relations=True)
-        loaded_out_port = OutputPort.load(out_port_path, relations=True)
+        loaded_in_port = InputPort.load(in_port_path)
+        loaded_out_port = OutputPort.load(out_port_path)
 
         # out_port object is still live so referencing to that not the loaded one
         self.assertIn(out_port.get_id(), loaded_in_port.attributes['connections'].data())
 
         InstanceManager().clear_all()
         with ReferenceManager() as reference_manager:
-            loaded_out_port = OutputPort.load(out_port_path, relations=True)
-            loaded_in_port = InputPort.load(in_port_path, relations=True)
+            loaded_out_port = OutputPort.load(out_port_path)
+            loaded_in_port = InputPort.load(in_port_path)
 
         # driver object is loaded so referencing that
         self.assertIn(loaded_out_port.get_id(), loaded_in_port.attributes['connections'].data())

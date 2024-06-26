@@ -25,7 +25,7 @@ class TestAttributeNode(unittest.TestCase):
 
         InstanceManager().clear_all()
 
-        loaded_collection = AttributeCollection.load(self.dump_path, relations=True)
+        loaded_collection = AttributeCollection.load(self.dump_path)
         self.assertEqual(len(self.collection), len(loaded_collection))
         self.assertEqual(self.collection['driver'].data(), loaded_collection['driver'].data())
         self.assertEqual(self.collection['driven'].data(), loaded_collection['driven'].data())

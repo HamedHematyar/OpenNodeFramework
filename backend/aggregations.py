@@ -13,14 +13,14 @@ class DataTypeCollection(CustomDictCollection):
     valid_types = (BaseType,)
 
     @classmethod
-    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
+    def _decode(cls, data: t.Dict[str, t.Any]) -> t.Any:
         from backend.registry import RegisteredTypes
 
         # remove class to avoid issues with dict constructor
         data.pop('class')
 
         for name, item_data in data.items():
-            data[name] = RegisteredTypes[item_data['class']].deserialize(item_data, relations=relations)
+            data[name] = RegisteredTypes[item_data['class']].deserialize(item_data)
 
         return cls(**data)
 
@@ -30,7 +30,7 @@ class AttributeCollection(CustomDictCollection):
     valid_types = (BaseAttributeNode,)
 
     @classmethod
-    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
+    def _decode(cls, data: t.Dict[str, t.Any]) -> t.Any:
         from backend.registry import RegisteredTypes, RegisteredAttributes
 
         # remove class to avoid issues with dict constructor
@@ -38,7 +38,7 @@ class AttributeCollection(CustomDictCollection):
 
         for name, item_data in data.items():
             subclass = RegisteredTypes.get(item_data['class']) or RegisteredAttributes.get(item_data['class'])
-            data[name] = subclass.deserialize(item_data, relations=True)
+            data[name] = subclass.deserialize(item_data)
 
         return cls(**data)
 
@@ -48,7 +48,7 @@ class PortCollection(CustomDictCollection):
     valid_types = (BasePortNode,)
 
     @classmethod
-    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
+    def _decode(cls, data: t.Dict[str, t.Any]) -> t.Any:
         from backend.registry import RegisteredTypes, RegisteredPorts
 
         # remove class to avoid issues with dict constructor
@@ -56,7 +56,7 @@ class PortCollection(CustomDictCollection):
 
         for name, item_data in data.items():
             subclass = RegisteredTypes.get(data['class']) or RegisteredPorts.get(item_data['class'])
-            data[name] = subclass.deserialize(item_data, relations=True)
+            data[name] = subclass.deserialize(item_data)
 
         return cls(**data)
 

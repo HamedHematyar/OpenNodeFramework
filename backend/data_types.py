@@ -133,7 +133,7 @@ class GenericReferencedType(GenericStr):
         return super().set_data(data)
 
     @classmethod
-    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
+    def _decode(cls, data: t.Dict[str, t.Any]) -> t.Any:
         from backend.meta import ReferenceManager
         instance = ReferenceManager().request_instant_reference(data['id'])
         if instance:
@@ -168,7 +168,7 @@ class GenericReferencedList(GenericList):
         return True
 
     @classmethod
-    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
+    def _decode(cls, data: t.Dict[str, t.Any]) -> t.Any:
         from backend.meta import ReferenceManager
         instance = ReferenceManager().request_instant_reference(data['id'])
         if instance:

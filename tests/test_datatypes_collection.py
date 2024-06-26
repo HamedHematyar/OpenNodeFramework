@@ -38,13 +38,12 @@ class TestDataTypeCollection(unittest.TestCase):
         self.collection.dump(self.path, indent=4)
         self.assertTrue(pathlib.Path(self.path).exists())
 
-        # test with relations
         loaded_collection = DataTypeCollection.load(self.path)
         self.assertIn(self.collection['label'], loaded_collection.values())
 
     def test_clean_load(self):
         InstanceManager().clear_all()
-        loaded_collection = DataTypeCollection.load(self.path, relations=True)
+        loaded_collection = DataTypeCollection.load(self.path)
 
         self.assertIn('label', loaded_collection)
         self.assertIn('size', loaded_collection)
