@@ -1,3 +1,5 @@
+import typing as t
+
 from backend.registry import register_attribute
 from backend.aggregations import DataTypeCollection
 from backend.data_types import (ReferencedNode,
@@ -22,8 +24,11 @@ class GenericAttribute(BaseAttributeNode):
 
     @classmethod
     def deserialize_attributes(cls, data):
-        from backend.registry import RegisteredCollections
-        return {'attributes': RegisteredCollections[data['class']].deserialize(data)}
+        from backend import registry
+        subclass: t.Optional[t.Type[DataTypeCollection]] = registry.registered_type(registry.Category.COLLECTION,
+                                                                                    data['class'])
+
+        return {'attributes': subclass.deserialize(data)}
 
     def data(self):
         reference = self.attributes['reference']

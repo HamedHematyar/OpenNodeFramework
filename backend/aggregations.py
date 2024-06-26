@@ -14,13 +14,15 @@ class DataTypeCollection(CustomDictCollection):
 
     @classmethod
     def _decode(cls, data: t.Dict[str, t.Any]) -> t.Any:
-        from backend.registry import RegisteredTypes
+        from backend import registry
 
         # remove class to avoid issues with dict constructor
         data.pop('class')
 
         for name, item_data in data.items():
-            data[name] = RegisteredTypes[item_data['class']].deserialize(item_data)
+            subclass: t.Optional[t.Type[BaseType]] = registry.registered_type(registry.Category.TYPE,
+                                                                              item_data['class'])
+            data[name] = subclass.deserialize(item_data)
 
         return cls(**data)
 
@@ -31,13 +33,16 @@ class AttributeCollection(CustomDictCollection):
 
     @classmethod
     def _decode(cls, data: t.Dict[str, t.Any]) -> t.Any:
-        from backend.registry import RegisteredTypes, RegisteredAttributes
+        from backend import registry
 
         # remove class to avoid issues with dict constructor
         data.pop('class')
 
         for name, item_data in data.items():
-            subclass = RegisteredTypes.get(item_data['class']) or RegisteredAttributes.get(item_data['class'])
+            subclass: t.Optional[t.Type[DataTypeCollection]] = (registry.registered_type(registry.Category.TYPE,
+                                                                                         item_data['class'])
+                                                                or registry.registered_type(registry.Category.ATTRIBUTE,
+                                                                                            item_data['class']))
             data[name] = subclass.deserialize(item_data)
 
         return cls(**data)
@@ -49,13 +54,17 @@ class PortCollection(CustomDictCollection):
 
     @classmethod
     def _decode(cls, data: t.Dict[str, t.Any]) -> t.Any:
-        from backend.registry import RegisteredTypes, RegisteredPorts
+        from backend import registry
 
         # remove class to avoid issues with dict constructor
         data.pop('class')
 
         for name, item_data in data.items():
-            subclass = RegisteredTypes.get(data['class']) or RegisteredPorts.get(item_data['class'])
+            subclass: t.Optional[t.Type[DataTypeCollection]] = (registry.registered_type(registry.Category.TYPE,
+                                                                                         item_data['class'])
+                                                                or registry.registered_type(registry.Category.PORT,
+                                                                                            item_data['class']))
+
             data[name] = subclass.deserialize(item_data)
 
         return cls(**data)

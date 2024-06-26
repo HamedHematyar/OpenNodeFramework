@@ -1,3 +1,5 @@
+import typing as t
+
 from backend.registry import register_port
 from backend.data_types import ReferencedNode, GenericStr, PortModeEnum, ReferencedPortList
 from backend.bases import BasePortNode
@@ -34,8 +36,10 @@ class GenericPort(BasePortNode):
 
     @classmethod
     def deserialize_attributes(cls, data):
-        from backend.registry import RegisteredCollections
-        return {'attributes': RegisteredCollections[data['class']].deserialize(data)}
+        from backend import registry
+        subclass: t.Optional[t.Type[DataTypeCollection]] = registry.registered_type(registry.Category.COLLECTION,
+                                                                                    data['class'])
+        return {'attributes': subclass.deserialize(data)}
 
 
 @register_port

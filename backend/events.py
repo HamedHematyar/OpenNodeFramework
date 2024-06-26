@@ -205,8 +205,10 @@ class PostPortDeleted(Event):
 
 class EventManager(metaclass=SingletonMeta):
     def __init__(self):
-        from backend.registry import RegisteredEvents
-        self._events = {name: event() for name, event in RegisteredEvents.items()}
+        from backend import registry
+        event_types = registry.registered_types(registry.Category.EVENT)
+
+        self._events = {name: event() for name, event in event_types.items()}
 
     def get_event(self, event):
         return self._events.get(event.__name__)
