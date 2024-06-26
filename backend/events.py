@@ -1,24 +1,26 @@
 import typing as t
 from abc import ABC, abstractmethod
 from functools import wraps
-from enum import Enum
+import enum
 
 from backend.registry import register_event
 from backend.logger import logger
 from backend.meta import SingletonMeta
 
 
-class EventExecutionPhase(Enum):
+class EventExecutionPhase(enum.Enum):
     UNDEFINED = 'undefined'
     PRE = 'pre'
     POST = 'post'
 
 
-def register_events_decorator(events):
+def register_events_decorator(event_enums):
     def decorator(func):
         @wraps(func)
         def wrapped(*args, **kwargs):
             event_manager = EventManager()
+            events: t.Optional[t.List[Event]] = [event_manager.get_event_by_name(e.name).__class__ for e in event_enums]
+
             for event in (e for e in events if e.Phase == EventExecutionPhase.PRE):
                 event_manager.trigger(event, *args, **kwargs)
 
@@ -89,25 +91,42 @@ def create_event_class(name: str, execution_phase: EventExecutionPhase) -> t.Typ
     return t.cast(t.Type[Event], event_class)
 
 
+class Events(enum.Enum):
+    PreNodeInitialized = enum.auto()
+    PostNodeInitialized = enum.auto()
+    PreNodeDeleted = enum.auto()
+    PostNodeDeleted = enum.auto()
+    PreTypeInitialized = enum.auto()
+    PostTypeInitialized = enum.auto()
+    PreTypeDeleted = enum.auto()
+    PostTypeDeleted = enum.auto()
+    PreTypeDataChanged = enum.auto()
+    PostTypeDataChanged = enum.auto()
+    PrePortInitialized = enum.auto()
+    PostPortInitialized = enum.auto()
+    PrePortDeleted = enum.auto()
+    PostPortDeleted = enum.auto()
+
+
 _event_classes = [
-    ('PreNodeInitialized', EventExecutionPhase.PRE),
-    ('PostNodeInitialized', EventExecutionPhase.POST),
-    ('PreNodeDeleted', EventExecutionPhase.PRE),
-    ('PostNodeDeleted', EventExecutionPhase.POST),
-    ('PreTypeInitialized', EventExecutionPhase.PRE),
-    ('PostTypeInitialized', EventExecutionPhase.POST),
-    ('PreTypeDeleted', EventExecutionPhase.PRE),
-    ('PostTypeDeleted', EventExecutionPhase.POST),
-    ('PreTypeDataChanged', EventExecutionPhase.PRE),
-    ('PostTypeDataChanged', EventExecutionPhase.POST),
-    ('PrePortInitialized', EventExecutionPhase.PRE),
-    ('PostPortInitialized', EventExecutionPhase.POST),
-    ('PrePortDeleted', EventExecutionPhase.PRE),
-    ('PostPortDeleted', EventExecutionPhase.POST)
+    (Events.PreNodeInitialized, EventExecutionPhase.PRE),
+    (Events.PostNodeInitialized, EventExecutionPhase.POST),
+    (Events.PreNodeDeleted, EventExecutionPhase.PRE),
+    (Events.PostNodeDeleted, EventExecutionPhase.POST),
+    (Events.PreTypeInitialized, EventExecutionPhase.PRE),
+    (Events.PostTypeInitialized, EventExecutionPhase.POST),
+    (Events.PreTypeDeleted, EventExecutionPhase.PRE),
+    (Events.PostTypeDeleted, EventExecutionPhase.POST),
+    (Events.PreTypeDataChanged, EventExecutionPhase.PRE),
+    (Events.PostTypeDataChanged, EventExecutionPhase.POST),
+    (Events.PrePortInitialized, EventExecutionPhase.PRE),
+    (Events.PostPortInitialized, EventExecutionPhase.POST),
+    (Events.PrePortDeleted, EventExecutionPhase.PRE),
+    (Events.PostPortDeleted, EventExecutionPhase.POST)
 ]
 
-for event_name, phase in _event_classes:
-    globals()[event_name] = register_event(create_event_class(event_name, phase))
+for event_enum, phase in _event_classes:
+    register_event(create_event_class(event_enum.name, phase))
 
 
 class EventManager(metaclass=SingletonMeta):
@@ -118,6 +137,9 @@ class EventManager(metaclass=SingletonMeta):
 
     def get_event(self, event: t.Type[Event]) -> t.Optional[Event]:
         return self._events.get(event.__name__)
+
+    def get_event_by_name(self, event_name: str) -> t.Optional[Event]:
+        return self._events.get(event_name)
 
     def register_callback(self, event: t.Type[Event], callback: t.Callable) -> bool:
         return self._events[event.__name__].register(callback)

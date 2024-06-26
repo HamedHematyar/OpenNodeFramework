@@ -149,7 +149,7 @@ class BaseType(EntitySerializer, AbstractType):
                                'id',
                                'data']
 
-    @register_events_decorator([PreTypeInitialized, PostTypeInitialized])
+    @register_events_decorator([Events.PreTypeInitialized, Events.PostTypeInitialized])
     def __init__(self, **kwargs):
         self._id = kwargs.pop('id')
         self._data: t.Optional[str] = None
@@ -158,7 +158,7 @@ class BaseType(EntitySerializer, AbstractType):
         if init_data is not None:
             self.set_data(init_data)
 
-    @register_events_decorator([PreTypeDeleted, PostTypeDeleted])
+    @register_events_decorator([Events.PreTypeDeleted, Events.PostTypeDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)
@@ -192,7 +192,7 @@ class BaseType(EntitySerializer, AbstractType):
 
         return self._data
 
-    @register_events_decorator([PreTypeDataChanged, PostTypeDataChanged])
+    @register_events_decorator([Events.PreTypeDataChanged, Events.PostTypeDataChanged])
     def set_data(self, data):
         if not self.validate_data(data):
             return False
@@ -231,7 +231,7 @@ class BaseNode(EntitySerializer, AbstractNode):
                            'inputs',
                            'outputs']
 
-    @register_events_decorator([PreNodeInitialized, PostNodeInitialized])
+    @register_events_decorator([Events.PreNodeInitialized, Events.PostNodeInitialized])
     def __init__(self, **kwargs):
         self._id = kwargs.pop('id')
 
@@ -270,7 +270,7 @@ class BaseNode(EntitySerializer, AbstractNode):
             if self.attributes.get(key):
                 self.attributes[key].attributes['value'].set_data(value)
 
-    @register_events_decorator([PreNodeDeleted, PostNodeDeleted])
+    @register_events_decorator([Events.PreNodeDeleted, Events.PostNodeDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)
@@ -390,7 +390,7 @@ class BasePortNode(EntitySerializer, AbstractNode):
 
     relation_attributes = ['attributes']
 
-    @register_events_decorator([PreNodeInitialized, PostNodeInitialized])
+    @register_events_decorator([Events.PreNodeInitialized, Events.PostNodeInitialized])
     def __init__(self, **kwargs):
         self._id = kwargs.pop('id')
 
@@ -415,7 +415,7 @@ class BasePortNode(EntitySerializer, AbstractNode):
             if self.attributes.get(key):
                 self.attributes[key].set_data(value)
 
-    @register_events_decorator([PreNodeDeleted, PostNodeDeleted])
+    @register_events_decorator([Events.PreNodeDeleted, Events.PostNodeDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)
@@ -481,7 +481,7 @@ class BaseAttributeNode(EntitySerializer, AbstractNode):
 
     relation_attributes = ['attributes']
 
-    @register_events_decorator([PreNodeInitialized, PostNodeInitialized])
+    @register_events_decorator([Events.PreNodeInitialized, Events.PostNodeInitialized])
     def __init__(self, **kwargs):
         self._id = kwargs.pop('id')
 
@@ -506,7 +506,7 @@ class BaseAttributeNode(EntitySerializer, AbstractNode):
             if self.attributes.get(key):
                 self.attributes[key].set_data(value)
 
-    @register_events_decorator([PreNodeDeleted, PostNodeDeleted])
+    @register_events_decorator([Events.PreNodeDeleted, Events.PostNodeDeleted])
     def delete(self):
         from backend.meta import InstanceManager
         InstanceManager().remove_instance(self)
