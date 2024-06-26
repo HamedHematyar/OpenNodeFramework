@@ -1,9 +1,13 @@
 import enum
+import pathlib
 import typing as t
-
 from abc import abstractmethod
 
 from backend.meta import *
+
+
+JSONStr = t.NewType('JSONStr', str)
+JSONType = t.Union[t.Dict[str, t.Any], t.List[t.Any], str, int, float, bool, None]
 
 
 class EntityType(enum.StrEnum):
@@ -18,29 +22,29 @@ class AbstractEntitySerializer:
     relation_attributes: list = None
 
     @abstractmethod
-    def serialize(self):
+    def serialize(self) -> t.Dict[str, t.Any]:
         """This return serialized instance data"""
         raise NotImplementedError
 
     @classmethod
     @abstractmethod
-    def deserialize(cls, data, **kwargs):
+    def deserialize(cls, data, **kwargs) -> t.Any:
         """This returns deserialized class instance."""
         raise NotImplementedError
 
     @abstractmethod
-    def dump(self, obj: t.Any, file_path: str):
+    def dump(self, obj: t.Any, file_path: pathlib.Path):
         """This method dumps the serialized entity to disk."""
         raise NotImplementedError
 
     @abstractmethod
-    def dumps(self, **kwargs):
+    def dumps(self, **kwargs) -> JSONStr:
         """This method dumps the serialized entity to str."""
         raise NotImplementedError
 
     @classmethod
     @abstractmethod
-    def load(cls, file_path: str):
+    def load(cls, file_path: str) -> t.Any:
         """This method loads the serialized entity from disk."""
         raise NotImplementedError
 
@@ -51,7 +55,7 @@ class AbstractEntitySerializer:
 
     @classmethod
     @abstractmethod
-    def _decode(cls, data: t.Dict[str, t.Any], relations=False) -> t.Any:
+    def _decode(cls, data: t.Dict[str, t.Any]) -> t.Any:
         """This method decodes the entity."""
         raise NotImplementedError
 
