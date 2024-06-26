@@ -20,7 +20,7 @@ class EntitySerializer(AbstractEntitySerializer):
 
     @classmethod
     def deserialize(cls, data, **kwargs) -> t.Any:
-        return cls._decode(copy.deepcopy(data), **kwargs)
+        return cls._decode(copy.deepcopy(data))
 
     def dump(self, file_path: pathlib.Path, *args, **kwargs):
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -34,7 +34,7 @@ class EntitySerializer(AbstractEntitySerializer):
     @classmethod
     def load(cls, file_path: pathlib.Path, *args, **kwargs):
         with open(file_path.absolute().as_posix(), 'r') as file:
-            return cls._decode(json.load(file), *args, **kwargs)
+            return cls._decode(json.load(file))
 
     def _encode(self, *args, **kwargs) -> t.Dict[str, t.Any]:
         data = {}

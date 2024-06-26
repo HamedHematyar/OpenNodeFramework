@@ -39,6 +39,7 @@ class GenericAttribute(BaseAttributeNode):
 
 @register_attribute
 class StringAttribute(GenericAttribute):
+
     def init_attributes(self):
         collection = super().init_attributes()
 
