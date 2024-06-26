@@ -61,9 +61,9 @@ class AbstractEntitySerializer:
 
 
 class AbstractType(AbstractEntitySerializer, metaclass=EntityTrackerMeta):
-    entity_type = EntityType.Type
-    valid_types = tuple()
-    default = None
+    entity_type: EntityType = EntityType.Type
+    valid_types: t.Tuple = None
+    default: t.Any = None
 
     @abstractmethod
     def delete(self):
@@ -112,7 +112,7 @@ class AbstractType(AbstractEntitySerializer, metaclass=EntityTrackerMeta):
 
 
 class AbstractNode(AbstractEntitySerializer, metaclass=EntityTrackerMeta):
-    entity_type = EntityType.Node
+    entity_type: EntityType = EntityType.Node
 
     @abstractmethod
     def delete(self):
