@@ -18,11 +18,6 @@ class GenericPort(BasePortNode):
 
         return collection
 
-    def populate_data(self, **kwargs):
-        for key, value in kwargs.items():
-            if self.attributes.get(key):
-                self.attributes[key].set_data(value)
-
     def validate_attributes(self, attributes):
         return True
 
