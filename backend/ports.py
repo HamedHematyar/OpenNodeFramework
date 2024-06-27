@@ -8,14 +8,6 @@ from backend.aggregations import DataTypeCollection
 
 class GenericPort(BasePortNode):
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        attributes = kwargs.pop('attributes', {})
-        self.set_attributes(attributes or self.init_attributes())
-
-        self.populate_data(**kwargs)
-
     def init_attributes(self):
         collection = DataTypeCollection()
 
@@ -63,6 +55,7 @@ class InputPort(GenericPort):
 class OutputPort(GenericPort):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
         self.attributes['mode'].set_data('OUTPUT')
 
     def data(self):
