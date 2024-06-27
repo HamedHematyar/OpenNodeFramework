@@ -34,26 +34,4 @@ def validate(validator: t.Union[t.Callable, BaseValidator]):
     return decorator
 
 
-def attribute_name_validator(instance, name) -> bool:
-    if not isinstance(name, str):
-        raise ValueError('attribute name must be a valid string.')
-
-    return True
-
-
-def port_name_validator(instance, name) -> bool:
-    if not isinstance(name, str):
-        raise ValueError('port name must be a valid string.')
-
-    return True
-
-
-def node_name_validator(instance, name) -> bool:
-    return True
-
-
-class ExampleValidator(BaseValidator):
-    def validate(self, data: int) -> bool:
-        return bool(data)
-
 
