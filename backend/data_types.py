@@ -78,7 +78,7 @@ class GenericEnum(BaseType):
 
     def set_options(self, options):
         if not issubclass(options, enum.Enum):
-            raise TypeError(f'options is not a subclass of {enum.Enum}.')
+            raise TypeError(f'Options is not a subclass of {enum.Enum}.')
 
         self._options = options
 

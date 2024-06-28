@@ -22,7 +22,7 @@ _Registry: t.DefaultDict[Category, RegistryDict] = defaultdict(dict)
 def register(category: Category):
     def decorator(cls: t.Type) -> t.Type:
         _Registry[category][cls.__name__] = cls
-        logger.debug(f'new {category.name} has been registered: {cls.__name__}')
+        logger.debug(f'New {category.name} has been registered: {cls.__name__}')
 
         return cls
 
